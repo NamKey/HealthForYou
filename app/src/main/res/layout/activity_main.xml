@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/btn_frag1_main"
+            android:layout_width="match_parent"
+            android:layout_height="60sp"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/home"
+            android:gravity="center"
+            android:text="메인"
+            android:textSize="8sp"/>
+        <Button
+            android:id="@+id/btn_frag2_chat"
+            android:layout_width="match_parent"
+            android:layout_height="60sp"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/rotate"
+            android:text="헬스톡"
+            android:textSize="8sp"/>
+        <Button
+            android:id="@+id/btn_frag3_meas"
+            android:layout_width="match_parent"
+            android:layout_height="60sp"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/electrocardiogram"
+            android:text="측정"
+            android:textSize="8sp"/>
+        <Button
+            android:id="@+id/btn_frag4_result"
+            android:layout_width="match_parent"
+            android:layout_height="60sp"
+            android:drawableTop="@drawable/list"
+            android:layout_weight="1"
+            android:text="측정결과"
+            android:textSize="8sp"/>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/frag_container_"
+        android:layout_width="match_parent"
+        android:layout_height="540sp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"></FrameLayout>
+
+</RelativeLayout>
