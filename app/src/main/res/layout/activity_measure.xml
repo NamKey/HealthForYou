@@ -20,9 +20,9 @@
         android:orientation="horizontal"
         android:id="@+id/linearGraph">
 
-        <org.opencv.android.JavaCameraView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+        <com.example.nam.healthforyou.javaViewCameraControl
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:id="@+id/activity_surface_view" />
 
     </LinearLayout>
@@ -51,24 +51,24 @@
         android:id="@+id/start_measure"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="측정시작"
         android:layout_below="@+id/heart_rate"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        android:text="측정시작" />
+        android:layout_centerHorizontal="true" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="150sp"
+        android:layout_height="200sp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_marginBottom="30dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:id="@+id/linearLayout4">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
             android:layout_marginStart="10dp"
+            android:layout_weight="1"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -99,9 +99,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:gravity="center_vertical"
-            android:layout_marginStart="10dp"
             android:orientation="horizontal">
 
             <ImageView
@@ -132,16 +132,16 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:gravity="center_vertical"
-            android:layout_marginStart="10dp"
             android:orientation="horizontal">
 
             <ImageView
                 android:id="@+id/imageView6"
                 android:layout_width="wrap_content"
-                android:gravity="center"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 app:srcCompat="@drawable/oxygen" />
 
             <TextView
@@ -162,4 +162,13 @@
 
         </LinearLayout>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/start_measure"
+        android:text="측정을 준비중입니다"
+
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

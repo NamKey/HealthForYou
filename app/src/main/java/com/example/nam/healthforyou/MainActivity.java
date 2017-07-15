@@ -2,6 +2,7 @@ package com.example.nam.healthforyou;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -84,29 +85,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onResume() {
-        //OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0,this,mLoaderCallback);
-        mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         super.onResume();
     }
 
-    static {
-        if(!OpenCVLoader.initDebug()) {
-            // Handle initialization error
-        }
-    }
-
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status){
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    Log.d("TAG","OPENCV Loaded succesfully");
-                    break;
-                }
-            }
-        }
-    };
     @Override
     public void onClick(View v) {
         switch (v.getId())
@@ -126,10 +107,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btn_frag3_meas:
-                getSupportFragmentManager()
+                /*getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.frag_container_, new Fragment_meas())
-                        .commit();
+                        .commit();*/
+                startActivity(new Intent(this,Measure.class));
                 break;
 
             case R.id.btn_frag4_result:

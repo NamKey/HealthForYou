@@ -12,4 +12,5 @@
         <item>남성</item>
         <item>여성</item>
     </string-array>
+    <string name="title_activity_test">test</string>
 </resources>
