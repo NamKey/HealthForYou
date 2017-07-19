@@ -204,8 +204,13 @@ public class Signup extends AppCompatActivity {
                 name=input_name.getText().toString();
                 age=input_age.getText().toString();
                 pw=input_pw.getText().toString();
-                sex=input_sex.getSelectedItem().toString();
 
+                if(input_sex.getSelectedItem().toString().equals("남성"))
+                {
+                    sex="male";
+                }else{
+                    sex="female";
+                }
 
                 signup_mem=new JSONObject();
                 try {
@@ -214,6 +219,7 @@ public class Signup extends AppCompatActivity {
                     signup_mem.put("name",name);
                     signup_mem.put("age",age);
                     signup_mem.put("sex",sex);
+                    System.out.println(signup_mem);
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -234,6 +240,7 @@ public class Signup extends AppCompatActivity {
 
             if(s.equals("true"))//DB에 저장이 되었을 때
             {
+                System.out.println(s);
                 Toast.makeText(Signup.this, "회원가입 완료", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(getApplicationContext(),Login.class));
                 finish();
@@ -244,7 +251,7 @@ public class Signup extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... params) {
-            String strUrl="http://www.dodambuchu.com/signup.php";
+            String strUrl="http://kakapo12.vps.phps.kr/signup.php";
 
             try {
                 URL url = new URL(strUrl);
@@ -312,7 +319,7 @@ public class Signup extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... params) {
-            String strUrl="http://www.dodambuchu.com/idconfirm.php";
+            String strUrl="http://kakapo12.vps.phps.kr/idconfirm.php";
 
             try {
                 URL url = new URL(strUrl);

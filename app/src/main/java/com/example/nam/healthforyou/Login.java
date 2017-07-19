@@ -103,20 +103,6 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     private static OAuthLogin mOAuthLoginModule;
     private static Context mContext;
 
-
-
-    String email = "";
-    String nickname = "";
-    String enc_id = "";
-    String profile_image = "";
-    String age = "";
-    String gender = "";
-    String id = "";
-    String name = "";
-    String birthday = "";
-
-    String accessToken = "";
-    String tokenType;
     //카카오톡 로그인
     private SessionCallback callback;
     //페이스북 로그인
@@ -456,7 +442,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
         @Override
         protected String doInBackground(String... params) {
-            String strUrl="http://www.dodambuchu.com/logincheck.php";
+            String strUrl="http://kakapo12.vps.phps.kr/logincheck.php";
 
             try {
                 URL url = new URL(strUrl);

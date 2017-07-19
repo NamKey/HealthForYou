@@ -29,7 +29,7 @@ public class javaViewCameraControl extends JavaCameraView {
 
     public void setFrameRate(int min,int max){
         Camera.Parameters params = mCamera.getParameters();
-        params.setPreviewFpsRange(min, max);
+        params.setPreviewFpsRange(min*1000, max*1000);
         mCamera.setParameters(params);
     }
 }

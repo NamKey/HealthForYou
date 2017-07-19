@@ -20,10 +20,21 @@
         android:orientation="horizontal"
         android:id="@+id/linearGraph">
 
-        <com.example.nam.healthforyou.javaViewCameraControl
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/activity_surface_view" />
+            android:layout_height="match_parent">
+
+            <com.example.nam.healthforyou.javaViewCameraControl
+                android:id="@+id/activity_surface_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/heartGraph"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </FrameLayout>
 
     </LinearLayout>
 
@@ -169,6 +180,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/start_measure"
         android:text="측정을 준비중입니다"
-
         android:layout_centerHorizontal="true" />
+
 </RelativeLayout>

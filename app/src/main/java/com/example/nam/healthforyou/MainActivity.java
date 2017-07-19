@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static {
         System.loadLibrary("native-lib");
     }
-    public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
     private TextView tv_outPut;
     HttpURLConnection con;
     SharedPreferences session;
@@ -68,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // 위젯에 대한 참조.
 
     // URL 설정.
-    String strurl = "http://www.dodambuchu.com/mainactivity.php";
+    String strurl = "http://kakapo12.vps.phps.kr/mainactivity.php";
 
         try {
             URL url = new URL(strurl);

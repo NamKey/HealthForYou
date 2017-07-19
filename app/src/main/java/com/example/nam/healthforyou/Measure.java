@@ -1,6 +1,8 @@
 package com.example.nam.healthforyou;
 
 
+import android.content.Context;
+import android.graphics.Color;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Message;
@@ -12,6 +14,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
@@ -19,9 +34,10 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class Measure extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+public class Measure extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, OnChartValueSelectedListener {
 
     static {
         System.loadLibrary("native-lib");
@@ -32,6 +48,7 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
             // Handle initialization error
         }
     }
+    Context mContext;
 
     private static final String TAG = "opencv";
     //private CameraBridgeViewBase mOpenCvCameraView;
@@ -39,18 +56,107 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
     ////카메라 영상 받아오는 부분
     private Mat matInput;
     private Mat matResult;
+    int sum;//intensity의 합
+    int moving;
+    float filtered_beat;//필터이후에 값
     ////이전이미지와 현재이미지 비교
     private Mat previous=null;
     private Mat current=null;
-    int is_moved;
 
     ////핸들러 메세지 정의
     static final int is_moving=1;
     static final int no_moving=2;
     TextView message;
 
+    ////그래프
+    private LineChart mChart;//차트
+    private Thread thread;//값 넣어주는 부분
+    int MaxX=0;
+    int MinX=0;
+    private int peakX=0;//피크의 x축값
+    private int peakXinArray=0;//array안에서 peak값
+    private int W_size=20;
+    private ArrayList<Integer> peakPoint;
+    private ArrayList<Integer> tempforPeak;//피크를 구하기위한 ArrayList
+    private ArrayList<Integer> localMinX;//피크를 구하기위한 ArrayList
+    private ArrayList<Integer> localMaxX;//피크를 구하기위한 ArrayList
+
+    private ArrayList<Integer> sumSlope;//피크를 구하기위한 ArrayList
+    private int slope=0;
+    private int resultSlope=0;
+
+    private int X=0;//X축값
+    private int peakIndex;
+    private int minX;
+    private int localMin;
+
+    private YAxis leftAxis;
+    private ArrayList<Integer> heart_data; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
+
+    ////네이티브 메소드
     public native int redDetection(long matAddrInput, long matAddrResult);
     public native int moveDetection(long previous,long current);
+
+    ////필터 부분
+    double filtered_Raw;
+    private final int N = 32;
+    private int n = 0;
+    private double[] x = new double[N];
+    private final double[] h =
+    {
+            -0.00825998710050537990,
+            -0.00094549491400912290,
+            0.00162817839503944160,
+            -0.01104320682553394000,
+            -0.03522777356983981100,
+            -0.05215865024345721400,
+            -0.04496990747950474500,
+            -0.01987572938995437300,
+            -0.00796052088164146510,
+            -0.03759964387008083600,
+            -0.09790882454086007000,
+            -0.13180532798007569000,
+            -0.07790881312870971700,
+            0.06745778393854905100,
+            0.22802929229187494000,
+            0.29801216506635481000,
+            0.22802929229187494000,
+            0.06745778393854905100,
+            -0.07790881312870971700,
+            -0.13180532798007569000,
+            -0.09790882454086007000,
+            -0.03759964387008083600,
+            -0.00796052088164146510,
+            -0.01987572938995437300,
+            -0.04496990747950474500,
+            -0.05215865024345721400,
+            -0.03522777356983981100,
+            -0.01104320682553394000,
+            0.00162817839503944160,
+            -0.00094549491400912290,
+            -0.00825998710050537990,
+            -0.00865680610025201280
+    };
+
+    public double filter(double x_in)
+    {
+        double y = 0.0;
+
+        //Store the current input, overwriting the oldest input
+        x[n] = x_in;
+
+        // Multiply the filter coefficients by the previous inputs and sum
+        for (int i=0; i<N; i++)
+        {
+            y += h[i] * x[((N - i) + n) % N];
+        }
+
+        // Increment the input buffer index to the next location
+        n = (n + 1) % N;
+
+        return y;
+    }
+
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -71,10 +177,12 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = getApplicationContext();
         setContentView(R.layout.activity_measure);
         //////////////OPENCV
-        mOpenCvCameraView = (javaViewCameraControl)findViewById(R.id.activity_surface_view);
+        mOpenCvCameraView =(javaViewCameraControl)findViewById(R.id.activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+        mOpenCvCameraView.setAlpha(0);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
         mOpenCvCameraView.setMaxFrameSize(200, 200);
@@ -87,10 +195,65 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
             public void onClick(View v) {
                 mOpenCvCameraView.enableView();
                 mOpenCvCameraView.turnFlashOn();
+                feedMultiple();
             }
         });
         ///측정의 정확성을 위해서 사용자에게 메세지를 알려줄 핸들러
         message = (TextView)findViewById(R.id.message);
+
+        //CHART setting
+        mChart = (LineChart)findViewById(R.id.heartGraph);
+
+        //LineChart chart = new LineChart(mContext);
+        mChart.setOnChartValueSelectedListener(this);
+        // enable description text
+        mChart.getDescription().setEnabled(true);
+
+        // enable touch gestures
+        mChart.setTouchEnabled(true);
+        // enable scaling and dragging
+        mChart.setDragEnabled(true);
+        mChart.setScaleEnabled(true);
+        mChart.setDrawGridBackground(false);
+
+        // if disabled, scaling can be done on x- and y-axis separately
+        mChart.setPinchZoom(true);
+
+        // set an alternative background color
+        mChart.setBackgroundColor(Color.WHITE);
+
+        LineData data = new LineData();
+        data.setValueTextColor(Color.WHITE);
+
+        // add empty data
+        mChart.setData(data);
+
+        // get the legend (only possible after setting data)
+        Legend l = mChart.getLegend();
+
+        // modify the legend ...
+        l.setForm(Legend.LegendForm.LINE);
+        l.setTextColor(Color.WHITE);
+
+        XAxis xl = mChart.getXAxis();
+        xl.setTextColor(Color.WHITE);
+        xl.setDrawGridLines(false);
+        xl.setAvoidFirstLastClipping(true);
+        xl.setEnabled(false);
+
+        leftAxis = mChart.getAxisLeft();
+        leftAxis.setTextColor(Color.WHITE);
+        mChart.setAutoScaleMinMaxEnabled(true);
+        leftAxis.setDrawGridLines(true);
+
+        YAxis rightAxis = mChart.getAxisRight();
+        rightAxis.setEnabled(false);
+
+        heart_data = new ArrayList<>();
+        peakPoint = new ArrayList<>();
+        tempforPeak = new ArrayList<>();
+        localMaxX = new ArrayList<>();
+        sumSlope = new ArrayList<>();
     }
 
     @Override
@@ -135,14 +298,17 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
+        mOpenCvCameraView.setFrameRate(30,30);
         matInput = inputFrame.rgba();
         /////빨간색을 받아오는 부분
         if ( matResult != null ) matResult.release();
         matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
-        int sum=redDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        sum=redDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+
         /////움직임을 감지하는 부분
         previous = new Mat(matInput.rows(), matInput.cols(), matInput.type());
         current = new Mat(matInput.rows(), matInput.cols(), matInput.type());
+
         /////현재영상과 이전 영상을 비교하는 부분
         if(previous!=null)//이전 프레임이 비어있으면
         {
@@ -153,15 +319,13 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
         }
         int move_point=moveDetection(previous.getNativeObjAddr(),current.getNativeObjAddr());//현재프레임과 이전프레임을 비교
         previous = current;/////비교후에 현재프레임을 이전 프레임에 넣어줌
-        System.out.println(move_point);
         ////움직이지 않을때 - 손가락을 갖다댔을 때 값이 3 나옴(실험 결과)
         ////손가락을 갖다댔을 때와 평상시인데 움직임이 없는 경우를 구분해야됨
-        if(move_point<5)
+        if(move_point<50)
         {
-            System.out.println(sum);//출력해줌
             handler.sendEmptyMessage(no_moving);
         }else{////움직일때
-            handler.sendEmptyMessage(is_moving);//출력안해줌
+            handler.sendEmptyMessage(is_moving);//그래프에 데이터를 넣지 않음
         }
         return matInput;
     }
@@ -173,17 +337,186 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
                 case is_moving:
                 {
                     message.setText("측정중에는 움직이지 말아주세요");
+                    moving=is_moving;
                     break;
                 }
 
                 case no_moving:
                 {
                     message.setText("측정중입니다");
+                    moving=no_moving;
                     break;
                 }
             }
         }
     };
 
+    @Override
+    public void onValueSelected(Entry e, Highlight h) {
+    }
 
+    @Override
+    public void onNothingSelected() {
+    }
+
+    private LineDataSet createSet() {
+
+        LineDataSet set = new LineDataSet(null, "심장박동 데이터");
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+        set.setColor(ColorTemplate.getHoloBlue());
+        set.setLineWidth(2f);
+        set.setHighLightColor(Color.rgb(244, 117, 117));
+        set.setValueTextColor(Color.WHITE);
+        set.setDrawValues(false);
+        return set;
+    }
+
+    private void addEntry() {
+
+        LineData data = mChart.getData();
+
+        if (data != null) {
+
+            ILineDataSet set = data.getDataSetByIndex(0);
+            // set.addEntry(...); // can be called as well
+
+            if (set == null) {
+                set = createSet();
+                data.addDataSet(set);
+            }
+
+            data.addEntry(new Entry(set.getEntryCount(),(float)Math.abs(filtered_Raw/100)), 0);///그래프에 데이터를 넣는 부분
+
+            data.notifyDataChanged();
+
+            // let the chart know it's data has changed
+            mChart.notifyDataSetChanged();
+            // limit the number of visible entries
+            mChart.setVisibleXRangeMaximum(100);
+            //mChart.setVisibleYRangeMinimum(1, YAxis.AxisDependency.LEFT);
+
+            // move to the latest entry
+            mChart.moveViewToX(data.getEntryCount());
+
+            // this automatically refreshes the chart (calls invalidate())
+            // mChart.moveViewTo(data.getXValCount()-7, 55f,
+            // AxisDependency.LEFT);
+        }
+    }
+
+    private void feedMultiple() {
+
+        if (thread != null)
+            thread.interrupt();
+
+        final Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                if(moving==2)
+                {
+                    filtered_Raw=filter(sum);//1~5Hz BandPass Filter
+                    //System.out.println((int)Math.abs(filtered_Raw/1000));//**************심장박동 출력보기**************
+                    heart_data.add((int)Math.abs(filtered_Raw/100)); ///peak 값을 찾기 위해 ArrayList에 넣어줌
+
+                    //데이터의 크기가 윈도우 크기 만큼 찼을 때까지 0일 수는 없으니
+                    //W_size로 나머지를 구해주면 배수일 때 옮겨주게 됨
+                    //데이터는 0~W_size,W_size~2*W_size 만큼 갖고오게됨
+                    //X는 들어오는 데이터임
+
+                    if(heart_data.size()%W_size==0)
+                    {
+                        for(int i=heart_data.size()-W_size;i<heart_data.size()-1;i++)
+                        {
+                            tempforPeak.add(heart_data.get(i));/////i부터
+                        }
+                        //System.out.println("여기부터 : "+(heart_data.size()-W_size)+"저기까지 : "+(heart_data.size()-1));
+                        //System.out.println("heart_data Size:"+heart_data.size()+" tempforPeak 저장데이터"+tempforPeak);
+                    }
+                    if(findPeak(tempforPeak)!=0)
+                    {
+                        peakPoint.add(findPeak(tempforPeak)+heart_data.size()-W_size);//////array안에서 최고값이므로 평소 데이터에서 X값을 구해야됨
+                        System.out.println(peakPoint);
+                    }
+
+                    //peakPoint.add();
+                    //System.out.println(peakPoint);
+                    tempforPeak.clear();
+
+                    //System.out.println("signal_size : "+peakPoint.size());
+
+                    /*if(heart_data.size()>2)
+                    {
+                        int sum_signal =0;
+                        int ave_signal;
+                        if(heart_data.get(X-2)<=heart_data.get(X-1)&&heart_data.get(X-1)>=heart_data.get(X))
+                        {
+                            peakPoint.add(heart_data.get(X-1));//피크들의 평균으로 해볼예정
+                            for(int i=0;i<peakPoint.size()-1;i++)//
+                            {
+                                sum_signal+=peakPoint.get(i);
+                            }
+                            ave_signal = sum_signal/peakPoint.size();
+
+                            if(heart_data.get(X-1)>ave_signal)
+                            {
+                                peakXinArray = X-1;
+                                localMaxX.add(peakXinArray);
+                                System.out.println(localMaxX);
+                            }
+                        }
+                    }*/
+
+                    if(heart_data.size()>2)
+                    {
+
+                    }
+
+                    X++;
+                    addEntry();
+                }
+            }
+        };
+
+        thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                for (int i = 0; i < 1000; i++) {/////데이터를 1000개만 넣어줌
+
+                    // Don't generate garbage runnables inside the loop.
+                    runOnUiThread(runnable);
+
+                    try {
+                        Thread.sleep(33);/////데이터 넣는 속도-카메라 프레임과 동기화
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        thread.start();
+    }
+
+    public int findPeak(ArrayList<Integer> input)
+    {
+        ArrayList<Integer> data=input;///인풋을 받음
+        int peakX=0;
+        for(int i=1;i<data.size()-1;i++)//////////피크를 구하는 부분
+        {
+            if(data.get(i-1)<=data.get(i)&&data.get(i)>=data.get(i+1))
+            {
+                if(data.get(peakX)<=data.get(i))
+                {
+                    peakX = i;
+                    return peakX;
+                }
+            }
+        }
+
+        //System.out.println("Array : "+ signal);
+        //System.out.println("MAX : "+signal.get(peakXinArray));
+        return 0;
+    }
 }

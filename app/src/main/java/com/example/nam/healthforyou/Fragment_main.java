@@ -24,7 +24,7 @@ import java.net.URL;
 public class Fragment_main extends Fragment {
 
     public TextView tv;
-    String strurl = "http://www.dodambuchu.com/mainactivity.php";
+    String strurl = "http://kakapo12.vps.phps.kr/mainactivity.php";
     HttpURLConnection con;
 
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {

@@ -52,4 +52,5 @@ dependencies {
     compile 'junit:junit:4.12'
     compile 'com.facebook.android:facebook-android-sdk:[4,5)'
     provided 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
+    compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
 }
