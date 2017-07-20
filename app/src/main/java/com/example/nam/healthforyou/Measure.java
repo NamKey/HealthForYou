@@ -35,6 +35,8 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class Measure extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, OnChartValueSelectedListener {
@@ -71,28 +73,33 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
     ////그래프
     private LineChart mChart;//차트
     private Thread thread;//값 넣어주는 부분
-    int MaxX=0;
-    int MinX=0;
+
     private int peakX=0;//피크의 x축값
-    private int peakXinArray=0;//array안에서 peak값
+    private int valleyX=0;
+
     private int W_size=20;
     private ArrayList<Integer> peakPoint;
     private ArrayList<Integer> tempforPeak;//피크를 구하기위한 ArrayList
+    private ArrayList<Integer> tempforValley;//밸리를 구하기위한 ArrayList
+
     private ArrayList<Integer> localMinX;//피크를 구하기위한 ArrayList
-    private ArrayList<Integer> localMaxX;//피크를 구하기위한 ArrayList
 
-    private ArrayList<Integer> sumSlope;//피크를 구하기위한 ArrayList
-    private int slope=0;
-    private int resultSlope=0;
+    int localmin;
+    int peak=0;
+    int X=0;
 
-    private int X=0;//X축값
-    private int peakIndex;
-    private int minX;
-    private int localMin;
+    int max=0;
+
+    int count=0;//데이터를 세는데 필요
 
     private YAxis leftAxis;
     private ArrayList<Integer> heart_data; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
 
+    //ExponentialMovingAverage maf;
+    private ArrayList<Integer> heart_maf; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
+    double alpha;
+    Double oldValue;
+    double peakInterval;
     ////네이티브 메소드
     public native int redDetection(long matAddrInput, long matAddrResult);
     public native int moveDetection(long previous,long current);
@@ -250,10 +257,15 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
         rightAxis.setEnabled(false);
 
         heart_data = new ArrayList<>();
-        peakPoint = new ArrayList<>();
+
         tempforPeak = new ArrayList<>();
-        localMaxX = new ArrayList<>();
-        sumSlope = new ArrayList<>();
+        peakPoint = new ArrayList<>();
+
+        tempforValley = new ArrayList<>();
+        localMinX = new ArrayList<>();
+        ////ExponentialMovingAverage 알파값을 생성자에 넣어줘야됨
+        alpha = 0.03;
+        heart_maf = new ArrayList<>();
     }
 
     @Override
@@ -321,7 +333,7 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
         previous = current;/////비교후에 현재프레임을 이전 프레임에 넣어줌
         ////움직이지 않을때 - 손가락을 갖다댔을 때 값이 3 나옴(실험 결과)
         ////손가락을 갖다댔을 때와 평상시인데 움직임이 없는 경우를 구분해야됨
-        if(move_point<50)
+        if(move_point<100)
         {
             handler.sendEmptyMessage(no_moving);
         }else{////움직일때
@@ -385,7 +397,8 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
                 data.addDataSet(set);
             }
 
-            data.addEntry(new Entry(set.getEntryCount(),(float)Math.abs(filtered_Raw/100)), 0);///그래프에 데이터를 넣는 부분
+            //data.addEntry(new Entry(set.getEntryCount(),(float)Math.abs(filtered_Raw/100)), 0);///그래프에 데이터를 넣는 부분
+            data.addEntry(new Entry(set.getEntryCount(),(float)average(Math.abs(filtered_Raw/100))), 0);
 
             data.notifyDataChanged();
 
@@ -404,6 +417,16 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
         }
     }
 
+    public double average(double value) {
+        if (oldValue == null) {
+            oldValue = value;
+            return value;
+        }
+        double newValue = oldValue + alpha * (value - oldValue);
+        oldValue = newValue;
+        return newValue;
+    }
+
     private void feedMultiple() {
 
         if (thread != null)
@@ -413,63 +436,78 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
 
             @Override
             public void run() {
-                if(moving==2)
+                if(moving==2)//움직이지 않을때
                 {
                     filtered_Raw=filter(sum);//1~5Hz BandPass Filter
                     //System.out.println((int)Math.abs(filtered_Raw/1000));//**************심장박동 출력보기**************
+
                     heart_data.add((int)Math.abs(filtered_Raw/100)); ///peak 값을 찾기 위해 ArrayList에 넣어줌
-
-                    //데이터의 크기가 윈도우 크기 만큼 찼을 때까지 0일 수는 없으니
-                    //W_size로 나머지를 구해주면 배수일 때 옮겨주게 됨
-                    //데이터는 0~W_size,W_size~2*W_size 만큼 갖고오게됨
-                    //X는 들어오는 데이터임
-
-                    if(heart_data.size()%W_size==0)
+                    heart_maf.add((int)average(Math.abs(filtered_Raw/100)));
+                    //System.out.println((int)average(Math.abs(filtered_Raw/100)));
+                    ////초기에 데이터가 많이 튄다. 그러므로 50전까지는 데이터를 버린다.
+                    ////2초정도
+                    ////교정을 어떻게 할까? 고민해볼것
+                    if(heart_data.size()>50)
                     {
-                        for(int i=heart_data.size()-W_size;i<heart_data.size()-1;i++)
+                        //데이터의 크기가 윈도우 크기 만큼 찼을 때까지 0일 수는 없으니
+                        //W_size로 나머지를 구해주면 배수일 때 옮겨주게 됨
+                        //데이터는 0~W_size,W_size~2*W_size 만큼 갖고오게됨
+                        //X는 들어오는 데이터임
+
+                        if(heart_data.size()%W_size==0)/////지금 데이터의 갯수가 이전 윈도우가 정해졌을때보다 윈도우만큼 켜져있다면
+                        //W_size가 바뀌면서 갑자기 나눠질수도 있음-2017.07.20 예를들면 윈도우 사이즈가 50이다가 51로 바뀌었을때 heart_data.size가 51이면 데이터가 충분하지 않은데 바로 나눠짐
                         {
-                            tempforPeak.add(heart_data.get(i));/////i부터
+                            for(int i=heart_data.size()-W_size;i<heart_data.size()-1;i++)
+                            {
+                                tempforPeak.add(heart_data.get(i));/////i부터
+                            }
+
+                            max=Collections.max(tempforPeak);
+                            peak=tempforPeak.indexOf(max);///피크를 구하기 위해 필요함
+                            System.out.println("피크를 구하기 위한 array:"+tempforPeak);
+                            //System.out.println("최대값 : "+(peak+heart_data.size()-W_size));
+                            //System.out.println("여기부터 : "+(heart_data.size()-W_size)+"저기까지 : "+(heart_data.size()-1));
+                            //System.out.println("heart_data:"+heart_data);
+                            //System.out.println(heart_data);
+                            peakPoint.add(peak+heart_data.size()-W_size);//////array안에서 최고값이므로 평소 데이터에서 X값을 구해야됨
+
+                            System.out.println("피크들의 X값:"+peakPoint);////피크값들의 X값
                         }
-                        //System.out.println("여기부터 : "+(heart_data.size()-W_size)+"저기까지 : "+(heart_data.size()-1));
-                        //System.out.println("heart_data Size:"+heart_data.size()+" tempforPeak 저장데이터"+tempforPeak);
-                    }
-                    if(findPeak(tempforPeak)!=0)
-                    {
-                        peakPoint.add(findPeak(tempforPeak)+heart_data.size()-W_size);//////array안에서 최고값이므로 평소 데이터에서 X값을 구해야됨
-                        System.out.println(peakPoint);
-                    }
+                        tempforPeak.clear();////피크를 위해 저장했던 ArrayList 초기화
 
-                    //peakPoint.add();
-                    //System.out.println(peakPoint);
-                    tempforPeak.clear();
-
-                    //System.out.println("signal_size : "+peakPoint.size());
-
-                    /*if(heart_data.size()>2)
-                    {
-                        int sum_signal =0;
-                        int ave_signal;
-                        if(heart_data.get(X-2)<=heart_data.get(X-1)&&heart_data.get(X-1)>=heart_data.get(X))
+                        ////윈도우 크기를 정해주는 부분
+                        if(heart_maf.size()>2)////
                         {
-                            peakPoint.add(heart_data.get(X-1));//피크들의 평균으로 해볼예정
-                            for(int i=0;i<peakPoint.size()-1;i++)//
+                            if(heart_maf.get(X-2)>=heart_maf.get(X-1)&&heart_maf.get(X-1)<=heart_maf.get(X))////실시간으로 valley 값을 구해줌
                             {
-                                sum_signal+=peakPoint.get(i);
+                               valleyX = X-1;
+                               localMinX.add(valleyX);
                             }
-                            ave_signal = sum_signal/peakPoint.size();
+                            //tempforValley.clear();
+                            if(localMinX.size()>2)
+                            {
+                                W_size=localMinX.get(localMinX.size()-1)-localMinX.get(localMinX.size()-2);
+                                count=heart_data.size();//////윈도우 사이즈가 정해졌을때 데이터의 갯수
+                            }
 
-                            if(heart_data.get(X-1)>ave_signal)
+                            if(W_size<10||W_size>60)
                             {
-                                peakXinArray = X-1;
-                                localMaxX.add(peakXinArray);
-                                System.out.println(localMaxX);
+                                W_size = 20;
                             }
+
+                            System.out.println("윈도우 크기: "+W_size);
                         }
-                    }*/
 
-                    if(heart_data.size()>2)
-                    {
-
+                        if(peakPoint.size()>2)/////피크의 간격을 구하는 부분
+                        {
+                            peakInterval=0;//피크 간격 초기화
+                            for(int i=1;i<peakPoint.size();i++)
+                            {
+                                peakInterval+=peakPoint.get(i)-peakPoint.get(i-1);
+                            }
+                            peakInterval=peakInterval/(peakPoint.size()-1);
+                            System.out.println((float)peakInterval);
+                        }
                     }
 
                     X++;
@@ -482,7 +520,7 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
 
             @Override
             public void run() {
-                for (int i = 0; i < 1000; i++) {/////데이터를 1000개만 넣어줌
+                for (int i = 0; i < 15000; i++) {/////데이터를 15000개만 넣어줌
 
                     // Don't generate garbage runnables inside the loop.
                     runOnUiThread(runnable);
@@ -497,26 +535,5 @@ public class Measure extends AppCompatActivity implements CameraBridgeViewBase.C
             }
         });
         thread.start();
-    }
-
-    public int findPeak(ArrayList<Integer> input)
-    {
-        ArrayList<Integer> data=input;///인풋을 받음
-        int peakX=0;
-        for(int i=1;i<data.size()-1;i++)//////////피크를 구하는 부분
-        {
-            if(data.get(i-1)<=data.get(i)&&data.get(i)>=data.get(i+1))
-            {
-                if(data.get(peakX)<=data.get(i))
-                {
-                    peakX = i;
-                    return peakX;
-                }
-            }
-        }
-
-        //System.out.println("Array : "+ signal);
-        //System.out.println("MAX : "+signal.get(peakXinArray));
-        return 0;
     }
 }
