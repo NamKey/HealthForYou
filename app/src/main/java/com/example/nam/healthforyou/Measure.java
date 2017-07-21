@@ -3,7 +3,6 @@ package com.example.nam.healthforyou;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
@@ -31,13 +30,11 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 public class Measure extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, OnChartValueSelectedListener {
 

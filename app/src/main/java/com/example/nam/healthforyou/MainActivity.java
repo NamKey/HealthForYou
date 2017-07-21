@@ -106,11 +106,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btn_frag3_meas:
-                /*getSupportFragmentManager()
+                getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.frag_container_, new Fragment_meas())
-                        .commit();*/
-                startActivity(new Intent(this,Measure.class));
+                        .commit();
+                //startActivity(new Intent(this,Measure.class));
                 break;
 
             case R.id.btn_frag4_result:

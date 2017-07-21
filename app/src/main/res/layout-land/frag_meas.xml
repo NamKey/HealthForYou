@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:baselineAligned="false"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,73 +33,36 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="250sp"
+        android:layout_height="270sp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true">
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="235dp"
+            android:layout_height="270sp"
             android:layout_alignParentStart="true"
             android:layout_below="@+id/linearGraph">
-
-            <LinearLayout
-                android:id="@+id/btn_detectdone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/heart_rate"
-                android:layout_centerHorizontal="true"
-                android:orientation="horizontal"
-                android:visibility="gone">
-
-                <Button
-                    android:id="@+id/btn_result"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="결과 기록하기"
-                    android:visibility="visible" />
-
-                <Button
-                    android:id="@+id/btn_redetect"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="다시 측정하기"
-                    android:visibility="visible" />
-
-            </LinearLayout>
 
             <TextView
                 android:id="@+id/message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_centerHorizontal="true"
-                android:background="@drawable/tvrect"
-                android:padding="5sp"
                 android:text="측정을 준비중입니다"
                 android:textSize="14sp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/startmessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="손가락을 카메라에 댄 후 시작 버튼을 눌러주세요"
-                android:textSize="15sp"
-                android:layout_alignParentTop="true"
+                android:background="@drawable/tvrect"
+                android:padding="5sp"
+                android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true" />
 
             <TextView
                 android:id="@+id/textView8"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="34dp"
-                android:text="심박수"
-                android:textSize="15sp"
                 android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="33dp"
+                android:text="심박수"
+                android:textSize="15sp" />
 
             <TextView
                 android:id="@+id/heart_rate"
@@ -108,19 +70,17 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/iv_heart"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="2sp"
-                android:text="--"
-                android:textSize="20sp"
-                android:visibility="visible" />
+                android:layout_marginTop="11dp"
+                android:text="90/BPM"
+                android:textSize="20sp" />
 
             <ImageView
                 android:id="@+id/iv_heart"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/heart"
-                android:layout_marginTop="8dp"
                 android:layout_below="@+id/textView8"
-                android:layout_centerHorizontal="true" />
+                android:layout_centerHorizontal="true"
+                app:srcCompat="@drawable/heart" />
 
             <Button
                 android:id="@+id/start_measure"
@@ -134,12 +94,33 @@
                 android:id="@+id/progressDetecting"
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
-                android:layout_height="235sp"
+                android:layout_height="250sp"
                 android:layout_above="@+id/message"
                 android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
                 android:padding="50sp"
                 android:progressDrawable="@drawable/custom_progressbar_drawable" />
+
+            <Button
+                android:id="@+id/btn_result"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/start_measure"
+                android:layout_alignBottom="@+id/start_measure"
+                android:layout_alignEnd="@+id/textView8"
+                android:layout_marginEnd="16dp"
+                android:text="결과보러가기"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btn_redetect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/start_measure"
+                android:layout_alignBottom="@+id/start_measure"
+                android:layout_alignStart="@+id/textView8"
+                android:layout_marginStart="27dp"
+                android:text="다시 측정하기"
+                android:visibility="gone" />
 
         </RelativeLayout>
     </FrameLayout>
@@ -148,6 +129,9 @@
         android:id="@+id/linearLayout4"
         android:layout_width="match_parent"
         android:layout_height="150sp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="30dp"
         android:orientation="vertical">
 
         <LinearLayout
