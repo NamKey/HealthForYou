@@ -29,6 +29,6 @@ public class Splash extends Activity {
                 startActivity(new Intent(getApplicationContext(),Login.class));
                 finish();
             }
-        },2000);
+        },1000);
     }
 }

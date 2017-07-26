@@ -182,8 +182,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         signup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getApplicationContext(),Signup.class));
-                finish();
+                startActivity(new Intent(getApplicationContext(),Signup.class));//회원가입시에는 액티비티를 종료시키지 않음
             }
         });
 
@@ -302,13 +301,6 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             }
         }
     }
-
-    protected void redirectSignupActivity() {
-        final Intent intent = new Intent(this, Login.class);
-        startActivity(intent);
-        finish();
-    }
-
         private void initSetting() {
 
 
@@ -330,11 +322,6 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                 Session.getCurrentSession().checkAndImplicitOpen();
             }
         });
-    }
-
-    private void redirectMainActivity(){
-        startActivity(new Intent(getApplicationContext(),MainActivity.class));
-        finish();
     }
 
     private void redirectLoginActivity(){
@@ -433,6 +420,20 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             if(s.equals("true"))
             {
                 Toast.makeText(Login.this, "로그인 되었습니다.", Toast.LENGTH_SHORT).show();
+                //로그인이 성공하면 세션쿠키를 얻어옴
+                Map<String, List<String>> headerFields = con.getHeaderFields();
+                List<String> cookiesHeader = headerFields.get(COOKIES_HEADER);
+                System.out.println(cookiesHeader);
+                //*전역변수로 세션쿠키 저장시 로그인이 안되거나 풀려버림
+                if (cookiesHeader != null) {//쿠키매니저를 통해 쿠키를 보관한다.
+                    for (String cookie : cookiesHeader) {
+                        msCookieManager.getCookieStore().add(null,HttpCookie.parse(cookie).get(0));
+                    }
+                    //처음 로그인 시 session id를 받아옴
+                    session_id= String.valueOf(msCookieManager.getCookieStore().getCookies());
+                    session_editor.putString("session",session_id);
+                    session_editor.commit();
+                }
                 startActivity(new Intent(getApplicationContext(),MainActivity.class));
                 finish();
             }else{
@@ -462,21 +463,6 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                 os.close();
 
                 con.connect();
-
-                //로그인을 하고 세션쿠키를 얻어옴
-                Map<String, List<String>> headerFields = con.getHeaderFields();
-                List<String> cookiesHeader = headerFields.get(COOKIES_HEADER);
-                System.out.println(cookiesHeader);
-                //*전역변수로 세션쿠키 저장시 로그인이 안되거나 풀려버림
-               if (cookiesHeader != null) {//쿠키매니저를 통해 쿠키를 보관한다.
-                    for (String cookie : cookiesHeader) {
-                        msCookieManager.getCookieStore().add(null,HttpCookie.parse(cookie).get(0));
-                    }
-                    //처음 로그인 시 session id를 받아옴
-                    session_id= String.valueOf(msCookieManager.getCookieStore().getCookies());
-                    session_editor.putString("session",session_id);
-                    session_editor.commit();
-                }
 
                 BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(),"UTF-8"));
 

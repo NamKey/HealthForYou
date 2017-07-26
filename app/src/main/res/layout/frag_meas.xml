@@ -145,15 +145,16 @@
     </FrameLayout>
 
     <LinearLayout
-        android:id="@+id/linearLayout4"
-        android:layout_width="match_parent"
+        android:id="@+id/Othreinfo"
+        android:layout_width="300sp"
         android:layout_height="150sp"
+        android:layout_gravity="center_horizontal"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="40sp"
             android:layout_weight="1"
             android:gravity="center_vertical"
             android:orientation="horizontal">
@@ -174,18 +175,18 @@
                 android:text="    호흡수    " />
 
             <TextView
-                android:id="@+id/textView13"
+                android:id="@+id/tv_measriiv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="측정중입니다." />
+                android:text="--" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="40sp"
             android:layout_weight="1"
             android:gravity="center_vertical"
             android:orientation="horizontal">
@@ -206,19 +207,19 @@
                 android:text="수축기 혈압" />
 
             <TextView
-                android:id="@+id/textView14"
+                android:id="@+id/tv_meassystolic"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="측정중입니다" />
+                android:text="--" />
 
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="40sp"
             android:layout_weight="1"
             android:gravity="center_vertical"
             android:orientation="horizontal">
@@ -239,12 +240,12 @@
                 android:text="산소 포화도" />
 
             <TextView
-                android:id="@+id/textView16"
+                android:id="@+id/tv_measspo2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="측정중입니다" />
+                android:text="--" />
 
         </LinearLayout>
     </LinearLayout>

@@ -9,13 +9,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import static com.example.nam.healthforyou.Login.cookies;
@@ -86,7 +82,7 @@ public class RequestHttpConnection {
             if (msCookieManager.getCookieStore().getCookies().size() > 0) {
                 // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
                 urlConn.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
-                System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
+                //System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
             }
 
             // [2-2]. parameter 전달 및 데이터 읽어오기.

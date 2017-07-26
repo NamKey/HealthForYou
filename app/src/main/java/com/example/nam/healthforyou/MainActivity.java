@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.PersistableBundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -41,28 +43,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     private TextView tv_outPut;
     HttpURLConnection con;
-    SharedPreferences session;
-    SharedPreferences.Editor session_editor;
-    private String session_id;
+
+    UiTask uiTask;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-    //Fragment 첫페이지 불러옴
-    getSupportFragmentManager()
-            .beginTransaction()
-            .replace(R.id.frag_container_, new Fragment_main())
-            .commit();
+
     //메인 페이지를 불러옴
     setContentView(R.layout.activity_main);
+    //Fragment 2017.07.22 현재 측정 fragment의 layout과 복잡도로 인해 최초 전환시 깜빡임
+    //AsyncTask를 통해 미리 불러옴
+    uiTask = new UiTask();
+    uiTask.execute();
 
     findViewById(R.id.btn_frag1_main).setOnClickListener(this);
     findViewById(R.id.btn_frag2_chat).setOnClickListener(this);
     findViewById(R.id.btn_frag3_meas).setOnClickListener(this);
     findViewById(R.id.btn_frag4_result).setOnClickListener(this);
-
-    // Example of a call to a native metho
-
-    //tv.setText(stringFromJNI());
 
     // 위젯에 대한 참조.
 
@@ -110,7 +108,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .beginTransaction()
                         .replace(R.id.frag_container_, new Fragment_meas())
                         .commit();
-                //startActivity(new Intent(this,Measure.class));
                 break;
 
             case R.id.btn_frag4_result:
@@ -153,16 +150,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public native String stringFromJNI();
+    public class UiTask extends  AsyncTask<Void,Void,Void>{
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frag_container_, new Fragment_result())
+                    .commit();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frag_container_, new Fragment_chat())
+                    .commit();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frag_container_, new Fragment_meas())
+                    .commit();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frag_container_, new Fragment_main())
+                    .commit();
+        }
 
-    // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            return null;
+        }
     }
-
-
-
-
 }
 
 
