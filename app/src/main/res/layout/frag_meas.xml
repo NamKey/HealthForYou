@@ -7,12 +7,10 @@
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/linearGraph"
         android:layout_width="match_parent"
-        android:layout_height="100sp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:orientation="horizontal"
-        android:id="@+id/linearGraph">
+        android:layout_height="150sp"
+        android:orientation="horizontal">
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -35,14 +33,11 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="250sp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true">
+        >
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="235dp"
-            android:layout_alignParentStart="true"
-            android:layout_below="@+id/linearGraph">
+            android:layout_height="240sp">
 
             <LinearLayout
                 android:id="@+id/btn_detectdone"
@@ -50,6 +45,7 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/heart_rate"
                 android:layout_centerHorizontal="true"
+                android:layout_marginTop="10sp"
                 android:orientation="horizontal"
                 android:visibility="gone">
 
@@ -72,35 +68,14 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/message"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_centerHorizontal="true"
-                android:background="@drawable/tvrect"
-                android:padding="5sp"
-                android:text="측정을 준비중입니다"
-                android:textSize="14sp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/startmessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="손가락을 카메라에 댄 후 시작 버튼을 눌러주세요"
-                android:textSize="15sp"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
-
-            <TextView
                 android:id="@+id/textView8"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="34dp"
-                android:text="심박수"
-                android:textSize="15sp"
                 android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="43dp"
+                android:text="심박수"
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/heart_rate"
@@ -108,7 +83,7 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/iv_heart"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="2sp"
+                android:layout_marginTop="5sp"
                 android:text="--"
                 android:textSize="20sp"
                 android:visibility="visible" />
@@ -117,10 +92,10 @@
                 android:id="@+id/iv_heart"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/heart"
-                android:layout_marginTop="8dp"
                 android:layout_below="@+id/textView8"
-                android:layout_centerHorizontal="true" />
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="8dp"
+                app:srcCompat="@drawable/heart" />
 
             <Button
                 android:id="@+id/start_measure"
@@ -128,27 +103,43 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/heart_rate"
                 android:layout_centerHorizontal="true"
+                android:layout_marginTop="10sp"
                 android:text="측정시작" />
 
             <ProgressBar
                 android:id="@+id/progressDetecting"
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
-                android:layout_height="235sp"
-                android:layout_above="@+id/message"
+                android:layout_height="240sp"
+                android:layout_alignParentBottom="true"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
-                android:padding="50sp"
+                android:padding="20sp"
                 android:progressDrawable="@drawable/custom_progressbar_drawable" />
 
         </RelativeLayout>
     </FrameLayout>
 
-    <LinearLayout
-        android:id="@+id/Othreinfo"
+    <TextView
+        android:id="@+id/message"
         android:layout_width="300sp"
-        android:layout_height="150sp"
+        android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5sp"
+        android:background="@drawable/tvrect"
+        android:gravity="center"
+        android:padding="5sp"
+        android:text="시작 버튼을 누르면 측정이 시작됩니다"
+        android:textSize="17sp"
+        android:visibility="visible" />
+
+    <LinearLayout
+        android:id="@+id/otherinfo"
+        android:layout_width="300sp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10sp"
+        android:background="@drawable/layout_border"
         android:orientation="vertical">
 
         <LinearLayout
@@ -161,8 +152,8 @@
 
             <ImageView
                 android:id="@+id/imageView4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50sp"
+                android:layout_height="50sp"
                 android:gravity="center_horizontal"
                 app:srcCompat="@drawable/lungs" />
 
@@ -172,7 +163,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0.2"
                 android:gravity="center"
-                android:text="    호흡수    " />
+                android:text="호흡수"
+                android:textSize="17sp" />
 
             <TextView
                 android:id="@+id/tv_measriiv"
@@ -183,71 +175,6 @@
                 android:text="--" />
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40sp"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/imageView5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                app:srcCompat="@drawable/pulse" />
-
-            <TextView
-                android:id="@+id/textView15"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.2"
-                android:gravity="center"
-                android:text="수축기 혈압" />
-
-            <TextView
-                android:id="@+id/tv_meassystolic"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="--" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40sp"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/imageView6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                app:srcCompat="@drawable/oxygen" />
-
-            <TextView
-                android:id="@+id/textView17"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.2"
-                android:gravity="center"
-                android:text="산소 포화도" />
-
-            <TextView
-                android:id="@+id/tv_measspo2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="--" />
-
-        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

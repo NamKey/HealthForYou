@@ -26,6 +26,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import android.content.Context;
 import android.graphics.Color;
@@ -56,10 +57,10 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
-import java.util.Arrays;
+
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.Date;
+import java.util.Locale;
 
 import static com.example.nam.healthforyou.Login.msCookieManager;
 import static java.lang.Math.sqrt;
@@ -77,7 +78,9 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     }
 
     Context mContext;
-
+    //Sqlite DB
+    DBhelper dbManager;
+    JSONObject healthinfo;
     final static private int size=1024;
 
     private LinearLayout meas;
@@ -112,6 +115,8 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     private YAxis leftAxis;
     private ArrayList<Integer> heart_data; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
 
+
+    ArrayList<Double> Raw_data;//카메라에서 측정된값그대로 갖고 있음
     //ExponentialMovingAverage filter;
     private ArrayList<Integer> heart_maf; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
     double alpha;
@@ -136,7 +141,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     static final int detectDone=4;///검사를 완료 하였다는 메시지
     static final int update_heartrate=5;
     static final int detectStop=6;///손가락인지 판단하였을 때 아닐 경우 Stop 시키는 메세지
-    TextView startmessage;
+    static final int final_heartrate=7;
     boolean detectStart;
 
     //**프로그레스 바 값 부분
@@ -151,12 +156,13 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     //****메세지 텍스트뷰 부분
     TextView heart_rate;// 심박수 나타내주는 부분
     TextView follow_message;// 측정 관련 메세지를 보여주는 부분
-    TextView tv_measriiv;
-    TextView tv_measspo2;
-    TextView tv_meassystolic;
+    TextView tv_measriiv;// 호흡수 나타내주는 부분
+    boolean is_ready=false;//준비중임을 나타냄 - 핸들러와 관련
+
     //*****Thread
     setTextthread setTextthread; ///텍스트 바꿔주는 쓰레드 클래스
     setHeartratethread setHeartratethread; ///심장박동수 바꿔주는 쓰레드 클래스
+    setProgressthread setProgressthread;//프로그레스바를 갱신해주는 쓰레드
 
     ////필터 부분(1~3Hz)->BPM(60 ~ 180)
     double filtered_Raw;
@@ -217,6 +223,67 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
         return y;
     }
+    //호흡
+    /*double filtered_forriiv;
+    ArrayList<Double> arrayListforrriiv;
+    private final int Q = 32;
+    private int t = 0;
+    private double[] r = new double[Q];
+    //호흡 검출에 사용될 필터
+    private final double[] q =
+            {
+                    0.007231118698551530,
+                    0.009833167982715321,
+                    0.012771189255820232,
+                    0.016005623405019213,
+                    0.019482260109596652,
+                    0.023133396879078835,
+                    0.026879695967298195,
+                    0.030632679245409127,
+                    0.034297764431692565,
+                    0.037777713664402413,
+                    0.040976339301553894,
+                    0.043802293733094425,
+                    0.046172761135875311,
+                    0.048016870188379440,
+                    0.049278657894625252,
+                    0.049919435341245197,
+                    0.049919435341245197,
+                    0.049278657894625252,
+                    0.048016870188379440,
+                    0.046172761135875311,
+                    0.043802293733094425,
+                    0.040976339301553894,
+                    0.037777713664402413,
+                    0.034297764431692565,
+                    0.030632679245409127,
+                    0.026879695967298195,
+                    0.023133396879078835,
+                    0.019482260109596652,
+                    0.016005623405019213,
+                    0.012771189255820232,
+                    0.009833167982715321,
+                    0.007231118698551530,
+            };
+
+    public double filter_respiratory(double x_in)
+    {
+        double y = 0.0;
+
+        //Store the current input, overwriting the oldest input
+        r[n] = x_in;
+
+        // Multiply the filter coefficients by the previous inputs and sum
+        for (int i=0; i<Q; i++)
+        {
+            y+=q[i]*r[((Q-i)+t)%Q];
+        }
+
+        // Increment the input buffer index to the next location
+        t = (t+1)%Q;
+
+        return y;
+    }*/
 
     //FFT 클래스 객체 선언
     ArrayList<Double> meaning_data;//의미 있는 값
@@ -241,8 +308,16 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     double finger_max_magnitude = Double.MIN_VALUE;
     int finger_index = -1;
 
+    //호흡수를 판단하는 FFT
+    double[] fft_res_rate;
+    DoubleFFT_1D res_fft;
+    double re_res;
+    double im_res;
+    double[] res_magnitude = new double[256];
+    double res_max_magnitude = Double.MIN_VALUE;
+    int res_index =-1;
+
     //FFT
-    int phase;//phase1? phase2? phase3?
     boolean phase1=false;//FFT 128 point
     boolean phase2=false;//FFT 256 point
     boolean phase3=false;//FFT 512 point
@@ -251,6 +326,14 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     double phase1_freq=100;
     double phase2_freq=100;
     double phase3_freq=100;
+
+
+    //측정 완료 시간 기록
+    //날짜 지정해주는 부분
+    long now;
+    Date date;
+    SimpleDateFormat sdf;
+    String getTime;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(getActivity()) {
         @Override
@@ -269,8 +352,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     };
     //통신으로 보낼 데이터 부분
     int averes=0; //평균 호흡수
-    int avepre=0; //평균 수축기 혈압
-    int aveoxi=0; //평균 산소포화도
 
     //통신부분
     HttpURLConnection con;
@@ -283,8 +364,11 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         mOpenCvCameraView.setAlpha(0);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
-        mOpenCvCameraView.setMaxFrameSize(176, 144);
+        mOpenCvCameraView.setMaxFrameSize(200, 200);
         mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+
+        //SQlite DB 접근
+        dbManager = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB생성
 
         //////////////////////측정순서 제어
         //1) 측정 시작 초기 단계
@@ -299,11 +383,18 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 detectComplete.setProgress(0);//프로그레스바도 초기화
                 detectStart=true;/////시작하는 부분
                 X=0;//X값도 초기화 시켜줘야됨
+                //심박수 초기화
+                avebpm=0;
+                fft_heart=0;
+                final_heart=0;
                 ///쓰레드 부분
                 setTextthread = new setTextthread();
                 setTextthread.start();////text를 테스트 하는 부분
                 setHeartratethread = new setHeartratethread();
                 setHeartratethread.start();///BPM을 정해주는 부분
+                setProgressthread = new setProgressthread();
+                setProgressthread.start();
+
 
                 feedMultiple();//그래프에 데이터를 넣는 부분
             }
@@ -322,14 +413,18 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 mOpenCvCameraView.enableView();
                 mOpenCvCameraView.turnFlashOn();
                 handler.sendEmptyMessage(detectGo);
-
+                //심박수 초기화
+                avebpm=0;
+                fft_heart=0;
+                final_heart=0;
                 detectStart=true;/////시작하는 부분
-
                 ///쓰레드 부분
                 setTextthread = new setTextthread();
                 setTextthread.start();////text를 정해주는 부분
                 setHeartratethread = new setHeartratethread();
                 setHeartratethread.start();///BPM을 정해주는 부분
+                setProgressthread = new setProgressthread();
+                setProgressthread.start();
 
                 feedMultiple();//그래프에 데이터를 넣는 부분
             }
@@ -340,17 +435,50 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         btn_result.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                JSONObject healthinfo = new JSONObject();
-                try {
-                    healthinfo.put("bpm",avebpm);
-                    healthinfo.put("res",averes);
-                    healthinfo.put("pre",avepre);
-                    healthinfo.put("oxi",aveoxi);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                int conn=NetworkUtil.getConnectivityStatus(getActivity().getApplicationContext());
+
+                if (conn == NetworkUtil.TYPE_MOBILE || conn== NetworkUtil.TYPE_WIFI)//인터넷이 연결되었을때
+                {
+                    healthinfo = new JSONObject();//JSON Object를 생성해서
+                    infoSaveTask infosave = new infoSaveTask();///네트워크 부분 AsyncTask 로 기록 후 측정내역으로 넘어감
+                    try {
+                        healthinfo.put("bpm", final_heart);
+                        healthinfo.put("res", averes);
+                        healthinfo.put("is_synced",1);//서버와 Sync 된 데이터
+
+                        //날짜도 저장
+                        healthinfo.put("data_signdate",getTime);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    infosave.execute(healthinfo.toString()); //신체정보를 Json 형식 -> 서버
+                    dbManager.infoinsert(healthinfo); //신체정보를 Json 형식 -> SQlite
+
+                } else if(conn == NetworkUtil.TYPE_NOT_CONNECTED){//인터넷이 연결 안되었을 때 SQLite
+                    healthinfo = new JSONObject();
+                    try {
+                        healthinfo.put("bpm", final_heart);
+                        healthinfo.put("res", averes);
+
+                        //날짜도 저장
+
+                        healthinfo.put("data_signdate",getTime);
+                        healthinfo.put("is_synced",0);//서버와 Sync 되지 않은 데이터
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    //DB에 결과를 기록하고
+                    dbManager.infoinsert(healthinfo);//신체정보를 Json 형식 -> SQlite
+                    Toast.makeText(getActivity(), "결과를 기록하였습니다.", Toast.LENGTH_SHORT).show();
+                    getActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.frag_container_, new Fragment_result())
+                            .commit();
                 }
-                infoSaveTask infosave = new infoSaveTask();///네트워크 부분 AsyncTask 로 기록 후 측정내역으로 넘어감
-                infosave.execute(healthinfo.toString()); //신체정보를 Json 형식을 통해 보내줌
+
             }
         });
 
@@ -364,11 +492,9 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         //**측정이 시작되면 보여지는 텍스트뷰
         heart_rate = (TextView)meas.findViewById(R.id.heart_rate); // 심장박동수를 보여주는 텍스트 뷰
         follow_message = (TextView)meas.findViewById(R.id.message); // 동작하는 부분을 보여주는 텍스트 뷰 ex) 측정중입니다. 측정시 움직이지 마세요
-        startmessage = (TextView)meas.findViewById(R.id.startmessage);// 초기에 있는 메세지
 
         tv_measriiv = (TextView)meas.findViewById(R.id.tv_measriiv);
-        tv_measspo2 = (TextView)meas.findViewById(R.id.tv_measspo2);
-        tv_meassystolic = (TextView)meas.findViewById(R.id.tv_meassystolic);
+
 
         //그래프 setting
         mChart = (LineChart)meas.findViewById(R.id.heartGraph);
@@ -421,6 +547,9 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
 
         //사용될 어레이리스트 생성
+        Raw_data = new ArrayList<>();
+
+        //심작박동 측정에 사용될 데이터
         heart_data = new ArrayList<>();
         tempforPeak = new ArrayList<>();
         peakPoint = new ArrayList<>();
@@ -433,6 +562,8 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         //손가락 판단을 위한 ArrayList
         finger_date = new ArrayList<>();
 
+        //호흡 filter
+        //arrayListforrriiv = new ArrayList<>();
         return meas;
     }
 
@@ -479,7 +610,33 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
             }
         }
 
+        if(setProgressthread!=null)//null check
+        {
+            if(!setProgressthread.isInterrupted())//isInterrupted check
+            {
+                setProgressthread.interrupt();//심박수를 갱신하는 쓰레드
+            }
+        }
 
+        btn_start.setVisibility(View.VISIBLE);
+        follow_message.setText("측정 시작 버튼을 눌러주세요");//
+        heart_rate.setText("--");
+        ///그동안 사용했던 데이터 초기화
+        heart_data.clear(); // 심장에 대한 데이터 clear
+        heart_maf.clear(); // 심장에 valley를 구하기 위한 데이터 clear
+        peakPoint.clear(); // peakPoint 초기화
+        localMinX.clear(); // 윈도우를 정하기 위한 데이터 clear
+        arraybpm.clear(); // 박동에 대한 데이터 clear
+        W_size=20;//윈도우 사이즈 초기화
+
+        meaning_data.clear();//FFT를 수행하기 위한 데이터 clear
+        max_index=-1;//max_index초기화
+        max_magnitude=Double.MIN_VALUE;//max_value초기화
+
+        //FFT 측정 초기화
+        phase1=false;
+        phase2=false;
+        phase3=false;
     }
 
     @Override
@@ -566,6 +723,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
             data.addEntry(new Entry(set.getEntryCount(),(float)Math.abs(filtered_Raw/100)), 0);///그래프에 데이터를 넣는 부분
             //data.addEntry(new Entry(set.getEntryCount(),(float) average(Math.abs(filtered_Raw/100))), 0);///MOVING AVERAGE 거친 데이터 그래프
+            //data.addEntry(new Entry(set.getEntryCount(),(float)Math.abs(filtered_forriiv/100)), 0);///호흡신호 측정하기 위한 데이터를 넣는 부분
             data.notifyDataChanged();
 
             // let the chart know it's data has changed
@@ -610,7 +768,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     //System.out.println((int)Math.abs(filtered_Raw/1000));//**************심장박동 출력보기**************
                     heart_data.add((int)Math.abs(filtered_Raw/100)); ///peak 값을 찾기 위해 ArrayList에 넣어줌
                     heart_maf.add((int)average(Math.abs(filtered_Raw/100)));
-
+                    Raw_data.add((double)sum/100);
                     handler.sendEmptyMessage(setprogress);//진행상황 반영
 
                     ////초기에 데이터가 많이 튄다. 그러므로 50전까지는 데이터를 버린다.
@@ -619,7 +777,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     ///윈도우 크기 교정하는 부분
                     if(heart_data.size()<=128)
                     {
-                        handler.sendEmptyMessage(detectGo);
+                        handler.sendEmptyMessage(detectGo);//시작 핸들러
                         ////윈도우 크기를 정해주는 부분
                         if(heart_maf.size()>2)////
                         {
@@ -645,6 +803,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     if(heart_data.size()>128)////W_size를 구할 시간을 줘야됨
                     {
                         detectStart=true;/////시작하는 부분
+                        is_ready=true;///준비중 메세지를 그만띄움
                         //데이터의 크기가 윈도우 크기 만큼 찼을 때까지 0일 수는 없으니
                         //W_size로 나머지를 구해주면 배수일 때 옮겨주게 됨
                         //데이터는 0~W_size,W_size~2*W_size 만큼 갖고오게됨
@@ -773,7 +932,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                                 finger_max_magnitude=Double.MIN_VALUE;
                                 phase1=true;//더이상 검사를 수행하지 않도록
 
-                                if(phase1_freq<=0.83 || phase1_freq>=2.16)
+                                if(phase1_freq<=0.83 || phase1_freq>=3)
                                 {
                                     handler.sendEmptyMessage(detectStop);
                                 }
@@ -923,13 +1082,12 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
             @Override
             public void run() {
                 try {//try-catch를 통해 쓰레드 인터럽트
-                        while(heart_data.size()<size)///데이터가 1000개가 쌓일때까지 - 기준 생각해보기
+                        while(heart_data.size()<size)///데이터가 3000개가 쌓일때까지 - 기준 생각해보기
                         {
                         // Don't generate garbage runnables inside the loop.
                             getActivity().runOnUiThread(runnable);
                             Thread.sleep(33);/////데이터 넣는 속도-카메라 프레임과 동기화
                         }   //30FPS이므로 30Hz 1초에 30개의 데이터-이 값들을 다 넣어주는게 아니라 33ms 단위로 넣어줌-그래프에
-                        System.out.println(heart_data.size());
                         handler.sendEmptyMessage(detectDone);
                     }
                     catch (InterruptedException e) {
@@ -976,7 +1134,27 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     if(detectStart)
                     {
                         handler.sendEmptyMessage(update_heartrate);//심장박동수를 갱신해주는 메시지
-                        sleep(500);///3초에 한번씩 체크
+                        sleep(500);///0.5초에 한번씩 체크
+                    }
+                }
+            }catch (InterruptedException e) {
+                e.printStackTrace();
+                handler.sendEmptyMessage(final_heartrate);///마지막 심장박동수를 띄어줌
+            }
+        }
+    }
+
+    public class setProgressthread extends Thread//프로그레스바를 갱신해주는 쓰레드
+    {
+        @Override
+        public void run() {
+            try {
+                while(true)
+                {
+                    if(detectStart)
+                    {
+                        handler.sendEmptyMessage(setprogress);//프로그레스바 갱신
+                        sleep(100);///0.1초에 한번씩 체크
                     }
                 }
             }catch (InterruptedException e) {
@@ -1070,31 +1248,34 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     btn_start.setVisibility(View.GONE);///시작 버튼을 누르면 사라짐
                     btn_detectdone.setVisibility(View.GONE);
                     heart_rate.setVisibility(View.VISIBLE);
-                    startmessage.setVisibility(View.GONE);
                     follow_message.setVisibility(View.VISIBLE);
-                    follow_message.setText("측정을 준비중입니다");
                     //FFT 측정 초기화
                     phase1=false;
                     phase2=false;
                     phase3=false;
+                    phase1_freq=100;
+                    phase2_freq=100;
+                    phase3_freq=100;
                     break;
                 }
 
                 case is_moving: {
-                    follow_message.setText("측정중에는 움직이지 말아주세요");
-                    moving = is_moving;
+                        follow_message.setText("측정중에는 움직이지 말아주세요");
+                        moving = is_moving;
                     break;
                 }
 
                 case no_moving: {
 
                     moving = no_moving;
-                    if(detectComplete.getProgress()<=60)
+                    if(detectComplete.getProgress()<=10)
+                    {
+                        follow_message.setText("측정을 준비중입니다");
+                    }
+                    else if(detectComplete.getProgress()<=60)
                     {
                         follow_message.setText("측정중입니다");
                         tv_measriiv.setText("측정중입니다");
-                        tv_meassystolic.setText("측정중입니다");
-                        tv_measspo2.setText("측정중입니다");
                     }
                     if(detectComplete.getProgress()>60)//50%가 넘어가면
                     {
@@ -1104,7 +1285,9 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 }
 
                 case setprogress: {
+                    detectComplete.setMax(100);
                     detectComplete.setProgress((heart_data.size() /10));
+                    detectComplete.invalidate();
                     break;
                 }
 
@@ -1141,7 +1324,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     {
                         meaning_data.set(i,meaning_data.get(i)-average);
                     }
-                    System.out.println(meaning_data);
+                    //System.out.println(meaning_data);
                     for(int i=0;i<512;i++)//FFT를 수행하기 위하여 배열에 복사
                     {
                         fft_heart_rate[2*i]=meaning_data.get(i);////
@@ -1175,6 +1358,29 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     fft_heart = (int)(freq*60);
                     System.out.println("fft_heart"+fft_heart);
                     final_heart=(fft_heart+avebpm)/2;///Peak detection을 통해 구한 값과 FFT를 통해 구한값의 평균을 통해 최종 심박수 구함
+                    System.out.println("final_heart "+final_heart);
+                    //호흡 FFT
+
+                    //**************전처리 필터
+                    //LPF-cut-off(0.5)
+                    /*Butterworth butterworth_low = new Butterworth();
+                    butterworth_low.lowPass(9,30,0.3);
+
+                    //HPF-cut-off(0.1)
+                    Butterworth butterworth_high = new Butterworth();
+                    butterworth_high.highPass(9,30,0.1);
+
+                    //Band pass filter(0.1~0.3)
+                    //Butterworth butterworth_band = new Butterworth();
+                    //butterworth_band.bandPass(9,30,0.2,0.2);
+
+                    for(int i=peakPoint.get(0);i<peakPoint.get(peakPoint.size()-1);i++)
+                    {
+                        double temp=butterworth_low.filter(Raw_data.get(i));//Lowpass
+                        filtered_forriiv=butterworth_high.filter(temp);//Highpass
+                        //filtered_forriiv=butterworth_band.filter(temp);
+                        arrayListforrriiv.add(filtered_forriiv);
+                    }*/
 
                     ///그동안 사용했던 데이터 초기화
                     heart_data.clear(); // 심장에 대한 데이터 clear
@@ -1182,9 +1388,11 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     peakPoint.clear(); // peakPoint 초기화
                     localMinX.clear(); // 윈도우를 정하기 위한 데이터 clear
                     arraybpm.clear(); // 박동에 대한 데이터 clear
+                    meaning_data.clear();//FFT를 수행하기 위한 데이터 clear
+                    //arrayListforrriiv.clear();//호흡에 사용된 Array초기화
+                    Raw_data.clear();//raw data clear
                     W_size=20;//윈도우 사이즈 초기화
 
-                    meaning_data.clear();//FFT를 수행하기 위한 데이터 clear
                     max_index=-1;//max_index초기화
                     max_magnitude=Double.MIN_VALUE;//max_value초기화
 
@@ -1197,7 +1405,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     phase3=false;
 
                     //쓰레드 제어부분
-
                     if(setTextthread!=null)//null check
                     {
                         if(!setTextthread.isInterrupted())//isInterrupted check
@@ -1212,6 +1419,15 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                             thread.interrupt();///데이터를 처리하는 쓰레드
                         }
                     }
+
+                    if(setProgressthread!=null)//null check
+                    {
+                        if(!setProgressthread.isInterrupted())//isInterrupted check
+                        {
+                            setProgressthread.interrupt();///데이터를 처리하는 쓰레드
+                        }
+                    }
+                    ///**심박수를 갱신하는 쓰레드를 가장 늦게 종료 - 이유 마지막 보정 심박수값을 출력시켜줘야됨
                     if(setHeartratethread!=null)//null check
                     {
                         if(!setHeartratethread.isInterrupted())//isInterrupted check
@@ -1219,16 +1435,19 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                             setHeartratethread.interrupt();//심박수를 갱신하는 쓰레드
                         }
                     }
-                    heart_rate.setText(final_heart+" BPM");//모든 검사가 끝나고 최종값을 넣어줌
+
+
+
                     break;
                 }
 
                 case update_heartrate:
                 {
-                    if(avebpm!=0)
+                    if(avebpm!=0)///Peak detection으로 찾은 심박수가 0이 아닐때
                     {
                         heart_rate.setText(avebpm+" BPM");
-                    }else{
+                    }
+                    else{
                         heart_rate.setText("--");
                     }
                     break;
@@ -1263,7 +1482,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
                     btn_start.setVisibility(View.VISIBLE);
                     follow_message.setText("손가락을 정확한 위치에 놓고 다시 측정해주세요");//
-                    heart_rate.setText("--");
+                    heart_rate.setText("--X");
                     ///그동안 사용했던 데이터 초기화
                     heart_data.clear(); // 심장에 대한 데이터 clear
                     heart_maf.clear(); // 심장에 valley를 구하기 위한 데이터 clear
@@ -1280,10 +1499,21 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     phase1=false;
                     phase2=false;
                     phase3=false;
+
                     mOpenCvCameraView.turnFlashOff();//플래시를 꺼줌
                     mOpenCvCameraView.disableView();//카메라를 꺼줌
 
                     break;
+                }
+
+                case final_heartrate:
+                {
+                    heart_rate.setText(final_heart+" BPM");
+                    //날짜 지정해주는 부분
+                    now = System.currentTimeMillis();
+                    date = new Date(now);
+                    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                    getTime = sdf.format(date);
                 }
             }
         }

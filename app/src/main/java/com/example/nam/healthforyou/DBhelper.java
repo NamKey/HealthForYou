@@ -26,7 +26,7 @@ public class DBhelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,user_pre INTEGER,user_oxi INTEGER,data_signdate TEXT);");
+        db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER);");
         Toast.makeText(mContext,"Table 생성완료", Toast.LENGTH_SHORT).show();
     }
 
@@ -54,9 +54,8 @@ public class DBhelper extends SQLiteOpenHelper {
         try {
             values.put("user_bpm",healthInfo.getInt("bpm"));
             values.put("user_res",healthInfo.getInt("res"));
-            values.put("user_pre",healthInfo.getInt("pre"));
-            values.put("user_oxi",healthInfo.getInt("oxi"));
             values.put("data_signdate",healthInfo.getString("data_signdate"));
+            values.put("is_synced",healthInfo.getInt("is_synced"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -91,12 +90,9 @@ public class DBhelper extends SQLiteOpenHelper {
                         +":"
                         + cursor.getInt(2)
                         +":"
-                        + cursor.getInt(3)
+                        + cursor.getString(3)
                         +":"
                         + cursor.getInt(4)
-                        +":"
-                        + cursor.getString(5)
-
                         + "\n";
             }
         }else{
@@ -116,9 +112,8 @@ public class DBhelper extends SQLiteOpenHelper {
                 try {
                     healthInfo.put("user_bpm",(cursor.getInt(1)));
                     healthInfo.put("user_res",(cursor.getInt(2)));
-                    healthInfo.put("user_pre",(cursor.getInt(3)));
-                    healthInfo.put("user_oxi",(cursor.getInt(4)));
-                    healthInfo.put("data_signdate",cursor.getString(5));
+                    healthInfo.put("data_signdate",cursor.getString(3));
+                    healthInfo.put("is_synced",cursor.getInt(4));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -132,7 +127,7 @@ public class DBhelper extends SQLiteOpenHelper {
     public List<JSONObject> getAllinfo() {
         List<JSONObject> healthInfos = new ArrayList<>();
         // Select All Query
-        String selectQuery = "SELECT  * FROM " + "User_health ORDER BY data_signdate desc";
+        String selectQuery = "SELECT  * FROM " + "User_health WHERE is_synced=0 ORDER BY data_signdate desc";
 
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -144,9 +139,8 @@ public class DBhelper extends SQLiteOpenHelper {
                 try {
                     healthInfo.put("user_bpm",(cursor.getInt(1)));
                     healthInfo.put("user_res",(cursor.getInt(2)));
-                    healthInfo.put("user_pre",(cursor.getInt(3)));
-                    healthInfo.put("user_oxi",(cursor.getInt(4)));
-                    healthInfo.put("data_signdate",cursor.getString(5));
+                    healthInfo.put("data_signdate",cursor.getString(3));
+                    healthInfo.put("is_synced",cursor.getInt(4));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -156,7 +150,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
 
-        // return contact list
+        // 모든 healdata를 갖고옴
         return healthInfos;
     }
 }
