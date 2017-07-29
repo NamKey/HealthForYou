@@ -16,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -48,6 +49,8 @@ public class Fragment_main extends Fragment {
     TextView heart_rate;
     TextView RIIV;
     TextView date;
+    TextView graphmessage;
+    ImageView graph;
     //Fragment 이동시 저장시켜주는 부분
     final static int update_main=1;
     DBhelper dbManager;
@@ -66,6 +69,8 @@ public class Fragment_main extends Fragment {
                     heart_rate.setText(bpm+" BPM");
                     RIIV.setText(res+" 회/분");
                     date.setText(time);
+                    graphmessage.setText("맥박 그래프");
+                    graph.setImageResource(R.drawable.image);
                     break;
                 }
             }
@@ -78,6 +83,8 @@ public class Fragment_main extends Fragment {
         heart_rate =(TextView)main.findViewById(R.id.tv_heartrate);
         RIIV = (TextView)main.findViewById(R.id.tv_riiv);
         date = (TextView)main.findViewById(R.id.tv_date);
+        graph = (ImageView)main.findViewById(R.id.graphImage);
+        graphmessage = (TextView)main.findViewById(R.id.graphmessage);
         ////DB를 불러옴
         dbManager = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB생성
         String init=dbManager.PrintData("SELECT * FROM User_health;");//유저의 건강정보 모두 받아오기

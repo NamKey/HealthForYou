@@ -143,7 +143,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     static final int detectStop=6;///손가락인지 판단하였을 때 아닐 경우 Stop 시키는 메세지
     static final int final_heartrate=7;
     boolean detectStart;
-
+    boolean is_Stop;//////손가락이 아니여서 종료된건지 판단
     //**프로그레스 바 값 부분
     ProgressBar detectComplete;
 
@@ -387,6 +387,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 avebpm=0;
                 fft_heart=0;
                 final_heart=0;
+                is_Stop=false;//정지하는 거 초기화
                 ///쓰레드 부분
                 setTextthread = new setTextthread();
                 setTextthread.start();////text를 테스트 하는 부분
@@ -394,7 +395,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 setHeartratethread.start();///BPM을 정해주는 부분
                 setProgressthread = new setProgressthread();
                 setProgressthread.start();
-
 
                 feedMultiple();//그래프에 데이터를 넣는 부분
             }
@@ -418,6 +418,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 fft_heart=0;
                 final_heart=0;
                 detectStart=true;/////시작하는 부분
+                is_Stop=false;/////정지하는 거 초기화
                 ///쓰레드 부분
                 setTextthread = new setTextthread();
                 setTextthread.start();////text를 정해주는 부분
@@ -1092,6 +1093,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     }
                     catch (InterruptedException e) {
                         // TODO Auto-generated catch block
+                        handler.sendEmptyMessage(final_heartrate);///마지막 심장박동수를 띄어줌
                         e.printStackTrace();
                     }
 
@@ -1120,6 +1122,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 }
             }catch (InterruptedException e) {
                 e.printStackTrace();
+                handler.sendEmptyMessage(final_heartrate);///마지막 심장박동수를 띄어줌
             }
         }
     }
@@ -1140,6 +1143,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
             }catch (InterruptedException e) {
                 e.printStackTrace();
                 handler.sendEmptyMessage(final_heartrate);///마지막 심장박동수를 띄어줌
+
             }
         }
     }
@@ -1159,6 +1163,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 }
             }catch (InterruptedException e) {
                 e.printStackTrace();
+                handler.sendEmptyMessage(final_heartrate);///마지막 심장박동수를 띄어줌
             }
         }
     }
@@ -1456,7 +1461,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 case detectStop:
                 {
                     //쓰레드 제어부분
-
+                    is_Stop=true;
                     if(setTextthread!=null)//null check
                     {
                         if(!setTextthread.isInterrupted())//isInterrupted check
@@ -1479,7 +1484,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                         }
                     }
                     ////--Stop이 불릴 경우 쓰레드부터 종류시켜줌 - 쓰레드가 돌면서 값을 계속 추가해서 OutofIndex 발생
-
                     btn_start.setVisibility(View.VISIBLE);
                     follow_message.setText("손가락을 정확한 위치에 놓고 다시 측정해주세요");//
                     heart_rate.setText("--X");
@@ -1508,12 +1512,25 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
                 case final_heartrate:
                 {
-                    heart_rate.setText(final_heart+" BPM");
-                    //날짜 지정해주는 부분
-                    now = System.currentTimeMillis();
-                    date = new Date(now);
-                    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-                    getTime = sdf.format(date);
+                    if(!is_Stop)
+                    {
+                        detectStart=false;
+                        heart_rate.setText(final_heart+" BPM");
+                        tv_measriiv.setText(averes+" 회/분");
+                        //날짜 지정해주는 부분
+                        now = System.currentTimeMillis();
+                        date = new Date(now);
+                        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                        getTime = sdf.format(date);
+
+                    }else{
+                        detectStart=false;
+                        btn_start.setVisibility(View.VISIBLE);
+                        follow_message.setText("손가락을 정확한 위치에 놓고 다시 측정해주세요");//
+                        heart_rate.setText("--X");
+                        tv_measriiv.setText("--X");
+                    }
+
                 }
             }
         }

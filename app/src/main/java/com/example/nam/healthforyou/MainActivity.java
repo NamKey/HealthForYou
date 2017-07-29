@@ -34,6 +34,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.BaseLoaderCallback;
@@ -47,6 +50,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     HttpURLConnection con;
 
     UiTask uiTask;
+    ////날짜에 따른 요일 알려주는 메쏘드
+    static public int getDateDay(String date, String dateType) throws Exception {
+
+        String day = "" ;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(dateType) ;
+        Date nDate = dateFormat.parse(date) ;
+
+        Calendar cal = Calendar.getInstance() ;
+        cal.setTime(nDate);
+
+        int dayNum = cal.get(Calendar.DAY_OF_WEEK) ;
+
+
+
+        /*switch(dayNum){
+            case 1:
+                day = "일";
+                break ;
+            case 2:
+                day = "월";
+                break ;
+            case 3:
+                day = "화";
+                break ;
+            case 4:
+                day = "수";
+                break ;
+            case 5:
+                day = "목";
+                break ;
+            case 6:
+                day = "금";
+                break ;
+            case 7:
+                day = "토";
+                break ;
+
+        }*/
+
+        return dayNum ;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

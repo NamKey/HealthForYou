@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="170sp"
+    android:layout_height="180sp"
     android:background="@drawable/layout_border_result"
     android:orientation="vertical">
 
@@ -15,10 +15,18 @@
         android:text="오늘"
         android:textSize="30sp" />
 
+    <TextView
+        android:id="@+id/nodatamessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="측정된 데이터가 없습니다"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15sp"
+        android:layout_marginTop="20sp"
         android:orientation="horizontal"
         android:paddingEnd="5sp"
         android:paddingStart="5sp">
@@ -34,7 +42,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="심박수"
+                android:text="평균 심박수"
                 android:textSize="17sp" />
 
             <ImageView
@@ -47,14 +55,14 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/textView19"
+            android:id="@+id/today_avebpm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="0.5"
             android:gravity="center"
             android:text="90 BPM"
-            android:textSize="25sp" />
+            android:textSize="21sp" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -68,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="호흡수"
+                android:text="평균 호흡수"
                 android:textSize="17sp" />
 
             <ImageView
@@ -81,14 +89,14 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/textView20"
+            android:id="@+id/today_averes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="0.5"
             android:gravity="center"
             android:text="15회 /min"
-            android:textSize="25sp" />
+            android:textSize="21sp" />
     </LinearLayout>
 
 </LinearLayout>

@@ -102,6 +102,47 @@ public class DBhelper extends SQLiteOpenHelper {
         return str;
     }
 
+    public List<JSONObject> PrintAvgData(String _query) {
+        SQLiteDatabase db = getReadableDatabase();
+        List<JSONObject> healthInfos = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(_query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                JSONObject healthInfo =new JSONObject();
+                try {
+                    healthInfo.put("data_signdate",cursor.getString(0));
+                    healthInfo.put("user_bpm",(cursor.getInt(1)));
+                    healthInfo.put("user_res",(cursor.getInt(2)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                healthInfos.add(healthInfo);
+            } while (cursor.moveToNext());
+        }
+        return healthInfos;
+    }
+
+    public JSONObject PrintMyAvgData(String _query) {/////나의 심박수 평균과
+        SQLiteDatabase db = getReadableDatabase();
+        JSONObject healthInfo =new JSONObject();
+        Cursor cursor = db.rawQuery(_query, null);
+        if (cursor.moveToFirst()) {
+            do {
+
+                try {
+                    healthInfo.put("user_bpm",(cursor.getInt(0)));
+                    healthInfo.put("user_res",(cursor.getInt(1)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            } while (cursor.moveToNext());
+        }
+        return healthInfo;
+    }
+
     public JSONObject PrintHealthData(String _query) {
         SQLiteDatabase db = getReadableDatabase();
         JSONObject healthInfo =new JSONObject();
