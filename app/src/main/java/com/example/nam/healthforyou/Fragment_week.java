@@ -115,53 +115,64 @@ public class Fragment_week extends Fragment {
 
         String dataDay = null;
         int dataDate=0;
+        //Y축값
         //요일에 맞는 값을 찾는 반복문
-        for(int i=0;i<mydata.size();i++)
+        if(mydata.size()!=0)//일주일간의 데이터가 있으면
         {
-            try {//데이터의 요일을 조사
-                dataDate=getDateDay(mydata.get(i).getString("data_signdate"),"yyyyMMdd");
-                switch(dataDate)
-                {
-                    case 1:
-                        dataDay = "일";
-                        break ;
-                    case 2:
-                        dataDay = "월";
-                        break ;
-                    case 3:
-                        dataDay = "화";
-                        break ;
-                    case 4:
-                        dataDay = "수";
-                        break ;
-                    case 5:
-                        dataDay = "목";
-                        break ;
-                    case 6:
-                        dataDay = "금";
-                        break ;
-                    case 7:
-                        dataDay = "토";
-                        break ;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            //x축에서 요일 비교 비교 - 지속적인 테스트 요망
-            for(int j=0;j<labels.length;j++)
+            for(int i=0;i<mydata.size();i++)
             {
-                if(labels[j].equals(dataDay))/////지금 꺼낸 JSON object의 date를 X축과 비교하여 같다면
-                {
-                    try {
-                        barEntries.add(new BarEntry(j,mydata.get(i).getInt("user_bpm")));//그 X축에 값을 넣어줌
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                try {//데이터의 요일을 조사
+                    dataDate=getDateDay(mydata.get(i).getString("data_signdate"),"yyyyMMdd");
+                    switch(dataDate)
+                    {
+                        case 1:
+                            dataDay = "일";
+                            break ;
+                        case 2:
+                            dataDay = "월";
+                            break ;
+                        case 3:
+                            dataDay = "화";
+                            break ;
+                        case 4:
+                            dataDay = "수";
+                            break ;
+                        case 5:
+                            dataDay = "목";
+                            break ;
+                        case 6:
+                            dataDay = "금";
+                            break ;
+                        case 7:
+                            dataDay = "토";
+                            break ;
                     }
-                }else{///같지않다면 0값을 넣어줌 - 가능한 이유 DB에서 긁어올 때 오늘을 기준으로 최신순으로 긁어오기 때문에 가능할 거 같음
-                     barEntries.add(new BarEntry(j,0));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //x축에서 요일 비교 비교 - 지속적인 테스트 요망
+                for(int j=0;j<labels.length;j++)
+                {
+                    if(labels[j].equals(dataDay))/////지금 꺼낸 JSON object의 date를 X축과 비교하여 같다면
+                    {
+                        try {
+                            barEntries.add(new BarEntry(j,mydata.get(i).getInt("user_bpm")));//그 X축에 값을 넣어줌
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }else{///같지않다면 0값을 넣어줌 - 가능한 이유 DB에서 긁어올 때 오늘을 기준으로 최신순으로 긁어오기 때문에 가능할 거 같음
+                        barEntries.add(new BarEntry(j,0));
+                    }
                 }
             }
+        }else{//일주일간의 데이터가 없으면
+            for(int i=0;i<7;i++)
+            {
+                barEntries.add(new BarEntry(i,0));
+            }
+
         }
+
 
         BarDataSet dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
         dataset.setValueTextSize(15);

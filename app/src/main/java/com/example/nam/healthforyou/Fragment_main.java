@@ -53,6 +53,7 @@ public class Fragment_main extends Fragment {
     ImageView graph;
     //Fragment 이동시 저장시켜주는 부분
     final static int update_main=1;
+    final static int no_data=2;
     DBhelper dbManager;
 
     Handler main_handler = new Handler()
@@ -72,6 +73,14 @@ public class Fragment_main extends Fragment {
                     graphmessage.setText("맥박 그래프");
                     graph.setImageResource(R.drawable.image);
                     break;
+                }
+
+                case no_data:
+                {
+                    heart_rate.setText("--");
+                    RIIV.setText("--");
+                    graph.setImageResource(R.drawable.sad);
+                    graphmessage.setText("측정한 데이터가 없습니다.");
                 }
             }
         }
@@ -162,35 +171,44 @@ public class Fragment_main extends Fragment {
             super.onPostExecute(s);
             //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
             System.out.println("response"+s);
-            try {
-                JSONArray jsonArray = new JSONArray(s);
-                System.out.println("jsonArray"+jsonArray);
-                for(int i=0;i<jsonArray.length();i++)
-                {
-                    health_data=new JSONObject(jsonArray.getString(i));
-                    health_data.put("is_synced",1);
-                    //DB에 자료를 넣어줌 - LocalDB(SQlite)
-                    dbManager.infoinsert(health_data);
-                    System.out.println(health_data);
-                }
 
-                //데이터를 SQlite에서 갖고와서 뿌려줌 - 인터넷이 연결 안됐을 때 도 생각?
-                JSONObject local_healthdata=dbManager.PrintHealthData("SELECT * FROM User_health ORDER BY data_signdate desc limit 1;");
-                System.out.println(local_healthdata);
                 try {
-                    bpm=local_healthdata.getInt("user_bpm");
-                    res=local_healthdata.getInt("user_res");
-                    time=local_healthdata.getString("data_signdate");
+                    JSONArray jsonArray = new JSONArray(s);
+                    if(jsonArray.length()!=0)///JSON array갯수로 데이터가 있는지 판단 데이터가 있으면
+                    {
+                        System.out.println("jsonArray"+jsonArray);
+                        for(int i=0;i<jsonArray.length();i++)
+                        {
+                            health_data=new JSONObject(jsonArray.getString(i));
+                            health_data.put("is_synced",1);
+                            //DB에 자료를 넣어줌 - LocalDB(SQlite)
+                            dbManager.infoinsert(health_data);
+                            System.out.println(health_data);
+                        }
+
+                        //데이터를 SQlite에서 갖고와서 뿌려줌 - 인터넷이 연결 안됐을 때 도 생각?
+                        JSONObject local_healthdata=dbManager.PrintHealthData("SELECT * FROM User_health ORDER BY data_signdate desc limit 1;");
+                        System.out.println(local_healthdata);
+                        try {
+                            bpm=local_healthdata.getInt("user_bpm");
+                            res=local_healthdata.getInt("user_res");
+                            time=local_healthdata.getString("data_signdate");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        //텍스트를 핸들러를 통해 띄어줌
+                        main_handler.sendEmptyMessage(update_main);
+                    }else{////데이터가 없으면
+                        main_handler.sendEmptyMessage(no_data);
+                    }
+
+
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                //텍스트를 핸들러를 통해 띄어줌
-                main_handler.sendEmptyMessage(update_main);
 
 
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
         }
     }
 }

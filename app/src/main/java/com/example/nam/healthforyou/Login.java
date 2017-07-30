@@ -142,7 +142,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             if (cookiesHeader != null) {//쿠키매니저를 통해 쿠키를 보관한다.
                 for (String cookie : cookiesHeader) {
                     msCookieManager.getCookieStore().add(null,HttpCookie.parse(cookie).get(0));
-                    System.out.println(HttpCookie.parse(cookie).get(0)+"Shared Login");
+                    //System.out.println(HttpCookie.parse(cookie).get(0)+"Shared Login");
                 }
             }
 
@@ -358,7 +358,6 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     };
 
     // 네이버 API 예제 - 회원프로필 조회
-
     private class RequestApiTask extends AsyncTask<String, String, String> {
         StringBuffer response;
         @Override
@@ -385,6 +384,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                 }
                 String inputLine;
                 response = new StringBuffer();
+                //System.out.println(response);
                 while ((inputLine = br.readLine()) != null) {
                     response.append(inputLine);
                 }
@@ -402,6 +402,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                 JSONObject response = new JSONObject(content);
                 JSONObject naver_mem=response.getJSONObject("response");
                 naver_mem.put("type","naver");
+                System.out.println(naver_mem);
                 LoginTask loginTask = new LoginTask();
                 loginTask.execute(naver_mem.toString());
             } catch (JSONException e) {

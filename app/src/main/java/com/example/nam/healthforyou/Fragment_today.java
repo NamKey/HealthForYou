@@ -43,24 +43,32 @@ public class Fragment_today extends Fragment {
         System.out.println(todaydata+"today");
 
         try {
-            if(todaydata.get(0).getString("data_signdate").equals(mTime))//현재시간과 최근 데이터의 날짜와 오늘날짜가 같다면 오늘 측정한 데이터임
+            if(todaydata.size()!=0)///최근순으로 데이터를 뽑았을 때 데이터가 있으면
             {
-                int average_today_bpm;
-                int average_today_res;
-                try {
-                    average_today_bpm=todaydata.get(0).getInt("user_bpm");
-                    average_today_res=todaydata.get(0).getInt("user_res");
-                    tv_avebpm.setText(average_today_bpm+" BPM");
-                    tv_averes.setText(average_today_res+" 회/분");
-                    tv_nodatamessage.setVisibility(View.GONE);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                if(todaydata.get(0).getString("data_signdate").equals(mTime))//현재시간과 최근 데이터의 날짜와 오늘날짜가 같다면 오늘 측정한 데이터임
+                {
+                    int average_today_bpm;
+                    int average_today_res;
+                    try {
+                        average_today_bpm=todaydata.get(0).getInt("user_bpm");
+                        average_today_res=todaydata.get(0).getInt("user_res");
+                        tv_avebpm.setText(average_today_bpm+" BPM");
+                        tv_averes.setText(average_today_res+" 회/분");
+                        tv_nodatamessage.setVisibility(View.GONE);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }else{////오늘 날짜인 데이터가 없으면
+                    tv_avebpm.setText("--");
+                    tv_averes.setText("--");
+                    tv_nodatamessage.setVisibility(View.VISIBLE);
                 }
-            }else{
+            }else{//데이터가 없으면
                 tv_avebpm.setText("--");
                 tv_averes.setText("--");
                 tv_nodatamessage.setVisibility(View.VISIBLE);
             }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
