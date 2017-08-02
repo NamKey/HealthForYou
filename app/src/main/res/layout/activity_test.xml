@@ -6,9 +6,12 @@
     android:layout_height="match_parent"
     tools:context="com.example.nam.healthforyou.test">
 
-    <org.opencv.android.JavaCameraView
+    <ImageView
+        android:id="@+id/imageView3"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/activity_surface_view" />
-
+        android:layout_height="200sp"
+        android:layout_marginTop="77dp"
+        app:srcCompat="@drawable/cancel2"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

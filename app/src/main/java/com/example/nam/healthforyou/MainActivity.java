@@ -37,6 +37,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.BaseLoaderCallback;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         String day = "" ;
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat(dateType) ;
+        SimpleDateFormat dateFormat = new SimpleDateFormat(dateType, Locale.getDefault()) ;
         Date nDate = dateFormat.parse(date) ;
 
         Calendar cal = Calendar.getInstance() ;
@@ -63,35 +64,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         int dayNum = cal.get(Calendar.DAY_OF_WEEK) ;
 
-
-
-        /*switch(dayNum){
-            case 1:
-                day = "일";
-                break ;
-            case 2:
-                day = "월";
-                break ;
-            case 3:
-                day = "화";
-                break ;
-            case 4:
-                day = "수";
-                break ;
-            case 5:
-                day = "목";
-                break ;
-            case 6:
-                day = "금";
-                break ;
-            case 7:
-                day = "토";
-                break ;
-
-        }*/
-
         return dayNum ;
     }
+
+    static public int getDateMonth(String date, String dateType) throws Exception {
+
+        String tempdate = date+"01";//////DB에서 긁어온 데이터가 월별로 GROUP BY 되어 있으므로
+        SimpleDateFormat dateFormat = new SimpleDateFormat(dateType,Locale.getDefault()) ;
+        Date nDate = dateFormat.parse(tempdate) ;
+
+        Calendar cal = Calendar.getInstance() ;
+        cal.setTime(nDate);
+
+        int dayMonth = cal.get(Calendar.MONTH) ;
+
+        return dayMonth+1;////MONTH는 JAVA에서 0~11이므로 1씩더해줘야됨 -> 1~12
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

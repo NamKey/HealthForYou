@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -26,7 +27,7 @@ public class DBhelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER);");
+        db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER,graph_image TEXT);");
         Toast.makeText(mContext,"Table 생성완료", Toast.LENGTH_SHORT).show();
     }
 
@@ -56,6 +57,7 @@ public class DBhelper extends SQLiteOpenHelper {
             values.put("user_res",healthInfo.getInt("res"));
             values.put("data_signdate",healthInfo.getString("data_signdate"));
             values.put("is_synced",healthInfo.getInt("is_synced"));
+            values.put("graph_image",healthInfo.getString("graph_image"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -95,12 +97,30 @@ public class DBhelper extends SQLiteOpenHelper {
                         + cursor.getInt(4)
                         + "\n";
             }
+            cursor.close();
         }else{
           str="false";//저장된 자료가 없음
         }
 
         return str;
     }
+
+    public int PrintCountData() {
+        SQLiteDatabase db = getReadableDatabase();
+        String str="";
+
+        Cursor cursor = db.rawQuery("SELECT health_no FROM User_health;", null);
+
+            while(cursor.moveToNext()) {
+                str += cursor.getInt(0)
+                        + "\n";
+            }
+            cursor.close();
+
+
+        return cursor.getCount();
+    }
+
 
     public List<JSONObject> PrintAvgData(String _query) {
         SQLiteDatabase db = getReadableDatabase();
@@ -155,6 +175,7 @@ public class DBhelper extends SQLiteOpenHelper {
                     healthInfo.put("user_res",(cursor.getInt(2)));
                     healthInfo.put("data_signdate",cursor.getString(3));
                     healthInfo.put("is_synced",cursor.getInt(4));
+                    healthInfo.put("graph_image",cursor.getString(5));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -168,7 +189,7 @@ public class DBhelper extends SQLiteOpenHelper {
     public List<JSONObject> getAllinfo() {
         List<JSONObject> healthInfos = new ArrayList<>();
         // Select All Query
-        String selectQuery = "SELECT  * FROM " + "User_health WHERE is_synced=0 ORDER BY data_signdate desc";
+        String selectQuery = "SELECT * FROM User_health WHERE is_synced=0 ORDER BY data_signdate desc";
 
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -182,6 +203,7 @@ public class DBhelper extends SQLiteOpenHelper {
                     healthInfo.put("user_res",(cursor.getInt(2)));
                     healthInfo.put("data_signdate",cursor.getString(3));
                     healthInfo.put("is_synced",cursor.getInt(4));
+                    healthInfo.put("graph_image",cursor.getString(5));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -190,7 +212,7 @@ public class DBhelper extends SQLiteOpenHelper {
                 healthInfos.add(healthInfo);
             } while (cursor.moveToNext());
         }
-
+        cursor.close();
         // 모든 healdata를 갖고옴
         return healthInfos;
     }

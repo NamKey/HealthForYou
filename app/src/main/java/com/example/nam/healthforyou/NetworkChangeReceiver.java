@@ -38,7 +38,6 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
             {
                 Intent startIntent = new Intent(context, Syncdbservice.class);
                 context.startService(startIntent);
-
             }else if(con == NetworkUtil.TYPE_MOBILE){
                 //다이얼로그 - 연동하시겠습니까?
             }

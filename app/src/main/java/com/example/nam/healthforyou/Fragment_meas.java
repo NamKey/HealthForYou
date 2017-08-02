@@ -1,17 +1,21 @@
 package com.example.nam.healthforyou;
 
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.os.Handler;
@@ -20,6 +24,7 @@ import android.widget.TextView;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -327,7 +332,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     double phase2_freq=100;
     double phase3_freq=100;
 
-
+    ImageView test;
     //측정 완료 시간 기록
     //날짜 지정해주는 부분
     long now;
@@ -441,12 +446,26 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                 if (conn == NetworkUtil.TYPE_MOBILE || conn== NetworkUtil.TYPE_WIFI)//인터넷이 연결되었을때
                 {
                     healthinfo = new JSONObject();//JSON Object를 생성해서
+                    ///////차트의 이미지를 ByteArray로 변환
+
+                    Bitmap bmp = mChart.getChartBitmap();
+
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    byte[] byteArray = stream.toByteArray();
+                    String base64String = Base64.encodeToString(byteArray,Base64.DEFAULT);
+
+                    ///////byteArray로 보내는 이유는 Bitmap은 이미 메모리에 올라가 있으므로 Array로 바꿀시 접근이 더 용이
+                    //////file로 보낼 시 file로 생성 후 보내야 되는 시간 필요
+
+                    //bytearray로 이미지 그리기 테스트
+
                     infoSaveTask infosave = new infoSaveTask();///네트워크 부분 AsyncTask 로 기록 후 측정내역으로 넘어감
                     try {
                         healthinfo.put("bpm", final_heart);
                         healthinfo.put("res", averes);
                         healthinfo.put("is_synced",1);//서버와 Sync 된 데이터
-
+                        healthinfo.put("graph_image",base64String);////이미지 byteArray를 Base64encoding 후 JSON에 저장
                         //날짜도 저장
                         healthinfo.put("data_signdate",getTime);
 
@@ -454,8 +473,10 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                         e.printStackTrace();
                     }
 
+                    System.out.println(healthinfo.toString());
                     infosave.execute(healthinfo.toString()); //신체정보를 Json 형식 -> 서버
                     dbManager.infoinsert(healthinfo); //신체정보를 Json 형식 -> SQlite
+                    ////JSON에 저장되어 있던 bytearray를 String으로 뽑아 다시 bytearray로 변화해주고 이미지로 뿌려지는지 테스트
 
                 } else if(conn == NetworkUtil.TYPE_NOT_CONNECTED){//인터넷이 연결 안되었을 때 SQLite
                     healthinfo = new JSONObject();
@@ -468,9 +489,24 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                         healthinfo.put("data_signdate",getTime);
                         healthinfo.put("is_synced",0);//서버와 Sync 되지 않은 데이터
 
+                        ///////차트의 이미지를 ByteArray로 변환
+                        Bitmap bmp = mChart.getChartBitmap();
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        byte[] byteArray = stream.toByteArray();
+
+                        String base64String = Base64.encodeToString(byteArray,Base64.DEFAULT);////이미지 byteArray를 Base64encoding 후 JSON에 저장
+
+                        ///////byteArray로 보내는 이유는 Bitmap은 이미 메모리에 올라가 있으므로 Array로 바꿀시 접근이 더 용이
+                        //////file로 보낼 시 file로 생성 후 보내야 되는 시간 필요
+
+                        healthinfo.put("graph_image",base64String);
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+
+                    System.out.println(healthinfo.toString());
                     //DB에 결과를 기록하고
                     dbManager.infoinsert(healthinfo);//신체정보를 Json 형식 -> SQlite
                     Toast.makeText(getActivity(), "결과를 기록하였습니다.", Toast.LENGTH_SHORT).show();
@@ -562,7 +598,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         arraybpm = new ArrayList<>();
         //손가락 판단을 위한 ArrayList
         finger_date = new ArrayList<>();
-
         //호흡 filter
         //arrayListforrriiv = new ArrayList<>();
         return meas;
@@ -629,7 +664,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         localMinX.clear(); // 윈도우를 정하기 위한 데이터 clear
         arraybpm.clear(); // 박동에 대한 데이터 clear
         W_size=20;//윈도우 사이즈 초기화
-
+        X=0;
         meaning_data.clear();//FFT를 수행하기 위한 데이터 clear
         max_index=-1;//max_index초기화
         max_magnitude=Double.MIN_VALUE;//max_value초기화
@@ -1083,7 +1118,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
             @Override
             public void run() {
                 try {//try-catch를 통해 쓰레드 인터럽트
-                        while(heart_data.size()<size)///데이터가 3000개가 쌓일때까지 - 기준 생각해보기
+                        while(heart_data.size()<size)///데이터가 1000개가 쌓일때까지 - 기준 생각해보기
                         {
                         // Don't generate garbage runnables inside the loop.
                             getActivity().runOnUiThread(runnable);
@@ -1304,7 +1339,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     //평균데이터를 빼주지 않으면 DC가 포함되어 있는 것이므로
 
                     fft = new DoubleFFT_1D(512);//meaning_data 만큼
-                    fft_heart_rate = new double[1024];//256*2 만큼 실수부 허수부
+                    fft_heart_rate = new double[1024];//실수부 허수부 고려
 
                     //peak 값 이후로 평가해야 쓰레기 데이터가 포함되지 않는다.
                     //peak가 처음 발견된 직후부터 마지막 peak 까지의 데이터만 가지고 평가
@@ -1364,6 +1399,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     System.out.println("fft_heart"+fft_heart);
                     final_heart=(fft_heart+avebpm)/2;///Peak detection을 통해 구한 값과 FFT를 통해 구한값의 평균을 통해 최종 심박수 구함
                     System.out.println("final_heart "+final_heart);
+
                     //호흡 FFT
 
                     //**************전처리 필터

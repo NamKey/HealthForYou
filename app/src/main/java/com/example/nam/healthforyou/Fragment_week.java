@@ -166,11 +166,10 @@ public class Fragment_week extends Fragment {
                 }
             }
         }else{//일주일간의 데이터가 없으면
-            for(int i=0;i<7;i++)
+            for(int i=0;i<labels.length;i++)
             {
                 barEntries.add(new BarEntry(i,0));
             }
-
         }
 
 

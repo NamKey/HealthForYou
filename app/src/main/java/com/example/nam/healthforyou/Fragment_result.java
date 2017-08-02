@@ -1,7 +1,11 @@
 package com.example.nam.healthforyou;
 
 
+import android.content.ContentValues;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -12,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -23,9 +28,12 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,14 +50,20 @@ public class Fragment_result extends Fragment {
     ViewPagerAdapter myAdapter;
     DBhelper dBhelper;
     BarChart mybarChart;
+    ArrayList<BarEntry> barEntries;
+    BarDataSet dataset;
+    float avgbpmPeople;
+    BarData data;
+    HttpURLConnection con;
+    final static int update_graph=0;
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mView = (RelativeLayout)inflater.inflate(R.layout.frag_result,container,false);
         mViewPager = (ViewPager)mView.findViewById(R.id.health_viewpager);
         dotsLayout = (LinearLayout)mView.findViewById(R.id.layoutDots);
         myAdapter = new ViewPagerAdapter(getChildFragmentManager());
         dBhelper = new DBhelper(getActivity().getApplicationContext(),"healthforyou.db", null, 1);
-
-        //limit절을 통해 평균을 구해놓은 쿼리를 최신순으로 정렬 후 한개만 limit를 통해 갖고 옴
+        String strurl = "http://kakapo12.vps.phps.kr/averagehealdata.php";
+        //나의 모든 심박수의 평균을 가지고 옴
         JSONObject avedata = dBhelper.PrintMyAvgData("SELECT avg(user_bpm),avg(user_res) from User_health;");
         System.out.println(avedata);
 
@@ -58,8 +72,6 @@ public class Fragment_result extends Fragment {
         mybarChart.setTouchEnabled(false);
         mybarChart.setPinchZoom(false);
         YAxis leftAxis = mybarChart.getAxisLeft();
-
-
 
         //X축 label값 결정
 
@@ -85,20 +97,38 @@ public class Fragment_result extends Fragment {
         YAxis rightAxis = mybarChart.getAxisRight();
         rightAxis.setEnabled(false);
         //Y축값
-        ArrayList<BarEntry> barEntries = new ArrayList<>();
+        barEntries = new ArrayList<>();
 
         try {
             barEntries.add(new BarEntry(0f,avedata.getInt("user_bpm")));///나의 데이터를 추가해줌
-            barEntries.add(new BarEntry(1f,70));///////나이와 성별에 따른 평균데이터 - 서버에서 받아온게 아님
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        BarDataSet dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
+        dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
         dataset.setValueTextSize(15);
-
-        BarData data = new BarData(dataset);
+        data = new BarData(dataset);
         data.setBarWidth(0.3f);
+        ////인터넷 상황에 대한 예외처리
+        int network_status=NetworkUtil.getConnectivityStatus(getActivity().getApplicationContext());
+        if(network_status == NetworkUtil.TYPE_MOBILE|| network_status == NetworkUtil.TYPE_WIFI) {
+            NetworkTask networkTask = new NetworkTask(strurl, null);
+            networkTask.execute();
+        }else{
+            Toast.makeText(getActivity().getApplicationContext(),"인터넷 연결여부를 확인해주세요",Toast.LENGTH_SHORT).show();
+            barEntries.add(new BarEntry(1f,0f));//
+            dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
+            dataset.setValueTextSize(15);
+            data = new BarData(dataset);
+            data.setBarWidth(0.3f);
+            mybarChart.setData(data);
+
+            data.notifyDataChanged();
+            dataset.notifyDataSetChanged();
+            mybarChart.notifyDataSetChanged();
+            mybarChart.invalidate();
+        }
         mybarChart.setData(data);
 
         mViewPager.addOnPageChangeListener(viewPagerPageChangeListener);
@@ -116,8 +146,14 @@ public class Fragment_result extends Fragment {
 
         mViewPager.setAdapter(myAdapter);
 
-        return mView;
+        try {
+            URL url = new URL(strurl);
+            con = (HttpURLConnection)url.openConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
+        return mView;
     }
 
     private void addBottomDots(int currentPage) {
@@ -158,4 +194,47 @@ public class Fragment_result extends Fragment {
         }
     };
 
+    public class NetworkTask extends AsyncTask<Void, Void, String> {
+
+        private String url;
+        private ContentValues values;
+
+        public NetworkTask(String url, ContentValues values) {
+
+            this.url = url;
+            this.values = values;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            String result; // 요청 결과를 저장할 변수.
+            RequestHttpConnection requestHttpURLConnection = new RequestHttpConnection();
+            result = requestHttpURLConnection.request(url, values); // 해당 URL로 부터 결과물을 얻어온다.
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            ///인터넷 연결에 대한 예외처리
+            if(s!=null)//인터넷 연결끊김에 대한 예외처리 연결이 끊겨있으면 null이 나옴
+            {
+                System.out.println((int)Float.parseFloat(s));
+                barEntries.add(new BarEntry(1f,(int)Float.parseFloat(s)));////서버에서 받아온 데이터
+                dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
+                dataset.setValueTextSize(15);
+                data = new BarData(dataset);
+                data.setBarWidth(0.3f);
+                mybarChart.setData(data);
+
+                data.notifyDataChanged();
+                dataset.notifyDataSetChanged();
+                mybarChart.notifyDataSetChanged();
+                mybarChart.invalidate();
+                //handler.sendEmptyMessage(update_graph);
+            }
+        }
+    }
 }

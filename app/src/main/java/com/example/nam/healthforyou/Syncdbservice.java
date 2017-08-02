@@ -47,7 +47,8 @@ public class Syncdbservice extends Service{
         dbManager = new DBhelper(mContext, "healthforyou.db", null, 1);//DB생성
 
         List<JSONObject> notsynced_list = dbManager.getAllinfo();
-        System.out.println(notsynced_list);
+        System.out.println(notsynced_list+"notsynced");
+        //////Sync localto server확인할것 20170802!!!!
         if(notsynced_list.size()>0)
         {
             JSONArray jsonArray = new JSONArray();//연동이 되지 않은 데이터
@@ -82,7 +83,9 @@ public class Syncdbservice extends Service{
             System.out.println(s);
             if(s.equals("true"))
             {
+                System.out.println("서비스 실행");
                 dbhelper.update("UPDATE User_health SET is_synced = 1 WHERE is_synced = 0;");//데이터를 보낸 후 SQlite is_synced 수정
+                dbhelper.close();
                 stopSelf(id);//서비스 종료
             }else{
 
