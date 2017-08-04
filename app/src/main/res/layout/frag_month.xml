@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5sp"
             android:paddingStart="10sp"
-            android:text="한달 간 심박수"
+            android:text="월 별 나의 심박수"
             android:textSize="15sp" />
     </FrameLayout>
 

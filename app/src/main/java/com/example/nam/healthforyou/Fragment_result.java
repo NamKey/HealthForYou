@@ -219,7 +219,7 @@ public class Fragment_result extends Fragment {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             ///인터넷 연결에 대한 예외처리
-            if(s!=null)//인터넷 연결끊김에 대한 예외처리 연결이 끊겨있으면 null이 나옴
+            if(s!=null && !s.equals(""))//인터넷 연결끊김에 대한 예외처리 연결이 끊겨있으면 null이 나옴
             {
                 System.out.println((int)Float.parseFloat(s));
                 barEntries.add(new BarEntry(1f,(int)Float.parseFloat(s)));////서버에서 받아온 데이터

@@ -27,7 +27,8 @@ public class DBhelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER,graph_image TEXT);");
+        db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER,graph_image TEXT);");//건강데이터에 관한 로컬 DB table
+        db.execSQL("CREATE TABLE User_friend(friend_no INTEGER PRIMARY KEY AUTOINCREMENT,user_friend TEXT,friendname TEXT);");//친구목록에 대한 로컬 DB table
         Toast.makeText(mContext,"Table 생성완료", Toast.LENGTH_SHORT).show();
     }
 
@@ -215,5 +216,68 @@ public class DBhelper extends SQLiteOpenHelper {
         cursor.close();
         // 모든 healdata를 갖고옴
         return healthInfos;
+    }
+
+    public void friendinsert(JSONObject friendinfo) {
+        SQLiteDatabase db = getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+
+        try {
+            values.put("user_friend",friendinfo.getString("user_friend"));
+            values.put("friendname",friendinfo.getString("user_name"));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        db.insert("User_friend",null,values);
+        db.close();
+    }
+
+    public List<JSONObject> getAllfriend()
+    {
+        List<JSONObject> friendlist = new ArrayList<>();
+        // Select All Query
+        String selectQuery = "SELECT * FROM User_friend ORDER BY friendname ASC";
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                JSONObject friend = new JSONObject();
+                try {
+                    friend.put("user_friend",(cursor.getString(1)));
+                    friend.put("user_name",(cursor.getString(2)));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                // Adding contact to list
+                friendlist.add(friend);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        // 모든 healdata를 갖고옴
+        return friendlist;
+    }
+
+    public int PrintCountfriend() {
+        SQLiteDatabase db = getReadableDatabase();
+        String str="";
+
+        Cursor cursor = db.rawQuery("SELECT friend_no FROM User_friend;", null);
+
+        while(cursor.moveToNext()) {
+            str += cursor.getInt(0)
+                    + "\n";
+        }
+        cursor.close();
+
+
+        return cursor.getCount();
     }
 }

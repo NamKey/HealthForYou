@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5sp"
             android:paddingStart="10sp"
-            android:text="일주일 간 심박수"
+            android:text="요일 별 나의 심박수"
             android:textSize="15sp" />
     </FrameLayout>
 
