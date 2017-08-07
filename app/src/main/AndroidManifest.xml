@@ -90,8 +90,11 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".Measure"
-            android:hardwareAccelerated="false"></activity>
-        <activity android:name=".Addfriend"></activity>
+            android:hardwareAccelerated="false" />
+        <activity android:name=".Addfriend" />
+        <activity android:name=".Chatroom"
+                  android:windowSoftInputMode="adjustResize"/>
+
     </application>
 
 </manifest>

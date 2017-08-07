@@ -83,7 +83,14 @@ public class TabFragment1_friend extends Fragment {
                 tv_email.setText(clickProfile.email);
 
                 //채팅하기 액티비티로 이동
-
+                Button btn_chattofriend = (Button)layout.findViewById(R.id.btn_chat);
+                btn_chattofriend.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(getActivity(),Chatroom.class);
+                        startActivity(intent);
+                    }
+                });
 
                 builder = new AlertDialog.Builder(getActivity());
                 builder.setView(layout);
