@@ -2,6 +2,7 @@ package com.example.nam.healthforyou;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -58,7 +59,9 @@ public class TabFragment1_friend extends Fragment {
                 listViewAdapter.Deleteall();///모든 리스트뷰 아이템 삭제 - 페이징 구현 필요!!!!20170824
                 Intent intent =new Intent(getActivity(),Addfriend.class);
                 startActivity(intent);
-                getActivity().overridePendingTransition(R.anim.slide_up,R.anim.no_change);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
+                    getActivity().overridePendingTransition(R.anim.slide_up,R.anim.no_change);
+                }
             }
         });
 
