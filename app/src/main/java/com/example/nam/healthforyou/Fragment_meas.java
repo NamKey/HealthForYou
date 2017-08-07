@@ -81,7 +81,16 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         System.loadLibrary("native-lib");
         System.loadLibrary("opencv_java3");
     }
-
+    /*
+    * OPENCV를 컴퓨터에 지우면 컴파일이 안됨
+    * -현재 2017.08.08 기준 2017.08.06일에 한 디버깅자료가 지워짐 다시 해야됨
+    *
+    *
+    *
+    *
+    *
+    *
+    * */
     Context mContext;
     //Sqlite DB
     DBhelper dbManager;

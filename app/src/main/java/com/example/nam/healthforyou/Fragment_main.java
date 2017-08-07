@@ -71,19 +71,22 @@ public class Fragment_main extends Fragment {
             {
                 case update_main:
                 {
+                    System.out.println("update_main");
                     //텍스트뷰에 뿌려줌
                     heart_rate.setText(bpm+" BPM");
                     RIIV.setText(res+" 회/분");
                     date.setText(time);
                     graphmessage.setText("맥박 그래프");
                     //graph.setImageResource(R.drawable.image);
+
                     if(graph_image!=null)
                     {
                         byte[] a = Base64.decode(graph_image,Base64.DEFAULT);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(a,0,a.length);////비트맵으로 변환
                         graph.setImageBitmap(bitmap);
                     }else{
-                        main_handler.sendEmptyMessage(no_data);
+                        //main_handler.sendEmptyMessage(no_data);
+                        System.out.println("여기로 빠지나");
                     }
 
                     break;
@@ -91,6 +94,7 @@ public class Fragment_main extends Fragment {
 
                 case no_data:
                 {
+                    System.out.println("no_data");
                     heart_rate.setText("--");
                     RIIV.setText("--");
                     graph.setImageResource(R.drawable.sad);
@@ -114,6 +118,7 @@ public class Fragment_main extends Fragment {
         dbManager = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB생성
         String init=dbManager.PrintData("SELECT * FROM User_health;");//유저의 건강정보 모두 받아오기
         int datacount = dbManager.PrintCountData();
+        System.out.println(datacount);
         //생각해야 될 부분
 
         /*
@@ -123,24 +128,14 @@ public class Fragment_main extends Fragment {
           - 아니면 메인부분에서만 기록할 것인지
         */
 
-        System.out.println(init+"init");//유저의 건강정보 모두 출력
+        //System.out.println(init+"init");//유저의 건강정보 모두 출력
 
         if(datacount!=0)///////갯수로 체크 SQLite에 데이터 가 있으면
         {
-            if(init.equals("false"))//SQlite에 아무자료가 없으면 AsyncTask를 통해 자료를 받아옴 - 서버에 데이터가 있는지 체크
-            {
-                try {
-                    URL url = new URL(strurl);
-                    con = (HttpURLConnection)url.openConnection();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                NetworkTask networkTask = new NetworkTask(strurl, null);///서버에서 데이터를 받아오는 부분
-                networkTask.execute();
-            }else{//자료가 있으면 최근 데이터(limit 사용)를 SQlite에서 받아옴
+                System.out.println("SQlite");
+               //자료가 있으면 최근 데이터(limit 사용)를 SQlite에서 받아옴
                 JSONObject local_healthdata=dbManager.PrintHealthData("SELECT * FROM User_health ORDER BY data_signdate desc limit 1;");
-                System.out.println(local_healthdata+"local");
+                System.out.println("local"+local_healthdata);
                 try {
                     bpm=local_healthdata.getInt("user_bpm");
                     res=local_healthdata.getInt("user_res");
@@ -149,12 +144,20 @@ public class Fragment_main extends Fragment {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
                 //텍스트뷰에 뿌려줌
                 main_handler.sendEmptyMessage(update_main);
+        }else{////Sqlite에 데이터가 없으면 서버 DB조회
+            System.out.println("else 부분 서버 DB 조회?");
+            try {
+                URL url = new URL(strurl);
+                con = (HttpURLConnection)url.openConnection();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }else{////데이터가 있으면
-            main_handler.sendEmptyMessage(no_data);
+
+            NetworkTask networkTask = new NetworkTask(strurl, null);///서버에서 데이터를 받아오는 부분
+            networkTask.execute();
+
         }
 
 
@@ -223,13 +226,13 @@ public class Fragment_main extends Fragment {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
+                        System.out.println("update_main");
                         //텍스트를 핸들러를 통해 띄어줌
                         main_handler.sendEmptyMessage(update_main);
                     }else{////데이터가 없으면
+                        System.out.println("no_data");
                         main_handler.sendEmptyMessage(no_data);
                     }
-
-
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -237,9 +240,6 @@ public class Fragment_main extends Fragment {
             }else{
                 Toast.makeText(getActivity(),"인터넷이 연결되지 않았습니다",Toast.LENGTH_SHORT).show();
             }
-
-
-
         }
     }
 }

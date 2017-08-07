@@ -67,7 +67,9 @@ public class TabFragment1_friend extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //프로필 다이얼로그 정의
                 layout = inflater.inflate(R.layout.custom_profiledialog,null);
+
                 ProfileItem clickProfile= listViewAdapter.getprofile(position);
+
                 ImageView iv_profile = (ImageView)layout.findViewById(R.id.iv_dialogprofile);
                 iv_profile.bringToFront();
                 iv_profile.invalidate();
@@ -76,6 +78,9 @@ public class TabFragment1_friend extends Fragment {
 
                 TextView tv_email = (TextView)layout.findViewById(R.id.tv_dialogemail);
                 tv_email.setText(clickProfile.email);
+
+                //채팅하기 액티비티로 이동
+
 
                 builder = new AlertDialog.Builder(getActivity());
                 builder.setView(layout);
@@ -109,6 +114,7 @@ public class TabFragment1_friend extends Fragment {
             {
                 listViewAdapter.addItem(friendlist.get(i));
             }
+            listViewAdapter.notifyDataSetChanged();
         }
         super.onResume();
     }

@@ -46,7 +46,7 @@ public class Fragment_week extends Fragment {
         ///현재 시간을 기준으로 일주일 전 데이터를 DB에서 평균을 내 구해옴
         dBhelper = new DBhelper(getActivity().getApplicationContext(),"healthforyou.db", null, 1);
         //////////쿼리문 중요//////////////
-        List<JSONObject> mydata = dBhelper.PrintAvgData("SELECT strftime('%Y%m%d',data_signdate) as date, avg(user_bpm),avg(user_res) from User_health WHERE date >= strftime('%Y%m%d',"+mTime+")-7 GROUP BY strftime('%Y%m%d',data_signdate) ORDER BY date desc limit 7;");
+        List<JSONObject> mydata = dBhelper.PrintAvgData("SELECT strftime('%Y%m%d',data_signdate) as date, avg(user_bpm),avg(user_res) from User_health WHERE date >= strftime('%Y%m%d','now','localtime','-7 day') GROUP BY strftime('%Y%m%d',data_signdate) ORDER BY date desc limit 7;");
 
         System.out.println(mydata);
 
@@ -176,6 +176,7 @@ public class Fragment_week extends Fragment {
         BarDataSet dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
         dataset.setValueTextSize(15);
         BarData data = new BarData(dataset);
+        data.setValueFormatter(new Myvalueformatter());
         data.setBarWidth(0.5f);
         barChart.setData(data);
         return view;

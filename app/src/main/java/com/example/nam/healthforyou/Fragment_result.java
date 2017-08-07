@@ -123,7 +123,7 @@ public class Fragment_result extends Fragment {
             data = new BarData(dataset);
             data.setBarWidth(0.3f);
             mybarChart.setData(data);
-
+            data.setValueFormatter(new Myvalueformatter());
             data.notifyDataChanged();
             dataset.notifyDataSetChanged();
             mybarChart.notifyDataSetChanged();
@@ -228,7 +228,7 @@ public class Fragment_result extends Fragment {
                 data = new BarData(dataset);
                 data.setBarWidth(0.3f);
                 mybarChart.setData(data);
-
+                data.setValueFormatter(new Myvalueformatter());
                 data.notifyDataChanged();
                 dataset.notifyDataSetChanged();
                 mybarChart.notifyDataSetChanged();

@@ -237,7 +237,7 @@ public class Fragment_month extends Fragment {
 
         BarData data = new BarData(dataset);
         data.setBarWidth(0.3f);
-
+        data.setValueFormatter(new Myvalueformatter());
         barChart.setData(data);
 
         return view;
