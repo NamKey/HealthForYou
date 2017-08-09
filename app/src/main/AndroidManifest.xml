@@ -35,7 +35,7 @@
                 <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
             </intent-filter>
         </receiver>
-
+        <service android:name=".ClientSocketService" />
         <service android:name=".Syncdbservice" />
 
         <activity

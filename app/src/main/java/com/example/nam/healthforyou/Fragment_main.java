@@ -147,7 +147,6 @@ public class Fragment_main extends Fragment {
                 //텍스트뷰에 뿌려줌
                 main_handler.sendEmptyMessage(update_main);
         }else{////Sqlite에 데이터가 없으면 서버 DB조회
-            System.out.println("else 부분 서버 DB 조회?");
             try {
                 URL url = new URL(strurl);
                 con = (HttpURLConnection)url.openConnection();

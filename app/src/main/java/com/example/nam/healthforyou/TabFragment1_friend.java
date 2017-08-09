@@ -42,13 +42,26 @@ public class TabFragment1_friend extends Fragment {
         tabfrag_friend = (RelativeLayout)inflater.inflate(R.layout.tab_frag_friend,container,false); //친구목록을 갖고 있는 프레그먼트의 레이아웃
         dBhelper = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB 접근
 
+        int count=dBhelper.PrintCountfriend();
         listViewAdapter = new ListViewAdapter();//////아답터 선언
+        if(count!=0)
+        {
+            friendlist=dBhelper.getAllfriend();
+            if(friendlist!=null)
+            {
+                System.out.println(friendlist+"친구목록");
+            }
+
+            for(int i=0;i<friendlist.size();i++)//NULLPointer Exception 주의
+            {
+                listViewAdapter.addItem(friendlist.get(i));
+            }
+            listViewAdapter.notifyDataSetChanged();
+        }
+
         profileList = (ListView)tabfrag_friend.findViewById(R.id.lv_friendlist);//리스트뷰
         profileList.setAdapter(listViewAdapter);///리스트뷰와 아답터 연결
         profileList.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-        int count=dBhelper.PrintCountfriend();
-        System.out.println(count+"친구의 갯수");
 
         ///친구추가 액티비티로 이동하는 버튼
         Button btn_addfriend = (Button)tabfrag_friend.findViewById(R.id.btn_addfriend);
@@ -71,7 +84,7 @@ public class TabFragment1_friend extends Fragment {
                 //프로필 다이얼로그 정의
                 layout = inflater.inflate(R.layout.custom_profiledialog,null);
 
-                ProfileItem clickProfile= listViewAdapter.getprofile(position);
+                final ProfileItem clickProfile= listViewAdapter.getprofile(position);
 
                 ImageView iv_profile = (ImageView)layout.findViewById(R.id.iv_dialogprofile);
                 iv_profile.bringToFront();
@@ -87,7 +100,9 @@ public class TabFragment1_friend extends Fragment {
                 btn_chattofriend.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        alertDialog.dismiss();
                         Intent intent = new Intent(getActivity(),Chatroom.class);
+                        intent.putExtra("who",clickProfile.email);///인텐트를 통해 내가 누구한테 보내는지 채팅 액티비티로 넘겨줌
                         startActivity(intent);
                     }
                 });
@@ -111,21 +126,6 @@ public class TabFragment1_friend extends Fragment {
     @Override
     public void onResume() {
         Log.d("생명주기","onResume");
-        int count=dBhelper.PrintCountfriend();
-        if(count!=0)
-        {
-            friendlist=dBhelper.getAllfriend();
-            if(friendlist!=null)
-            {
-                System.out.println(friendlist+"친구목록");
-            }
-
-            for(int i=0;i<friendlist.size();i++)//NULLPointer Exception 주의
-            {
-                listViewAdapter.addItem(friendlist.get(i));
-            }
-            listViewAdapter.notifyDataSetChanged();
-        }
         super.onResume();
     }
 

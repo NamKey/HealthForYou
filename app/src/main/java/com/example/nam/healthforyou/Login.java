@@ -36,6 +36,7 @@ import com.kakao.usermgmt.UserManagement;
 import com.kakao.usermgmt.callback.MeResponseCallback;
 import com.kakao.usermgmt.response.model.UserProfile;
 import com.kakao.util.exception.KakaoException;
+import com.kakao.util.helper.SharedPreferencesCache;
 import com.kakao.util.helper.log.Logger;
 //네이버 로그인
 import com.nhn.android.naverlogin.OAuthLogin;
@@ -119,11 +120,20 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     SharedPreferences.Editor session_editor;
     private String session_id;
 
+    SharedPreferences loginemail;
+    SharedPreferences.Editor loginemail_editor;
+    private String loginemailid;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         session = getApplicationContext().getSharedPreferences("session",MODE_PRIVATE);//SharedPreference에 저장할 준비
         session_editor = session.edit();
+
+        loginemail = getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
+        loginemail_editor = loginemail.edit();
+
         mContext = getApplicationContext();
         FacebookSdk.sdkInitialize(this.getApplicationContext());
         //session id 가 있으면
@@ -145,8 +155,6 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
                     //System.out.println(HttpCookie.parse(cookie).get(0)+"Shared Login");
                 }
             }
-
-
             //Login에서 메인액티비티로 가는부분
             Intent intent = new Intent(Login.this,MainActivity.class);
             startActivity(intent);
@@ -413,13 +421,35 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
 
     public class LoginTask extends AsyncTask<String,String,String>
-    {
+    {   JSONObject loginresult;
+        String result;
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             //System.out.println(s);
-            if(s.equals("true"))
+            try {
+                loginresult = new JSONObject(s);/////JSON으로 된 데이터 형식에서
+                result=loginresult.getString("result");///성공했느냐
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            if(result.equals("true"))
             {
+                String useremail;
+                ///로그인에 성공하면 로그인한 유저의 이메일을 받을 수 있음
+                try {
+                    useremail=loginresult.getString("useremail");
+                    System.out.println(useremail);
+
+                    //Shared에 로그인한 user의 이메일을 저장 - 로그아웃시 삭제 필요
+                    loginemail_editor.putString("useremail",useremail);
+                    loginemail_editor.apply();
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 Toast.makeText(Login.this, "로그인 되었습니다.", Toast.LENGTH_SHORT).show();
                 //로그인이 성공하면 세션쿠키를 얻어옴
                 Map<String, List<String>> headerFields = con.getHeaderFields();
