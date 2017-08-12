@@ -5,7 +5,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -22,6 +24,9 @@ public class ListViewAdapter extends BaseAdapter {
     /* 아이템을 세트로 담기 위한 어레이 */
     private ArrayList<ProfileItem> profileItems = new ArrayList<>();
 
+    private static final int FRIENDLIST_TYPE=0;
+    private static final int GROUPCHATLIST_TYPE=1;
+    LayoutInflater inflater;
     @Override
     public int getCount() {
         return profileItems.size();
@@ -43,35 +48,61 @@ public class ListViewAdapter extends BaseAdapter {
 
         /* 'listview_custom' Layout을 inflate하여 convertView 참조 획득 */
         if (convertView == null) {
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(R.layout.listitem, parent, false);
+            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
-
-        /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
-        ImageView iv_img = (ImageView) convertView.findViewById(R.id.iv_profile) ;
-        TextView tv_name = (TextView) convertView.findViewById(R.id.tv_name) ;
 
         ProfileItem profileItem = profileItems.get(position);
 
-        iv_img.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
-        tv_name.setText(profileItem.name);
+        switch(profileItem.getType())
+        {
+            case FRIENDLIST_TYPE:
+            {
+                convertView = inflater.inflate(R.layout.listitem, parent, false);
+                /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
+                ImageView iv_img = (ImageView) convertView.findViewById(R.id.iv_profile) ;
+                TextView tv_name = (TextView) convertView.findViewById(R.id.tv_name) ;
+                iv_img.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
+                tv_name.setText(profileItem.name);
+                break;
+            }
 
-        /* (위젯에 대한 이벤트리스너를 지정하고 싶다면 여기에 작성하면된다..)  */
+            case GROUPCHATLIST_TYPE:
+            {
+                convertView = inflater.inflate(R.layout.listitem2, parent, false);
+                /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
+                ImageView iv_img = (ImageView) convertView.findViewById(R.id.iv_profilegroup);
+                TextView tv_name = (TextView) convertView.findViewById(R.id.tv_namegroup);
+                CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.cb_addgroup);
+                checkBox.setFocusable(false);
+                checkBox.setClickable(false);
+
+                iv_img.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
+                tv_name.setText(profileItem.name);
+                checkBox.setChecked(((ListView)parent).isItemChecked(position));////체크 박스 기억
+
+                break;
+            }
+        }
 
         return convertView;
     }
 
-    public void addItem(JSONObject friendprofile)
+    public void addItemFriend(JSONObject friendprofile)
     {
         ProfileItem profileItem = new ProfileItem();
         try {
             profileItem.name=friendprofile.getString("user_name");//이름을 담고
             profileItem.email=friendprofile.getString("user_friend");//이메일을 담고
+            profileItem.setType(FRIENDLIST_TYPE);
             ////프로필 사진을 담아야됨
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        profileItems.add(profileItem);//////유저의 프로필 추가
+    }
 
+    public void addGroupFriend(ProfileItem profileItem)
+    {
         profileItems.add(profileItem);//////유저의 프로필 추가
     }
 

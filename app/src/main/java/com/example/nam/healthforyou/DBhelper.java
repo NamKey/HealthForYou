@@ -29,6 +29,7 @@ public class DBhelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER,graph_image TEXT);");//건강데이터에 관한 로컬 DB table
         db.execSQL("CREATE TABLE User_friend(friend_no INTEGER PRIMARY KEY AUTOINCREMENT,user_friend TEXT,friendname TEXT);");//친구목록에 대한 로컬 DB table
+        db.execSQL("CREATE TABLE ChatMessage(message_no INTEGER PRIMARY KEY AUTOINCREMENT,room_type INTEGER,room_id TEXT,message_sender TEXT,message_content TEXT,message_date TEXT,is_looked INTEGER);");//채팅방에 따른 메세지 정보
         Toast.makeText(mContext,"Table 생성완료", Toast.LENGTH_SHORT).show();
     }
 
@@ -280,4 +281,68 @@ public class DBhelper extends SQLiteOpenHelper {
 
         return cursor.getCount();
     }
+
+    ////메세지를 등록
+    public void messageinsert(String line) {
+        SQLiteDatabase db = getWritableDatabase();
+        System.out.println("DB insert : "+line);
+        /////전송된 데이터를 구분자를 통해 분리함
+        String type = line.split(":",4)[0];//////그룹간의 대화인지
+        String who = line.split(":",4)[1];
+        String message = line.split(":",4)[2];
+        String date = line.split(":",4)[3];
+
+        //분리한 데이터를 SQlite에 저장 - 다른 사람이 보낸 메세지 타입
+
+        ContentValues values = new ContentValues();
+        /////메세지에 들어있는 정보를 분류해야함
+        if(type.equals("ptop"))///개인간의 대화를 나타냄
+        {
+            values.put("room_id",who);////개인간의 대화는 방의 id가 상대방으로 설정
+            values.put("message_sender",who);//보낸 사람이 누구인지
+            values.put("message_content",message);///메세지의 내용
+            values.put("message_date",date);///메세지를 보낸 시간
+            values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
+            values.put("room_type",0);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
+
+        }else{///그룹채팅을 의미 방번호가 오게됨
+
+            values.put("room_id",type);////그룹간의 대화는 방의 id가 방고유번호 - 서버 RoomManager가 부여
+            values.put("message_sender",who);////보낸 사람이 누구인지
+            values.put("message_content",message);
+            values.put("message_date",date);
+            values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
+            values.put("room_type",1);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
+        }
+
+        db.insert("ChatMessage",null,values);
+        db.close();
+    }
+
+    public JSONObject updatemessage(String _query){
+        SQLiteDatabase db = getReadableDatabase();
+
+        JSONObject message =new JSONObject();
+        Cursor cursor = db.rawQuery(_query, null);
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                try {
+                    message.put("room_type",(cursor.getString(1)));
+                    message.put("room_id",cursor.getString(2));
+                    message.put("message_sender",cursor.getString(3));
+                    message.put("message_content",(cursor.getString(4)));
+                    message.put("message_date",cursor.getString(5));
+                    message.put("is_looked",cursor.getInt(6));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return message;
+    }
+
 }

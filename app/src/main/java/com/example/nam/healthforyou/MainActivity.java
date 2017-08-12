@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     HttpURLConnection con;
 
     UiTask uiTask;
+
     ////날짜에 따른 요일 알려주는 메쏘드
     static public int getDateDay(String date, String dateType) throws Exception {
 
@@ -193,10 +194,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_result())
                     .commit();
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.frag_container_, new Fragment_chat())
-                    .commit();
+//            getSupportFragmentManager()
+//                    .beginTransaction()
+//                    .replace(R.id.frag_container_, new Fragment_chat())
+//                    .commit();
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_meas())

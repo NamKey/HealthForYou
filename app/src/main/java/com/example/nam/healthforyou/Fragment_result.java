@@ -221,19 +221,23 @@ public class Fragment_result extends Fragment {
             ///인터넷 연결에 대한 예외처리
             if(s!=null && !s.equals(""))//인터넷 연결끊김에 대한 예외처리 연결이 끊겨있으면 null이 나옴
             {
-                System.out.println((int)Float.parseFloat(s));
-                barEntries.add(new BarEntry(1f,(int)Float.parseFloat(s)));////서버에서 받아온 데이터
-                dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
-                dataset.setValueTextSize(15);
-                data = new BarData(dataset);
-                data.setBarWidth(0.3f);
-                mybarChart.setData(data);
-                data.setValueFormatter(new Myvalueformatter());
-                data.notifyDataChanged();
-                dataset.notifyDataSetChanged();
-                mybarChart.notifyDataSetChanged();
-                mybarChart.invalidate();
-                //handler.sendEmptyMessage(update_graph);
+                if(!s.equals("잘못된 접근"))
+                {
+                    System.out.println((int)Float.parseFloat(s));
+                    barEntries.add(new BarEntry(1f,(int)Float.parseFloat(s)));////서버에서 받아온 데이터
+                    dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
+                    dataset.setValueTextSize(15);
+                    data = new BarData(dataset);
+                    data.setBarWidth(0.3f);
+                    mybarChart.setData(data);
+                    data.setValueFormatter(new Myvalueformatter());
+                    data.notifyDataChanged();
+                    dataset.notifyDataSetChanged();
+                    mybarChart.notifyDataSetChanged();
+                    mybarChart.invalidate();
+                    //handler.sendEmptyMessage(update_graph);
+
+                }
             }
         }
     }

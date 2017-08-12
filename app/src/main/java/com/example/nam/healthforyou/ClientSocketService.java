@@ -38,13 +38,19 @@ public class ClientSocketService extends Service {
     boolean endflag = false;
     private Context mContext;
     String line="";
-    private String ip = "115.71.232.242"; // IP
+    private String ip = "115.71.232.242"; //SERVER IP
     private int port = 9999; // PORT번호
     public ClientSocketService() {
         super();
     }
+    public DBhelper dBhelper;
 
-
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mContext = getApplicationContext();
+        dBhelper = new DBhelper(mContext, "healthforyou.db", null, 1);
+    }
 
     //서비스 바인더 내부 클래스 선언
     public class ClientSocketServiceBinder extends Binder {
@@ -56,12 +62,18 @@ public class ClientSocketService extends Service {
     private final IBinder mBinder = new ClientSocketServiceBinder();
 
     @Override
-    public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        //throw new UnsupportedOperationException("Not yet implemented");
+    public int onStartCommand(Intent intent, int flags, int startId) {
         ////소켓 설정 - 서비스는 화면이 없는 액티비티라고 이해한다면 MainThread에서 Socket을 호출하면 안됨
         SocketThread socketThread = new SocketThread();
         socketThread.start();
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        //throw new UnsupportedOperationException("Not yet implemented");
+
         return mBinder;
     }
 
@@ -137,7 +149,13 @@ public class ClientSocketService extends Service {
                 String line = null;
                 while((line = br.readLine())!=null){
                     System.out.println(line);
-                    mCallback.ReceiveMessage(line);////입력을 받으면 액티비티로 값을 넘겨줌
+                    //mCallback.ReceiveMessage(line);////입력을 받으면 액티비티로 값을 넘겨줌
+                    dBhelper.messageinsert(line);///로컬 DB에 socket을 통해 온값 저장
+                    ///////LocalDB에 저장
+                    ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄
+                    Intent intent = new Intent();
+                    intent.setAction("com.example.nam.healthforyou.DATABASE_CHANGED");
+                    mContext.sendBroadcast(intent);
                 }
             }catch(Exception e){
                 e.printStackTrace();

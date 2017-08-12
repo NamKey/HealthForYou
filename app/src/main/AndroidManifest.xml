@@ -35,6 +35,14 @@
                 <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".DatabaseChangedReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="com.example.nam.healthforyou.DATABASE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <service android:name=".ClientSocketService" />
         <service android:name=".Syncdbservice" />
 
@@ -92,9 +100,10 @@
             android:name=".Measure"
             android:hardwareAccelerated="false" />
         <activity android:name=".Addfriend" />
-        <activity android:name=".Chatroom"
-                  android:windowSoftInputMode="adjustResize"/>
-
+        <activity
+            android:name=".Chatroom"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".AddGroupChat"></activity>
     </application>
 
 </manifest>

@@ -15,6 +15,9 @@
     <color name="dot_light_screen2">#8cf9eb</color>
     <color name="dot_light_screen3">#93c6fd</color>
 
+    <color name="floating_normal">#354CFC</color>
+    <color name="floating_pressed">#E0E0E0</color>
+
     <array name="array_dot_active">
         <item>@color/dot_light_screen1</item>
         <item>@color/dot_light_screen2</item>

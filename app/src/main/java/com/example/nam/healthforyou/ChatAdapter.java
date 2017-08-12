@@ -20,6 +20,12 @@ import java.util.List;
 public class ChatAdapter extends BaseAdapter {
     List<ChatItem> chatItemList =new ArrayList<>();
     boolean message_left;
+
+    //내가 쓴 카톡과 아닌것을 구분하기 위한 type
+    private static final int ITEM_VIEW_TYPE_ME = 0 ;
+    private static final int ITEM_VIEW_TYPE_YOU = 1 ;
+    LayoutInflater inflater;
+
     @Override
     public int getCount() {
         return chatItemList.size();
@@ -41,49 +47,59 @@ public class ChatAdapter extends BaseAdapter {
         Context context = parent.getContext();
         if (row == null) {
             // inflator를 생성하여, chatting_message.xml을 읽어서 View객체로 생성한다.
-            LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            row = inflater.inflate(R.layout.chatlayout, parent, false);
+            inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
         }
 
         // Array List에 들어 있는 채팅 문자열을 읽어
         ChatItem msg = chatItemList.get(position);
-
-        // Inflater를 이용해서 생성한 View에, ChatMessage를 삽입한다.
-        TextView msgId = (TextView)row.findViewById(R.id.tv_sender);
-        TextView msgText = (TextView)row.findViewById(R.id.tv_content);
-
-        msgText.setText(msg.item_content);
-        msgId.setText(msg.item_sender);
-
-        msgText.setTextColor(Color.parseColor("#000000"));
-
-          ////보낸 사람이 있으면 상대방 없으면 나
-        if(msg.item_sender.equals(""))
+        switch(msg.getType())
         {
-            message_left = true;
-        }else{
-            message_left = false;
+            case ITEM_VIEW_TYPE_ME:
+            {
+                row = inflater.inflate(R.layout.chatlayout2_me, parent, false);
+
+                // Inflater를 이용해서 생성한 View에, ChatMessage를 삽입한다.
+                TextView msgText = (TextView)row.findViewById(R.id.tv_content);
+                TextView msgDate = (TextView)row.findViewById(R.id.tv_sendtime);
+                /////리스트에 정보를 출력
+                msgText.setText(msg.item_content);
+                msgDate.setText(msg.item_date);
+
+                msgText.setTextColor(Color.parseColor("#000000"));
+                break;
+            }
+
+            case ITEM_VIEW_TYPE_YOU:
+            {
+                row = inflater.inflate(R.layout.chatlayout1_you, parent, false);
+                // Inflater를 이용해서 생성한 View에, ChatMessage를 삽입한다.
+                TextView msgId = (TextView)row.findViewById(R.id.tv_sender);
+                TextView msgText = (TextView)row.findViewById(R.id.tv_content);
+                TextView msgDate = (TextView)row.findViewById(R.id.tv_sendtime);
+                /////리스트에 정보를 출력
+                msgText.setText(msg.item_content);
+                msgId.setText(msg.item_sender);
+                msgDate.setText(msg.item_date);
+
+                msgText.setTextColor(Color.parseColor("#000000"));
+
+                break;
+            }
         }
-
-//        // 9 - 패치 이미지로 채팅 버블을 출력
-        msgText.setBackground(context.getResources().getDrawable( (message_left ?  R.drawable.rounded_yellow : R.drawable.rounded_blue )));
-
-//        // 메세지를 번갈아 가면서 좌측,우측으로 출력
-
-        LinearLayout chatMessageContainer = (LinearLayout)row.findViewById(R.id.chatMessageLayout);
-
-        int align;
-        if(message_left) {
-            align = Gravity.END;
-        }else{
-            align = Gravity.START;
-        }
-        chatMessageContainer.setGravity(align);
         return row;
     }
 
-    public void addItem(ChatItem item)
+    public void addItemYou(ChatItem item)
     {
+        item.setType(ITEM_VIEW_TYPE_YOU);
+        chatItemList.add(item);
+
+    }
+
+    public void addItemME(ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TYPE_ME);
         chatItemList.add(item);
     }
 }

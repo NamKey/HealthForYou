@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -16,6 +17,10 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 import org.json.JSONObject;
 
@@ -37,6 +42,9 @@ public class TabFragment1_friend extends Fragment {
     AlertDialog.Builder builder;
     AlertDialog alertDialog;
     View layout;
+
+    private FloatingActionMenu fam;
+    private FloatingActionButton fab_team_chat, fab_add_user;
     @Override
     public View onCreateView(final LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         tabfrag_friend = (RelativeLayout)inflater.inflate(R.layout.tab_frag_friend,container,false); //친구목록을 갖고 있는 프레그먼트의 레이아웃
@@ -54,7 +62,7 @@ public class TabFragment1_friend extends Fragment {
 
             for(int i=0;i<friendlist.size();i++)//NULLPointer Exception 주의
             {
-                listViewAdapter.addItem(friendlist.get(i));
+                listViewAdapter.addItemFriend(friendlist.get(i));///친구를 불러오는 부분
             }
             listViewAdapter.notifyDataSetChanged();
         }
@@ -64,7 +72,7 @@ public class TabFragment1_friend extends Fragment {
         profileList.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
         ///친구추가 액티비티로 이동하는 버튼
-        Button btn_addfriend = (Button)tabfrag_friend.findViewById(R.id.btn_addfriend);
+        /*Button btn_addfriend = (Button)tabfrag_friend.findViewById(R.id.btn_addfriend);
         btn_addfriend.bringToFront();
         btn_addfriend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,6 +83,31 @@ public class TabFragment1_friend extends Fragment {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
                     getActivity().overridePendingTransition(R.anim.slide_up,R.anim.no_change);
                 }
+            }
+        });*/
+
+        fab_team_chat = (FloatingActionButton)tabfrag_friend.findViewById(R.id.fab2);
+        fab_add_user = (FloatingActionButton)tabfrag_friend.findViewById(R.id.fab3);
+        fam = (FloatingActionMenu)tabfrag_friend.findViewById(R.id.fab_menu);
+        fam.setMenuButtonColorNormal(R.color.floating_normal);
+        fam.setMenuButtonColorPressed(R.color.floating_pressed);
+        //handling each floating action button clicked
+        fab_team_chat.setOnClickListener(onButtonClick());
+        fab_add_user.setOnClickListener(onButtonClick());
+
+        fam.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (fam.isOpened()) {
+                    fam.close(true);
+                }
+            }
+        });
+
+        fam.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return true;
             }
         });
 
@@ -115,6 +148,30 @@ public class TabFragment1_friend extends Fragment {
         });
 
         return tabfrag_friend;
+    }
+
+    private View.OnClickListener onButtonClick() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (view == fab_add_user) {//////////친구 추가
+                    listViewAdapter.Deleteall();///모든 리스트뷰 아이템 삭제 - 페이징 구현 필요!!!!20170824
+                    Intent intent =new Intent(getActivity(),Addfriend.class);
+                    startActivity(intent);
+                    getActivity().overridePendingTransition(R.anim.slide_up,R.anim.no_change);
+
+                } else if (view == fab_team_chat) {
+                    Intent intent =new Intent(getActivity(),AddGroupChat.class);
+                    startActivity(intent);
+                    getActivity().overridePendingTransition(R.anim.slide_up,R.anim.no_change);
+                }
+                fam.close(true);
+            }
+        };
+    }
+
+    private void showToast(String msg) {
+        Toast.makeText(getActivity(),msg,Toast.LENGTH_SHORT).show();
     }
 
     @Override

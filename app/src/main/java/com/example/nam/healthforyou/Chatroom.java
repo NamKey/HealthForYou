@@ -1,8 +1,10 @@
 package com.example.nam.healthforyou;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
@@ -15,19 +17,33 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 public class Chatroom extends AppCompatActivity {
     //액티비티에서 선언.
     private ClientSocketService mService; //서비스 클래스
     private String who;//누구한테 보낼지
+    private String sender;//보낸사람
     ChatAdapter chatAdapter;
     int state;
     final static int update_message=1;
     ChatItem receiveitem;
+    DBhelper dBhelper;
+    Context mContext;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chatroom);
 
+        registerReceiver(broadcastReceiver, new IntentFilter("updateChat"));///새로 온메세지를 확인해보라는 말
+        mContext = getApplicationContext();
+        dBhelper = new DBhelper(mContext, "healthforyou.db", null, 1);///DB정의
         ///채팅 ListviewAdapter 정의
         chatAdapter = new ChatAdapter();
         ///채팅 내용에 대한 리스트뷰
@@ -45,22 +61,46 @@ public class Chatroom extends AppCompatActivity {
 
         ////친구 이메일 인텐트로 받기
         Intent intent = getIntent();
-        who = intent.getStringExtra("who");
+        who = intent.getStringExtra("who");////누구한테 보낼지 정하는 부분
         Button btn_send = (Button)findViewById(R.id.btn_health_send);
         btn_send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 EditText et_message = (EditText)findViewById(R.id.et_content);
                 String message = et_message.getText().toString();
-                System.out.println(message);
-                mService.SendMessage(message,who);
-
                 //내가 보낸 메세지를 Listview에 추가
                 ChatItem me_message = new ChatItem();
+                ////시간을 나타내줌
+                long now = System.currentTimeMillis();
+                // 현재시간을 date 변수에 저장한다.
+                Date date = new Date(now);
+                // 시간을 나타냇 포맷을 정한다 ( yyyy/MM/dd 같은 형태로 변형 가능 )
+                SimpleDateFormat sdfNow = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                // nowDate 변수에 값을 저장한다.
+                String formatDate = sdfNow.format(date);
+                ///시간을 더해주기 전에 아이템에 넣어줌
                 me_message.item_content=message;
-                me_message.item_sender="";
-                chatAdapter.addItem(me_message);
+
+                message = message + ":" + formatDate;
+                System.out.println(message);
+
+                final String finalMessage = message;
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mService.SendMessage(finalMessage,who);
+                    }
+                });
+
+                thread.start();
+
+                ///내가 보낸 메시지 타입
+                me_message.setType(0);
+                me_message.item_date=formatDate;
+
+                chatAdapter.addItemME(me_message);
                 chatAdapter.notifyDataSetChanged();
+
                 et_message.setText("");
             }
         });
@@ -90,19 +130,17 @@ public class Chatroom extends AppCompatActivity {
 
         public void ReceiveMessage(String line)
         {
-            String who = line.split(":",2)[0];
-            String message = line.split(":",2)[1];
-            receiveitem = new ChatItem();
-            receiveitem.item_content = message;
-            receiveitem.item_sender = who;
-            handler.sendEmptyMessage(update_message);
+            /////전송된 데이터를 구분자를 통해 분리함
+            String who = line.split(":",3)[0];
+            String message = line.split(":",3)[1];
+            String date = line.split(":",3)[2];
         }
     };
 
     //서비스 시작.
     public void startServiceMethod(){
+        ////소켓에 연결되어 있는 서비스와 채팅창 액티비티를 연결
         Intent Service = new Intent(this, ClientSocketService.class);
-        startService(Service);
         bindService(Service, mConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -126,13 +164,43 @@ public class Chatroom extends AppCompatActivity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch(msg.what){
-
                 case update_message:{/////받은 데이터를 리스트뷰에
-                    chatAdapter.addItem(receiveitem);
+                    chatAdapter.addItemYou(receiveitem);
                     chatAdapter.notifyDataSetChanged();
                     break;
                 }
             }
         }
     };
+
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {////
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String query = "SELECT * FROM ChatMessage WHERE is_looked=0 and room_id= '" + who + "'"+"ORDER BY datetime(message_date) DESC LIMIT 1;";//////변수를 통해 하려면 ''를 통해 처리 한 쿼리를 사용해야함
+            JSONObject jsonObject=dBhelper.updatemessage(query);
+            System.out.println(jsonObject);
+
+            //분리한 데이터를 리스트뷰에 들어갈 아이템 객체로 변환 - 다른 사람이 보낸 메세지 타입
+            if(jsonObject.length()!=0){//////JSONObject가 비었는지 판단 - 길이로 판단해야됨
+                receiveitem = new ChatItem();
+                receiveitem.item_content = jsonObject.optString("message_content");
+                receiveitem.item_sender = jsonObject.optString("room_id");
+                receiveitem.item_date = jsonObject.optString("message_date");
+
+                receiveitem.setType(1);
+                handler.sendEmptyMessage(update_message);
+
+                String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
+                dBhelper.update(updateStateQuery);
+            }else{
+                System.out.println("다른 사람이 메세지를 보냄");
+            }
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(broadcastReceiver);
+    }
 }

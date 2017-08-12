@@ -1,0 +1,20 @@
+package com.example.nam.healthforyou;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.widget.Toast;
+
+/**
+ * Created by NAM on 2017-08-11.
+ */
+
+public class DatabaseChangedReceiver extends BroadcastReceiver {
+
+    public static String ACTION_DATABASE_CHANGED = "com.example.nam.healthforyou.DATABASE_CHANGED";
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        context.sendBroadcast(new Intent("updateChat"));//Service에서 BroadCastReceiver를 호출하면 다시 알려줌 DB가 바뀌었다!!!!
+    }
+}

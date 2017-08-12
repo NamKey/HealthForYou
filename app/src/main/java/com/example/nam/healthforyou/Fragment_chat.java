@@ -1,5 +1,7 @@
 package com.example.nam.healthforyou;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -33,6 +35,10 @@ public class Fragment_chat extends Fragment{
 
         chat = (LinearLayout)inflater.inflate(R.layout.frag_chat,container,false);
 
+        //어플 시작시에 Socket을 연다
+        ServicesocketThread servicesocketThread = new ServicesocketThread();
+        servicesocketThread.start();
+
         tabLayout = (TabLayout)chat.findViewById(R.id.tabLayout);
         tabLayout.addTab(tabLayout.newTab().setText("친구목록").setIcon(R.drawable.friend));
         tabLayout.addTab(tabLayout.newTab().setText("채팅목록").setIcon(R.drawable.chat));
@@ -65,5 +71,19 @@ public class Fragment_chat extends Fragment{
         });
 
         return chat;
+    }
+
+    //UI-Thread를 통해서 Socket을 열면 netWorkThreadException 발생 - Thread를 통해 쓰레드 시작
+    public class ServicesocketThread extends Thread{
+        @Override
+        public void run() {
+            startServiceMethod();
+        }
+    }
+
+    //서비스 시작. - 소켓 연결
+    public void startServiceMethod(){
+        Intent Service = new Intent(getActivity(), ClientSocketService.class);
+        getActivity().startService(Service);
     }
 }
