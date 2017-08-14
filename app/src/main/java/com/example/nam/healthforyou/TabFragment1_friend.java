@@ -135,6 +135,7 @@ public class TabFragment1_friend extends Fragment {
                     public void onClick(View v) {
                         alertDialog.dismiss();
                         Intent intent = new Intent(getActivity(),Chatroom.class);
+                        intent.putExtra("from",0);////개인간의 대화를 나타내는 인텐트 - 다이얼로그를 통해 올 수 있음
                         intent.putExtra("who",clickProfile.email);///인텐트를 통해 내가 누구한테 보내는지 채팅 액티비티로 넘겨줌
                         startActivity(intent);
                     }

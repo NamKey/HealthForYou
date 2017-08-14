@@ -287,7 +287,7 @@ public class DBhelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         System.out.println("DB insert : "+line);
         /////전송된 데이터를 구분자를 통해 분리함
-        String type = line.split(":",4)[0];//////그룹간의 대화인지
+        String roomid = line.split(":",4)[0];//////그룹간의 대화인지
         String who = line.split(":",4)[1];
         String message = line.split(":",4)[2];
         String date = line.split(":",4)[3];
@@ -296,7 +296,7 @@ public class DBhelper extends SQLiteOpenHelper {
 
         ContentValues values = new ContentValues();
         /////메세지에 들어있는 정보를 분류해야함
-        if(type.equals("ptop"))///개인간의 대화를 나타냄
+        if(roomid.equals("ptop"))///개인간의 대화를 나타냄
         {
             values.put("room_id",who);////개인간의 대화는 방의 id가 상대방으로 설정
             values.put("message_sender",who);//보낸 사람이 누구인지
@@ -307,7 +307,7 @@ public class DBhelper extends SQLiteOpenHelper {
 
         }else{///그룹채팅을 의미 방번호가 오게됨
 
-            values.put("room_id",type);////그룹간의 대화는 방의 id가 방고유번호 - 서버 RoomManager가 부여
+            values.put("room_id",roomid);////그룹간의 대화는 방의 id가 방고유번호 - 서버 RoomManager가 부여
             values.put("message_sender",who);////보낸 사람이 누구인지
             values.put("message_content",message);
             values.put("message_date",date);
@@ -343,6 +343,41 @@ public class DBhelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return message;
+    }
+
+    public List<JSONObject> getChatroomList(String _query)//메세지를 기준으로 방을 나누고 DB에서 긁어오는 메소드
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        List<JSONObject> chatroomList = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(_query, null);
+
+        // looping through all rows and adding to list
+
+        if (cursor.moveToFirst()) {
+            do {
+                JSONObject chatList = new JSONObject();
+                try {
+                    chatList.put("room_type",(cursor.getString(1)));
+                    chatList.put("room_id",(cursor.getString(2)));
+                    chatList.put("message_sender",(cursor.getString(3)));
+                    chatList.put("message_content",(cursor.getString(4)));
+                    chatList.put("message_date",(cursor.getString(5)));
+                    chatList.put("is_looked",(cursor.getString(6)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                // Adding contact to list
+                chatroomList.add(chatList);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        // 모든 healdata를 갖고옴
+
+        return chatroomList;
     }
 
 }

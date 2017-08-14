@@ -27,6 +27,7 @@ public class ListViewAdapter extends BaseAdapter {
     private static final int FRIENDLIST_TYPE=0;
     private static final int GROUPCHATLIST_TYPE=1;
     LayoutInflater inflater;
+
     @Override
     public int getCount() {
         return profileItems.size();
@@ -79,7 +80,12 @@ public class ListViewAdapter extends BaseAdapter {
                 iv_img.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
                 tv_name.setText(profileItem.name);
                 checkBox.setChecked(((ListView)parent).isItemChecked(position));////체크 박스 기억
-
+                if(checkBox.isChecked())
+                {
+                    profileItem.checked=true;
+                }else{
+                    profileItem.checked=false;
+                }
                 break;
             }
         }

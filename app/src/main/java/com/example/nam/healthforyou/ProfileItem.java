@@ -10,7 +10,7 @@ public class ProfileItem {
     public String profile;
     public String name;
     public String email;
-
+    public boolean checked=false;
     /////리스트뷰 타입을 분류
     public void setType(int type) { this.type = type ; }
     public int getType() { return this.type ; }

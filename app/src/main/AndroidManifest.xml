@@ -35,6 +35,7 @@
                 <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
             </intent-filter>
         </receiver>
+
         <receiver
             android:name=".DatabaseChangedReceiver"
             android:enabled="true">
@@ -103,7 +104,10 @@
         <activity
             android:name=".Chatroom"
             android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".AddGroupChat"></activity>
+        <activity android:name=".AddGroupChat"
+                  android:label=""/>
+
+
     </application>
 
 </manifest>

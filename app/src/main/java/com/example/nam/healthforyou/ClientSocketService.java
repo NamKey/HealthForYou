@@ -81,6 +81,7 @@ public class ClientSocketService extends Service {
     public interface ICallback {
         public void recvData(); //액티비티에서 선언한 콜백 함수.
         public void ReceiveMessage(String params);
+        public void Knowroom(String room_no);
     }
 
     private ICallback mCallback;
@@ -104,7 +105,7 @@ public class ClientSocketService extends Service {
         }
     }
 
-    ///메세지를 받는 쓰레드 객체 실행
+    ///메세지를 받는 쓰레드 객체 실행 - 액티비티에서 서비스를 실행하는 부분
     public void Receiving(){
         InputThread inputThread = new InputThread(socket,networkReader);
         inputThread.start();
@@ -112,6 +113,18 @@ public class ClientSocketService extends Service {
 
     public void SendMessage(String message,String who_receive){
         networkPrintwriter.println("/to "+who_receive+" "+message);
+        networkPrintwriter.flush();
+    }
+
+    public void RequestRoom(String member)
+    {
+        networkPrintwriter.println("/makeroom "+member);
+        networkPrintwriter.flush();
+    }
+
+    public void InfoMessage(String message,int room_no)
+    {
+        networkPrintwriter.println("/inform"+" "+room_no+" "+message);
         networkPrintwriter.flush();
     }
 
@@ -150,12 +163,20 @@ public class ClientSocketService extends Service {
                 while((line = br.readLine())!=null){
                     System.out.println(line);
                     //mCallback.ReceiveMessage(line);////입력을 받으면 액티비티로 값을 넘겨줌
-                    dBhelper.messageinsert(line);///로컬 DB에 socket을 통해 온값 저장
-                    ///////LocalDB에 저장
-                    ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄
-                    Intent intent = new Intent();
-                    intent.setAction("com.example.nam.healthforyou.DATABASE_CHANGED");
-                    mContext.sendBroadcast(intent);
+                    if(line.contains("room_no"))
+                    {
+                        System.out.println("방완성");
+                        System.out.println("방번호 : "+line.substring(8));
+                        mCallback.Knowroom(line.substring(8));
+                    }else{
+                        dBhelper.messageinsert(line);///로컬 DB에 socket을 통해 온값 저장
+                        ///////LocalDB에 저장
+                        ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄
+                        Intent intent = new Intent();
+                        intent.setAction("com.example.nam.healthforyou.DATABASE_CHANGED");
+                        mContext.sendBroadcast(intent);
+                    }
+
                 }
             }catch(Exception e){
                 e.printStackTrace();

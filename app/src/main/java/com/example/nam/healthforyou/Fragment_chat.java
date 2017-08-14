@@ -35,7 +35,7 @@ public class Fragment_chat extends Fragment{
 
         chat = (LinearLayout)inflater.inflate(R.layout.frag_chat,container,false);
 
-        //어플 시작시에 Socket을 연다
+        //채팅창을 누를 시에 Socket을 연다
         ServicesocketThread servicesocketThread = new ServicesocketThread();
         servicesocketThread.start();
 

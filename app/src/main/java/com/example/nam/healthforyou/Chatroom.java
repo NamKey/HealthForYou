@@ -36,6 +36,10 @@ public class Chatroom extends AppCompatActivity {
     ChatItem receiveitem;
     DBhelper dBhelper;
     Context mContext;
+    int room_id;
+
+    int sendtype;///채팅방의 종류
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,9 +63,7 @@ public class Chatroom extends AppCompatActivity {
         startServcie_Thread socket_thread = new startServcie_Thread();
         socket_thread.start();
 
-        ////친구 이메일 인텐트로 받기
-        Intent intent = getIntent();
-        who = intent.getStringExtra("who");////누구한테 보낼지 정하는 부분
+        ///전송버튼
         Button btn_send = (Button)findViewById(R.id.btn_health_send);
         btn_send.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -82,13 +84,21 @@ public class Chatroom extends AppCompatActivity {
                 me_message.item_content=message;
 
                 message = message + ":" + formatDate;
-                System.out.println(message);
-
+                System.out.println(message+"메세지");
+                System.out.println("sendtype: "+sendtype);
+                System.out.println("who "+who);
                 final String finalMessage = message;
                 Thread thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        mService.SendMessage(finalMessage,who);
+                        if(sendtype==0)
+                        {
+                            mService.SendMessage(finalMessage,who);
+                        }else if(sendtype==1)
+                        {
+                            mService.InfoMessage(finalMessage,Integer.parseInt(who));/////who를 통해 보내므로 parseInt를 통해 값을 보내야됨
+                        }
+
                     }
                 });
 
@@ -113,6 +123,41 @@ public class Chatroom extends AppCompatActivity {
             ClientSocketService.ClientSocketServiceBinder binder = (ClientSocketService.ClientSocketServiceBinder) service;
             mService = binder.getService(); //서비스 받아옴
             mService.registerCallback(mCallback); //콜백 등록
+            ///서비스는 액티비티가 다뜨지 않으면 액티비티와 연결되지 않음
+            ////대화 대상이 누구인지 인텐트를 통해 받는 부분
+            Intent intent = getIntent();
+            int from = intent.getIntExtra("from",-1);
+            switch(from)
+            {
+                case 0:
+                {
+                    who = intent.getStringExtra("who");////누구한테 보낼지 정하는 부분
+                    System.out.println("who"+who);
+                    sendtype = 0;
+                    break;
+                }
+
+                case 1://초기 방 생성시 방을 요청해 달라고 하는 부분
+                {
+                    final String groupList = intent.getStringExtra("groupChat");
+                    System.out.println("groupList"+groupList);
+                    Thread thread = new Thread(){
+                        @Override
+                        public void run() {
+                            mService.RequestRoom(groupList);////방을 만들어달라 요청
+                        }
+                    };
+                    thread.start();
+                    sendtype = 1;
+                }
+
+                case 2://채팅방은 이미 만들어져 있어서 보내기만 하면 되는 상황
+                {
+                    who = intent.getStringExtra("room_id");///room_id를 받아옴
+                    sendtype=1;
+                    System.out.println("방아이디 " + who);
+                }
+            }
         }
 
         // Called when the connection with the service disconnects unexpectedly
@@ -134,6 +179,11 @@ public class Chatroom extends AppCompatActivity {
             String who = line.split(":",3)[0];
             String message = line.split(":",3)[1];
             String date = line.split(":",3)[2];
+        }
+
+        @Override
+        public void Knowroom(String room_no) {
+            who = room_no;///////room_no를 who에다가 담음
         }
     };
 
@@ -176,6 +226,7 @@ public class Chatroom extends AppCompatActivity {
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {////
         @Override
         public void onReceive(Context context, Intent intent) {
+            System.out.println(who+"broadcastReceiver who");
             String query = "SELECT * FROM ChatMessage WHERE is_looked=0 and room_id= '" + who + "'"+"ORDER BY datetime(message_date) DESC LIMIT 1;";//////변수를 통해 하려면 ''를 통해 처리 한 쿼리를 사용해야함
             JSONObject jsonObject=dBhelper.updatemessage(query);
             System.out.println(jsonObject);
@@ -184,9 +235,8 @@ public class Chatroom extends AppCompatActivity {
             if(jsonObject.length()!=0){//////JSONObject가 비었는지 판단 - 길이로 판단해야됨
                 receiveitem = new ChatItem();
                 receiveitem.item_content = jsonObject.optString("message_content");
-                receiveitem.item_sender = jsonObject.optString("room_id");
+                receiveitem.item_sender = jsonObject.optString("message_sender");
                 receiveitem.item_date = jsonObject.optString("message_date");
-
                 receiveitem.setType(1);
                 handler.sendEmptyMessage(update_message);
 
@@ -197,6 +247,11 @@ public class Chatroom extends AppCompatActivity {
             }
         }
     };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
 
     @Override
     protected void onDestroy() {
