@@ -107,6 +107,20 @@ public class ListViewAdapter extends BaseAdapter {
         profileItems.add(profileItem);//////유저의 프로필 추가
     }
 
+    public void addItemNewFriend(JSONObject friendprofile)
+    {
+        ProfileItem profileItem = new ProfileItem();
+        try {
+            profileItem.name=friendprofile.getString("user_name");//이름을 담고
+            profileItem.email=friendprofile.getString("user_friend");//이메일을 담고
+            profileItem.setType(FRIENDLIST_TYPE);
+            ////프로필 사진을 담아야됨
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        profileItems.add(0,profileItem);//////유저의 프로필 추가
+    }
+
     public void addGroupFriend(ProfileItem profileItem)
     {
         profileItems.add(profileItem);//////유저의 프로필 추가

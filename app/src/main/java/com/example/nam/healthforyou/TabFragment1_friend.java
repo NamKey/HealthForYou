@@ -43,6 +43,7 @@ public class TabFragment1_friend extends Fragment {
     AlertDialog alertDialog;
     View layout;
 
+    final static int ACT_ADDFRIEND =0;
     private FloatingActionMenu fam;
     private FloatingActionButton fab_team_chat, fab_add_user;
     @Override
@@ -70,21 +71,6 @@ public class TabFragment1_friend extends Fragment {
         profileList = (ListView)tabfrag_friend.findViewById(R.id.lv_friendlist);//리스트뷰
         profileList.setAdapter(listViewAdapter);///리스트뷰와 아답터 연결
         profileList.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-        ///친구추가 액티비티로 이동하는 버튼
-        /*Button btn_addfriend = (Button)tabfrag_friend.findViewById(R.id.btn_addfriend);
-        btn_addfriend.bringToFront();
-        btn_addfriend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                listViewAdapter.Deleteall();///모든 리스트뷰 아이템 삭제 - 페이징 구현 필요!!!!20170824
-                Intent intent =new Intent(getActivity(),Addfriend.class);
-                startActivity(intent);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
-                    getActivity().overridePendingTransition(R.anim.slide_up,R.anim.no_change);
-                }
-            }
-        });*/
 
         fab_team_chat = (FloatingActionButton)tabfrag_friend.findViewById(R.id.fab2);
         fab_add_user = (FloatingActionButton)tabfrag_friend.findViewById(R.id.fab3);
@@ -156,9 +142,8 @@ public class TabFragment1_friend extends Fragment {
             @Override
             public void onClick(View view) {
                 if (view == fab_add_user) {//////////친구 추가
-                    listViewAdapter.Deleteall();///모든 리스트뷰 아이템 삭제 - 페이징 구현 필요!!!!20170824
                     Intent intent =new Intent(getActivity(),Addfriend.class);
-                    startActivity(intent);
+                    startActivityForResult(intent,ACT_ADDFRIEND);////친구를 추가
                     getActivity().overridePendingTransition(R.anim.slide_up,R.anim.no_change);
 
                 } else if (view == fab_team_chat) {
@@ -173,6 +158,18 @@ public class TabFragment1_friend extends Fragment {
 
     private void showToast(String msg) {
         Toast.makeText(getActivity(),msg,Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode==ACT_ADDFRIEND)////최근에 추가한 친구를 상단에 표시
+        {
+            listViewAdapter.addItemNewFriend(dBhelper.getnewfriend());///최근에 등록된 친구를 리스트뷰에 등록
+            listViewAdapter.notifyDataSetChanged();
+        }
+
     }
 
     @Override

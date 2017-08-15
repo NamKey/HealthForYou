@@ -266,6 +266,32 @@ public class DBhelper extends SQLiteOpenHelper {
         return friendlist;
     }
 
+    public JSONObject getnewfriend()
+    {
+        // Select All Query
+        String selectQuery = "SELECT * FROM User_friend ORDER BY friend_no DESC limit 1";
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        JSONObject newfriend = new JSONObject();
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                try {
+                    newfriend.put("user_friend",(cursor.getString(1)));
+                    newfriend.put("user_name",(cursor.getString(2)));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        // 모든 healdata를 갖고옴
+        return newfriend;
+    }
+
     public int PrintCountfriend() {
         SQLiteDatabase db = getReadableDatabase();
         String str="";

@@ -37,7 +37,7 @@ public class Chatroom extends AppCompatActivity {
     DBhelper dBhelper;
     Context mContext;
     int room_id;
-
+    boolean mServiceIsregistered;
     int sendtype;///채팅방의 종류
 
     @Override
@@ -125,6 +125,7 @@ public class Chatroom extends AppCompatActivity {
             mService.registerCallback(mCallback); //콜백 등록
             ///서비스는 액티비티가 다뜨지 않으면 액티비티와 연결되지 않음
             ////대화 대상이 누구인지 인텐트를 통해 받는 부분
+            mServiceIsregistered=true;
             Intent intent = getIntent();
             int from = intent.getIntExtra("from",-1);
             switch(from)
@@ -206,7 +207,9 @@ public class Chatroom extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        unbindService(mConnection);//서비스와 액티비티의 통신을 끊음
+        if(mServiceIsregistered){/////
+            unbindService(mConnection);//서비스와 액티비티의 통신을 끊음
+        }
     }
 
     Handler handler = new Handler(){

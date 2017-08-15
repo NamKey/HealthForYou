@@ -1,5 +1,6 @@
 package com.example.nam.healthforyou;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -94,7 +95,8 @@ public class Addfriend extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-
+                    Intent intent = getIntent();
+                    setResult(RESULT_OK,intent);
                     finish();//추가페이지 종료
                     break;
 

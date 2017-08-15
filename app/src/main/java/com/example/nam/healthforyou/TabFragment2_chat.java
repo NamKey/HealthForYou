@@ -49,11 +49,6 @@ public class TabFragment2_chat extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         chat_list = (RelativeLayout)inflater.inflate(R.layout.tab_frag_chat,container,false); //친구목록을 갖고 있는 프레그먼트의 레이아웃
 
-        if(!mIsReceiverRegistered){
-            getActivity().registerReceiver(broadcastReceiver, new IntentFilter("updateChatroom"));///새로 메세지에 대한 채팅방 확인해보라는 말
-            mIsReceiverRegistered = true;
-        }
-
         dBhelper = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB 접근
 
         chatroomAdapter = new ChatroomAdapter();///리스트뷰 아답터 선언
@@ -161,6 +156,16 @@ public class TabFragment2_chat extends Fragment {
             }
         }
     };
+    //TODO 2017815 - registerReceiver 관련 이슈 - 그룹채팅을 하면 채팅방이 업데이트가 안됨
+    ////registerReceiver 생명주기 고려
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(!mIsReceiverRegistered){////onCreatView에 놓을 경우 화면 전환을 할 시 처음에는 되다가 안되는 경우가 생김
+            getActivity().registerReceiver(broadcastReceiver, new IntentFilter("updateChatroom"));///새로 메세지에 대한 채팅방 확인해보라는 말
+            mIsReceiverRegistered = true;
+        }
+    }
 
     @Override
     public void onPause() {
