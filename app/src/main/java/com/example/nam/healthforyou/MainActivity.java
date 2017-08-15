@@ -1,5 +1,6 @@
 package com.example.nam.healthforyou;
 
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,7 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
@@ -22,6 +24,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
+
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.opencv.android.OpenCVLoader;
 
@@ -44,6 +50,8 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final String TAG ="MainActivity";
+
     static {
         System.loadLibrary("native-lib");
     }
@@ -112,9 +120,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
-    // AsyncTask를 통해 HttpURLConnection 수행.
-    //NetworkTask networkTask = new NetworkTask(strurl, null);
-    //networkTask.execute();
+
+    FirebaseInstanceId.getInstance().getToken();
+
     }
 
     @Override

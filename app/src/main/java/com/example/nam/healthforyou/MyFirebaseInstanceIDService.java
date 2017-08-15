@@ -42,5 +42,6 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
 
     private void sendRegistrationToServer(String token) {
         // TODO: Implement this method to send token to your app server.
+        System.out.println(token+"이거를 보냄");///어디로 보내야하나 서버로 보내야됨
     }
 }

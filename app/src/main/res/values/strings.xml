@@ -28,4 +28,23 @@
     <string name="ruleforuse1">본 어플을 통해 측정된 심박수가 특정 조건에서 신뢰도가 높다할 지라도 결코 의료진단용으로 사용되어서는 안됩니다.</string>
     <string name="ruleforuse2">본 어플이 제공하는 안정시 심박수 점검기능은 성인의 표준 심박수 범위와 비교하는 데만 목적을 두고 있습니다.</string>
     <string name="ruleforuse3">전반적인 건강상태를 검사받고자 하는 경우에는 의사에게 문의하시기 바랍니다.</string>
+
+
+
+    <string name="quickstart_message">Click the SUBSCRIBE TO NEWS button below to subscribe to the
+    news topic. Messages sent to the news topic will be received. The LOG TOKEN button logs the
+    InstanceID token to logcat.</string>
+    <string name="subscribe_to_news">Subscribe To News</string>
+    <string name="log_token">Log Token</string>
+
+    <string name="msg_subscribed">Subscribed to news topic</string>
+    <string name="msg_token_fmt" translatable="false">InstanceID Token: %s</string>
+
+    <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
+    <!--
+        This is the name that users will see when interacting with this channel.
+        It should describe the category of notifications that will be sent through this channel
+     -->
+    <string name="default_notification_channel_name" translatable="true">News</string>
+
 </resources>
