@@ -61,7 +61,14 @@ public class TabFragment2_chat extends Fragment {
 
         for(int i=0;i<roomlist.size();i++)
         {
+            JSONObject friendinfo=dBhelper.getFriend(roomlist.get(i).optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
+            try {
+                roomlist.get(i).put("room_name",friendinfo.optString("user_name"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             chatroomAdapter.addRoom(roomlist.get(i));
+
         }
 
         chatroomlv.setOnItemClickListener(new AdapterView.OnItemClickListener() {

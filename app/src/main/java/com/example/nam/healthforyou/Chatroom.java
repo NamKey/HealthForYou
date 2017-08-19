@@ -69,7 +69,8 @@ public class Chatroom extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 EditText et_message = (EditText)findViewById(R.id.et_content);
-                String message = et_message.getText().toString();
+                final String message = et_message.getText().toString();
+
                 //내가 보낸 메세지를 Listview에 추가
                 ChatItem me_message = new ChatItem();
                 ////시간을 나타내줌
@@ -79,26 +80,25 @@ public class Chatroom extends AppCompatActivity {
                 // 시간을 나타냇 포맷을 정한다 ( yyyy/MM/dd 같은 형태로 변형 가능 )
                 SimpleDateFormat sdfNow = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 // nowDate 변수에 값을 저장한다.
-                String formatDate = sdfNow.format(date);
+                final String formatDate = sdfNow.format(date);
                 ///시간을 더해주기 전에 아이템에 넣어줌
                 me_message.item_content=message;
 
-                message = message + ":" + formatDate;
                 System.out.println(message+"메세지");
                 System.out.println("sendtype: "+sendtype);
                 System.out.println("who "+who);
-                final String finalMessage = message;
+
+                //////서비스를 통해 보내는 부분
                 Thread thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
                         if(sendtype==0)
                         {
-                            mService.SendMessage(finalMessage,who);
+                            mService.SendMessage(who,message,formatDate);///누구에게-메세지-시간
                         }else if(sendtype==1)
                         {
-                            mService.InfoMessage(finalMessage,Integer.parseInt(who));/////who를 통해 보내므로 parseInt를 통해 값을 보내야됨
+                            mService.InfoMessage(Integer.parseInt(who),message,formatDate);/////who를 통해 보내므로 parseInt를 통해 값을 보내야됨
                         }
-
                     }
                 });
 
@@ -169,21 +169,9 @@ public class Chatroom extends AppCompatActivity {
 
     //서비스에서 아래의 콜백 함수를 호출하며, 콜백 함수에서는 액티비티에서 처리할 내용 입력
     private ClientSocketService.ICallback mCallback = new ClientSocketService.ICallback() {
-        public void recvData() {
-            mService.ChatServiceFunc();
-            //처리할 일들..
-        }
-
-        public void ReceiveMessage(String line)
-        {
-            /////전송된 데이터를 구분자를 통해 분리함
-            String who = line.split(":",3)[0];
-            String message = line.split(":",3)[1];
-            String date = line.split(":",3)[2];
-        }
 
         @Override
-        public void Knowroom(String room_no) {
+        public void Knowroom(String room_no){
             who = room_no;///////room_no를 who에다가 담음
         }
     };
@@ -231,14 +219,21 @@ public class Chatroom extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             System.out.println(who+"broadcastReceiver who");
             String query = "SELECT * FROM ChatMessage WHERE is_looked=0 and room_id= '" + who + "'"+"ORDER BY datetime(message_date) DESC LIMIT 1;";//////변수를 통해 하려면 ''를 통해 처리 한 쿼리를 사용해야함
-            JSONObject jsonObject=dBhelper.updatemessage(query);
+            JSONObject jsonObject=dBhelper.updatemessage(query);//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
             System.out.println(jsonObject);
-
+            JSONObject friendinfo=dBhelper.getFriend(jsonObject.optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
             //분리한 데이터를 리스트뷰에 들어갈 아이템 객체로 변환 - 다른 사람이 보낸 메세지 타입
             if(jsonObject.length()!=0){//////JSONObject가 비었는지 판단 - 길이로 판단해야됨
                 receiveitem = new ChatItem();
                 receiveitem.item_content = jsonObject.optString("message_content");
-                receiveitem.item_sender = jsonObject.optString("message_sender");
+
+                if(friendinfo.length()!=0)//친구에 대한 정보가 있으면
+                {
+                    receiveitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 보여줌
+                }else{//없으면
+                    receiveitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+                }
+
                 receiveitem.item_date = jsonObject.optString("message_date");
                 receiveitem.setType(1);
                 handler.sendEmptyMessage(update_message);

@@ -308,6 +308,30 @@ public class DBhelper extends SQLiteOpenHelper {
         return cursor.getCount();
     }
 
+    public JSONObject getFriend(String friendid)
+    {
+        // Select All Query
+        String selectQuery = "SELECT * FROM User_friend WHERE user_friend= '" + friendid + "';";
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        JSONObject friendinfo = new JSONObject();
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                try {
+                    friendinfo.put("user_name",(cursor.getString(2)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        // 모든 healdata를 갖고옴
+        return friendinfo;
+    }
+
     ////메세지를 등록
     public void messageinsert(String line) {
         SQLiteDatabase db = getWritableDatabase();
@@ -339,6 +363,46 @@ public class DBhelper extends SQLiteOpenHelper {
             values.put("message_date",date);
             values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
             values.put("room_type",1);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
+        }
+
+        db.insert("ChatMessage",null,values);
+        db.close();
+    }
+
+    ////메세지를 등록 - 보내는 형식부터 JSON으로 할것
+    public void messagejsoninsert(JSONObject jsonMessage) {
+        SQLiteDatabase db = getWritableDatabase();
+        System.out.println("DB insert : "+jsonMessage.toString());
+        /////전송된 데이터를 구분자를 통해 분리함
+
+        //분리한 데이터를 SQlite에 저장 - 다른 사람이 보낸 메세지 타입
+
+        ContentValues values = new ContentValues();
+        /////메세지에 들어있는 정보를 분류해야함
+        /////TODO 사진, 심박데이터가 있는 판단해야됨
+        try {
+            if(jsonMessage.getString("command").equals("/to"))///개인간의 대화를 나타냄
+            {
+                values.put("room_id",jsonMessage.getString("from"));////개인간의 대화는 방의 id가 상대방으로 설정
+                values.put("message_sender",jsonMessage.getString("from"));//보낸 사람이 누구인지
+                values.put("message_content",jsonMessage.getString("message"));///메세지의 내용
+                values.put("message_date",jsonMessage.getString("date"));///메세지를 보낸 시간
+                values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
+                values.put("room_type",0);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
+
+            }else if(jsonMessage.getString("command").equals("/inform")){///그룹채팅을 의미 방번호가 오게됨
+
+                values.put("room_id",jsonMessage.getString("room_no"));////그룹간의 대화는 방의 id가 방고유번호 - 서버 RoomManager가 부여
+                values.put("message_sender",jsonMessage.getString("from"));////보낸 사람이 누구인지
+                values.put("message_content",jsonMessage.getString("message"));
+                values.put("message_date",jsonMessage.getString("date"));
+                values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
+                values.put("room_type",1);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
+            }else{////그룹채팅을 저장
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
         db.insert("ChatMessage",null,values);

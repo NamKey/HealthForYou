@@ -55,7 +55,7 @@ public class ChatroomAdapter extends BaseAdapter {
         TextView tv_recentmessage = (TextView)convertView.findViewById(R.id.tv_recentchat);
 
         iv_chatroomprofile.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
-        tv_chatroomid.setText(chatroomitem.room_id);
+        tv_chatroomid.setText(chatroomitem.room_name);////방의 이름
         tv_recentdate.setText(chatroomitem.recentdate);
         tv_recentmessage.setText(chatroomitem.recentmessage);
 
@@ -66,6 +66,7 @@ public class ChatroomAdapter extends BaseAdapter {
         Chatroomitem chatroomitem = new Chatroomitem();
         try {
             chatroomitem.room_id=chatroom.getString("room_id");
+            chatroomitem.room_name=chatroom.getString("room_name");
             chatroomitem.recentdate = chatroom.getString("message_date");
             chatroomitem.recentmessage = chatroom.getString("message_content");
             chatroomitem.roomtype = chatroom.getInt("room_type");
@@ -81,6 +82,7 @@ public class ChatroomAdapter extends BaseAdapter {
         Chatroomitem chatroomitem = new Chatroomitem();
         try {
             chatroomitem.room_id=chatroom.getString("room_id");
+            chatroomitem.room_name=chatroom.getString("room_name");
             chatroomitem.recentdate = chatroom.getString("message_date");
             chatroomitem.recentmessage = chatroom.getString("message_content");
             chatroomitem.roomtype = chatroom.getInt("room_type");

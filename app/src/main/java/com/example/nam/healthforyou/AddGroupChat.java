@@ -119,7 +119,6 @@ public class AddGroupChat extends AppCompatActivity {
                         friendcount++;////친구인원수 세는 부분
                     }
                 }
-                sb.append(";");
                 System.out.println("확인");
                 System.out.println(sb.toString().substring(1));//2부터 시작하는 이유 초기에 :를 붙여주기 때문에 제거해줌
                 ///////친구의 갯수를 생각해야됨

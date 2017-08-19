@@ -86,4 +86,6 @@ public class Fragment_chat extends Fragment{
         Intent Service = new Intent(getActivity(), ClientSocketService.class);
         getActivity().startService(Service);
     }
+
+
 }

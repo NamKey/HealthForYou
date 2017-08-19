@@ -29,12 +29,17 @@ import android.widget.Toast;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -48,6 +53,8 @@ import java.util.Locale;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
+
+import static com.example.nam.healthforyou.Login.msCookieManager;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG ="MainActivity";
@@ -121,7 +128,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-    FirebaseInstanceId.getInstance().getToken();
+        String token=FirebaseInstanceId.getInstance().getToken();/////Firebase에서 Token을 받아오는 부분
+        ///내 서버에 토큰을 저장을 해야함
+        System.out.println(token+" tokentoken");
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("token",token);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        savetokenTask savetokenTask = new savetokenTask();
+        savetokenTask.execute(jsonObject.toString());
 
     }
 
@@ -221,6 +239,90 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             return null;
         }
+    }
+
+    public class savetokenTask extends AsyncTask<String,String,String>
+    {
+        String result;
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            System.out.println(s);
+            if(s.equals("true"))
+            {
+
+            }else{
+
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String strUrl="http://kakapo12.vps.phps.kr/fcmtokenrequest.php";
+
+            try {
+                URL url = new URL(strUrl);
+                con = (HttpURLConnection) url.openConnection();//커넥션을 여는 부분
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");// 타입설정(application/json) 형식으로 전송 (Request Body 전달시 application/json로 서버에 전달.)
+                con.setDoInput(true);
+                con.setDoOutput(true);
+                //쿠키매니저에 저장되어있는 세션 쿠키를 사용하여 통신
+                if (msCookieManager.getCookieStore().getCookies().size() > 0) {
+                    // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
+                    con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
+                    System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
+                }
+                OutputStream os = con.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
+
+                writer.write(params[0]);
+
+                writer.flush();
+                writer.close();
+                os.close();
+
+                con.connect();
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(),"UTF-8"));
+
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while((line = br.readLine())!=null)
+                {
+                    if(sb.length()>0)
+                    {
+                        sb.append("\n");
+                    }
+                    sb.append(line);
+                }
+
+                //결과를 보여주는 부분 서버에서 true or false
+                result = sb.toString();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                if(con!=null)
+                {
+                    con.disconnect();
+                }
+            }
+
+            return result;
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Intent Service = new Intent(MainActivity.this, ClientSocketService.class);///메인액티비티가 destroy되면
+        stopService(Service);//서비스를 중지시키고 socket연결을 종료
     }
 }
 
