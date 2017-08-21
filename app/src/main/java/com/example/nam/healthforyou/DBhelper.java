@@ -12,6 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -30,6 +31,7 @@ public class DBhelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER,graph_image TEXT);");//건강데이터에 관한 로컬 DB table
         db.execSQL("CREATE TABLE User_friend(friend_no INTEGER PRIMARY KEY AUTOINCREMENT,user_friend TEXT,friendname TEXT);");//친구목록에 대한 로컬 DB table
         db.execSQL("CREATE TABLE ChatMessage(message_no INTEGER PRIMARY KEY AUTOINCREMENT,room_type INTEGER,room_id TEXT,message_sender TEXT,message_content TEXT,message_date TEXT,is_looked INTEGER);");//채팅방에 따른 메세지 정보
+        db.execSQL("CREATE TABLE GroupChat(room_no INTEGER PRIMARY KEY AUTOINCREMENT,room_id TEXT,room_member TEXT)");//그룹 채팅에 대한 방정보 생성 - 멤버만 표시
         Toast.makeText(mContext,"Table 생성완료", Toast.LENGTH_SHORT).show();
     }
 
@@ -117,9 +119,10 @@ public class DBhelper extends SQLiteOpenHelper {
                 str += cursor.getInt(0)
                         + "\n";
             }
-            cursor.close();
 
 
+        cursor.close();
+        db.close();
         return cursor.getCount();
     }
 
@@ -143,10 +146,12 @@ public class DBhelper extends SQLiteOpenHelper {
                 healthInfos.add(healthInfo);
             } while (cursor.moveToNext());
         }
+        db.close();
+        cursor.close();
         return healthInfos;
     }
 
-    public JSONObject PrintMyAvgData(String _query) {/////나의 심박수 평균과
+    public JSONObject PrintMyAvgData(String _query) {/////나의 심박수 평균과 호흡 수 평균 데이터
         SQLiteDatabase db = getReadableDatabase();
         JSONObject healthInfo =new JSONObject();
         Cursor cursor = db.rawQuery(_query, null);
@@ -162,7 +167,32 @@ public class DBhelper extends SQLiteOpenHelper {
 
             } while (cursor.moveToNext());
         }
+        cursor.close();
+        db.close();
         return healthInfo;
+    }
+
+    public ArrayList<JSONObject> PrintMyAvgDataForgridView(String _query) {/////나의 심박수 평균과 호흡 수 평균 데이터
+        SQLiteDatabase db = getReadableDatabase();
+
+        ArrayList<JSONObject> healthInfoGridArray = new ArrayList<>();
+        Cursor cursor = db.rawQuery(_query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                JSONObject healthInfo =new JSONObject();
+                try {
+                    healthInfo.put("user_bpm",(cursor.getInt(0)));
+                    healthInfo.put("user_res",(cursor.getInt(1)));
+                    healthInfo.put("data_signdate",(cursor.getString(2)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                healthInfoGridArray.add(healthInfo);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return healthInfoGridArray;
     }
 
     public JSONObject PrintHealthData(String _query) {
@@ -184,7 +214,52 @@ public class DBhelper extends SQLiteOpenHelper {
 
             } while (cursor.moveToNext());
         }
+        cursor.close();
+        db.close();
+        return healthInfo;
+    }
 
+    public JSONObject PrintHealthChatdata(String _query) {///채팅용 DB 긁어오기
+        SQLiteDatabase db = getReadableDatabase();
+        JSONObject healthInfo =new JSONObject();
+        Cursor cursor = db.rawQuery(_query, null);
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                try {
+                    healthInfo.put("user_bpm",(cursor.getInt(1)));
+                    healthInfo.put("user_res",(cursor.getInt(2)));
+                    healthInfo.put("data_signdate",cursor.getString(3));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return healthInfo;
+    }
+
+    public JSONObject PrintHealthChatdata_forgrid(String _query) {///채팅용 DB 긁어오기
+        SQLiteDatabase db = getReadableDatabase();
+        JSONObject healthInfo =new JSONObject();
+        Cursor cursor = db.rawQuery(_query, null);
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                try {
+                    healthInfo.put("user_bpm",(cursor.getInt(0)));
+                    healthInfo.put("user_res",(cursor.getInt(1)));
+                    healthInfo.put("data_signdate",(cursor.getString(2)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
         return healthInfo;
     }
 
@@ -215,6 +290,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
+        db.close();
         // 모든 healdata를 갖고옴
         return healthInfos;
     }
@@ -262,6 +338,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
+        db.close();
         // 모든 healdata를 갖고옴
         return friendlist;
     }
@@ -288,6 +365,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
+        db.close();
         // 모든 healdata를 갖고옴
         return newfriend;
     }
@@ -303,7 +381,7 @@ public class DBhelper extends SQLiteOpenHelper {
                     + "\n";
         }
         cursor.close();
-
+        db.close();
 
         return cursor.getCount();
     }
@@ -328,46 +406,11 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
+        db.close();
         // 모든 healdata를 갖고옴
         return friendinfo;
     }
 
-    ////메세지를 등록
-    public void messageinsert(String line) {
-        SQLiteDatabase db = getWritableDatabase();
-        System.out.println("DB insert : "+line);
-        /////전송된 데이터를 구분자를 통해 분리함
-        String roomid = line.split(":",4)[0];//////그룹간의 대화인지
-        String who = line.split(":",4)[1];
-        String message = line.split(":",4)[2];
-        String date = line.split(":",4)[3];
-
-        //분리한 데이터를 SQlite에 저장 - 다른 사람이 보낸 메세지 타입
-
-        ContentValues values = new ContentValues();
-        /////메세지에 들어있는 정보를 분류해야함
-        if(roomid.equals("ptop"))///개인간의 대화를 나타냄
-        {
-            values.put("room_id",who);////개인간의 대화는 방의 id가 상대방으로 설정
-            values.put("message_sender",who);//보낸 사람이 누구인지
-            values.put("message_content",message);///메세지의 내용
-            values.put("message_date",date);///메세지를 보낸 시간
-            values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
-            values.put("room_type",0);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
-
-        }else{///그룹채팅을 의미 방번호가 오게됨
-
-            values.put("room_id",roomid);////그룹간의 대화는 방의 id가 방고유번호 - 서버 RoomManager가 부여
-            values.put("message_sender",who);////보낸 사람이 누구인지
-            values.put("message_content",message);
-            values.put("message_date",date);
-            values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
-            values.put("room_type",1);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
-        }
-
-        db.insert("ChatMessage",null,values);
-        db.close();
-    }
 
     ////메세지를 등록 - 보내는 형식부터 JSON으로 할것
     public void messagejsoninsert(JSONObject jsonMessage) {
@@ -381,25 +424,35 @@ public class DBhelper extends SQLiteOpenHelper {
         /////메세지에 들어있는 정보를 분류해야함
         /////TODO 사진, 심박데이터가 있는 판단해야됨
         try {
-            if(jsonMessage.getString("command").equals("/to"))///개인간의 대화를 나타냄
+            if(jsonMessage.getString("command").equals("/to")||jsonMessage.getString("command").equals("/tohealth"))///개인간의 대화를 나타냄
             {
-                values.put("room_id",jsonMessage.getString("from"));////개인간의 대화는 방의 id가 상대방으로 설정
+                if(jsonMessage.optString("from").equals("me"))///내가 보낸거면
+                {
+                    values.put("room_id",jsonMessage.optString("who"));//이거는 내가 보낸것에 대한 id
+                    values.put("is_looked",1);///보였는지 판단 보였으면 1,안보였으면 0
+                }else{
+                    values.put("room_id",jsonMessage.getString("from"));////개인간의 대화는 방의 id가 상대방으로 설정
+                    values.put("is_looked",0);///안보인 것
+                }
                 values.put("message_sender",jsonMessage.getString("from"));//보낸 사람이 누구인지
                 values.put("message_content",jsonMessage.getString("message"));///메세지의 내용
                 values.put("message_date",jsonMessage.getString("date"));///메세지를 보낸 시간
-                values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
+
                 values.put("room_type",0);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
 
-            }else if(jsonMessage.getString("command").equals("/inform")){///그룹채팅을 의미 방번호가 오게됨
+            }else if(jsonMessage.getString("command").equals("/inform")||jsonMessage.getString("command").equals("/informhealth")){///그룹채팅을 의미 방번호가 오게됨
 
                 values.put("room_id",jsonMessage.getString("room_no"));////그룹간의 대화는 방의 id가 방고유번호 - 서버 RoomManager가 부여
                 values.put("message_sender",jsonMessage.getString("from"));////보낸 사람이 누구인지
                 values.put("message_content",jsonMessage.getString("message"));
                 values.put("message_date",jsonMessage.getString("date"));
-                values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
+                if(jsonMessage.optString("from").equals("me"))//구분하는 이유 내가 적은거는 나한테 바로 보임
+                {
+                    values.put("is_looked",1);///보였는지 판단 보였으면 1,안보였으면 0
+                }else{
+                    values.put("is_looked",0);///보였는지 판단 보였으면 1,안보였으면 0
+                }
                 values.put("room_type",1);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
-            }else{////그룹채팅을 저장
-
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -435,6 +488,36 @@ public class DBhelper extends SQLiteOpenHelper {
         return message;
     }
 
+    public ArrayList<JSONObject> getAllmessage(String _query){
+
+        SQLiteDatabase db = getReadableDatabase();
+        ArrayList<JSONObject> allmessage = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(_query, null);
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                JSONObject message =new JSONObject();
+                try {
+                    message.put("room_type",(cursor.getString(1)));
+                    message.put("room_id",cursor.getString(2));
+                    message.put("message_sender",cursor.getString(3));
+                    message.put("message_content",(cursor.getString(4)));
+                    message.put("message_date",cursor.getString(5));
+                    message.put("is_looked",cursor.getInt(6));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                allmessage.add(message);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return allmessage;
+    }
+
     public List<JSONObject> getChatroomList(String _query)//메세지를 기준으로 방을 나누고 DB에서 긁어오는 메소드
     {
         SQLiteDatabase db = getReadableDatabase();
@@ -468,6 +551,58 @@ public class DBhelper extends SQLiteOpenHelper {
         // 모든 healdata를 갖고옴
 
         return chatroomList;
+    }
+
+    ////메세지를 등록 - 보내는 형식부터 JSON으로 할것
+    public void makeRoominsert(JSONObject roomInfo) {
+        SQLiteDatabase db = getWritableDatabase();
+        String[] memberList=null;
+        System.out.println("DB insert : "+roomInfo.toString());
+        /////전송된 데이터를 구분자를 통해 분리함
+        try {
+            memberList = roomInfo.getString("who_receive").split(":");///친구들을 정보를 가지고 옴
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        //분리한 데이터를 SQlite에 저장 - 다른 사람이 보낸 메세지 타입
+
+        ContentValues values = new ContentValues();
+
+        try {
+
+            for(int i=0;i<memberList.length;i++)
+            {
+                values.put("room_id",roomInfo.getString("room_no"));
+                values.put("room_member",memberList[i]);
+                System.out.println(memberList[i]);
+                db.insert("GroupChat",null,values);
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        db.close();
+    }
+
+    public ArrayList<String> getRoominfo(String room_no)
+    {
+        // Select All Query
+        String selectQuery = "SELECT * FROM GroupChat WHERE room_id= '" + room_no + "';";
+        ArrayList<String> friendlist = new ArrayList<>();
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                friendlist.add(cursor.getString(2));//친구의 리스트를 저장해줌
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+
+        return friendlist;
     }
 
 }

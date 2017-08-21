@@ -48,7 +48,7 @@ public class Fragment_week extends Fragment {
         //////////쿼리문 중요//////////////
         List<JSONObject> mydata = dBhelper.PrintAvgData("SELECT strftime('%Y%m%d',data_signdate) as date, avg(user_bpm),avg(user_res) from User_health WHERE date >= strftime('%Y%m%d','now','localtime','-7 day') GROUP BY strftime('%Y%m%d',data_signdate) ORDER BY date desc limit 7;");
 
-        System.out.println(mydata);
+        System.out.println(mydata+"Week");
 
         barChart = (BarChart)view.findViewById(R.id.barchart);
         barChart.getDescription().setEnabled(false);/////라벨 없애줌
@@ -113,8 +113,13 @@ public class Fragment_week extends Fragment {
         xAxis.setDrawGridLines(false);
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
 
+        for(int i=0;i<labels.length;i++)
+        {
+            barEntries.add(new BarEntry(i,0));
+        }
+
         String dataDay = null;
-        int dataDate=0;
+        int dataDate;
         //Y축값
         //요일에 맞는 값을 찾는 반복문
         if(mydata.size()!=0)//일주일간의 데이터가 있으면
@@ -155,24 +160,13 @@ public class Fragment_week extends Fragment {
                 {
                     if(labels[j].equals(dataDay))/////지금 꺼낸 JSON object의 date를 X축과 비교하여 같다면
                     {
-                        try {
-                            barEntries.add(new BarEntry(j,mydata.get(i).getInt("user_bpm")));//그 X축에 값을 넣어줌
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }else{///같지않다면 0값을 넣어줌 - 가능한 이유 DB에서 긁어올 때 오늘을 기준으로 최신순으로 긁어오기 때문에 가능할 거 같음
-                        barEntries.add(new BarEntry(j,0));
+                        barEntries.set(j,new BarEntry(j,mydata.get(i).optInt("user_bpm")));//그 X축에 값을 넣어줌
                     }
                 }
             }
-        }else{//일주일간의 데이터가 없으면
-            for(int i=0;i<labels.length;i++)
-            {
-                barEntries.add(new BarEntry(i,0));
-            }
-        }
+        }///데이터가 없으면 이미 추가 시켜놨기 때문에 할필요가 없음
 
-
+        System.out.println(barEntries);
         BarDataSet dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
         dataset.setValueTextSize(15);
         BarData data = new BarData(dataset);

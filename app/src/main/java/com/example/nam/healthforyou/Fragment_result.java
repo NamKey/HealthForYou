@@ -64,7 +64,7 @@ public class Fragment_result extends Fragment {
         dBhelper = new DBhelper(getActivity().getApplicationContext(),"healthforyou.db", null, 1);
         String strurl = "http://kakapo12.vps.phps.kr/averagehealdata.php";
         //나의 모든 심박수의 평균을 가지고 옴
-        JSONObject avedata = dBhelper.PrintMyAvgData("SELECT avg(user_bpm),avg(user_res) from User_health;");
+        JSONObject avedata = dBhelper.PrintMyAvgData("SELECT avg(user_bpm),avg(user_res),data_signdate from User_health;");///측정날짜를 받아오기 위한 것을 추가 chat에서 보내야됨
         System.out.println(avedata);
 
         mybarChart = (BarChart)mView.findViewById(R.id.mybarchart);

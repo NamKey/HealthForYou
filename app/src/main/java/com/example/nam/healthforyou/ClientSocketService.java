@@ -48,6 +48,7 @@ public class ClientSocketService extends Service {
     }
     public DBhelper dBhelper;
     InputThread inputThread;
+    JSONObject getjson;//Nullpointer 방지?
     @Override
     public void onCreate() {
         super.onCreate();
@@ -127,6 +128,36 @@ public class ClientSocketService extends Service {
         networkPrintwriter.flush();
     }
 
+    /////건강데이터 보내는 Method
+    public void SendHealthdata(String who_receive,JSONObject healthdata,String date){
+        JSONObject sendptopJSON = new JSONObject();
+        try {
+            sendptopJSON.put("command","/tohealth");///서버에 보낼 명령어
+            sendptopJSON.put("who_receive",who_receive);///누가 받을 건지
+            sendptopJSON.put("message",healthdata.toString());///어떤 내용인지
+            sendptopJSON.put("date",date);///보낸 시간은
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        networkPrintwriter.println(sendptopJSON.toString());//JSON을 String으로 보냄
+        networkPrintwriter.flush();
+    }
+
+    public void SendHealthdata(int room_no,JSONObject healthdata,String date){
+        JSONObject infomessageJSON = new JSONObject();
+        try {
+            infomessageJSON.put("command","/informhealth");///서버에 보낼 명령어
+            infomessageJSON.put("room_no",String.valueOf(room_no));///어떤 방한테 메세지를 보낼건지
+            infomessageJSON.put("message",healthdata.toString());
+            infomessageJSON.put("date",date);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        networkPrintwriter.println(infomessageJSON.toString());//JSON을 String으로 보냄
+        networkPrintwriter.flush();
+    }
+
     public void RequestRoom(String member)
     {
         JSONObject requestRoomJSON = new JSONObject();
@@ -156,8 +187,6 @@ public class ClientSocketService extends Service {
         networkPrintwriter.println(infomessageJSON.toString());
         networkPrintwriter.flush();
     }
-
-
 
     //*********서비스에서 액티비티 함수 호출은..
 
@@ -191,13 +220,19 @@ public class ClientSocketService extends Service {
                 while((line = br.readLine())!=null){
                     System.out.println(line+"line");
                     //mCallback.ReceiveMessage(line);////입력을 받으면 액티비티로 값을 넘겨줌
-                    JSONObject getjsonMessage = new JSONObject(line);
+                    JSONObject getjson = new JSONObject(line);
+                    System.out.println(getjson);
                     //없는 값을 찾으려고 하면 JSON exception을 통해 while문을 빠져나감
-                    if(getjsonMessage.getString("command").equals("/makeroom"))//TODO 방완성과 메세지를 받는 것을 구분해야함
+                    if(getjson.getString("command").equals("/makeroom"))//TODO 방완성과 메세지를 받는 것을 구분해야함
                     {
-                        mCallback.Knowroom(getjsonMessage.getString("room_no"));
-                    }else{//TODO JSON으로 바꿀 예정 20170819
-                        dBhelper.messagejsoninsert(getjsonMessage);
+                        if(mCallback!=null)//////이부분이 필요한 이유 - 채팅방과 연결되는 메쏘드 Knowroom은 mCallback 인터페이스를 통해 구현되는데
+                        {//방을 만든 당사자는 채팅창에 있지만 나머지 사람은 채팅창에 있을지 모르기 때문에 null 예외처리를 통해 nullpointer exception을 막음
+                            mCallback.Knowroom(getjson.getString("room_no"));//int로 넘겨주는 이유 String은 객체이므로 넘겨주는 것은 값이 아닌 주소이므로 값을 넘겨줘야됨
+                        }
+                        dBhelper.makeRoominsert(getjson);//방의 정보를 저장 room_no,chatmember
+                    }
+                    else{//TODO JSON으로 바꿀 예정 20170819
+                        dBhelper.messagejsoninsert(getjson);
                         ///////LocalDB에 저장
                         ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄
                         Intent intent = new Intent();

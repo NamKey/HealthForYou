@@ -20,6 +20,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -59,15 +60,43 @@ public class TabFragment2_chat extends Fragment {
         List<JSONObject> roomlist = dBhelper.getChatroomList("SELECT * from ChatMessage GROUP by room_id ORDER by message_date DESC;");
         System.out.println(roomlist);
 
-        for(int i=0;i<roomlist.size();i++)
+        for(int i=0;i<roomlist.size();i++)//모든 방에 대한 정보를 조사 하는 부분 + 모든 방의 이름을 정해주는 부분
         {
-            JSONObject friendinfo=dBhelper.getFriend(roomlist.get(i).optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
             try {
-                roomlist.get(i).put("room_name",friendinfo.optString("user_name"));
+                if(roomlist.get(i).getString("room_type").equals("0"))///////////방의 타입이 1:1이면 친구의 이름을 통해 채팅방 리스트에 넣어줌 - 처리는 Adapter에서
+                {
+                    JSONObject friendinfo=dBhelper.getFriend(roomlist.get(i).optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
+                    try {
+                        roomlist.get(i).put("room_name",friendinfo.optString("user_name"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    chatroomAdapter.addRoom(roomlist.get(i));
+                }else{//그룹 채팅이라면
+                    ArrayList<String> friendArray=dBhelper.getRoominfo(roomlist.get(i).getString("room_id"));//방의 친구들에 대한 정보를 불러옴
+                    ArrayList<String> roomname = new ArrayList<>();
+                    for(int j=0;j<friendArray.size();j++)
+                    {
+                        JSONObject friendinfo = dBhelper.getFriend(friendArray.get(j));///친구들에 대한 정보 있는 지 판단
+                        if(friendinfo.optString("user_name").equals("")||friendinfo.optString("user_name")==null)///등록된 친구가 없다면
+                        {
+                            roomname.add(friendArray.get(j));
+                        }else{//등록된 사람이 있음
+                            roomname.add(friendinfo.optString("user_name"));
+                        }
+                    }
+                    String[] room=new String[roomname.size()];
+                    for(int k=0;k<roomname.size();k++)
+                    {
+                        room[k]=roomname.get(k);
+                    }
+                    roomlist.get(i).put("room_name", Arrays.toString(room));///배열을 String으로 바꿈
+                    chatroomAdapter.addRoom(roomlist.get(i));
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            chatroomAdapter.addRoom(roomlist.get(i));
+
 
         }
 
@@ -146,6 +175,40 @@ public class TabFragment2_chat extends Fragment {
             {
                 case ADD_CHATROOM:
                     System.out.println("ADDDDD");
+                    try {///방이름 정해주는 부분 - 새로운 방이 생기면 바로 이름을 반영할 수 있도록 함
+                        if(roomlist.get(roomlistno).getString("room_type").equals("0"))///////////방의 타입이 1:1이면 친구의 이름을 통해 채팅방 리스트에 넣어줌 - 처리는 Adapter에서
+                        {
+                            JSONObject friendinfo=dBhelper.getFriend(roomlist.get(roomlistno).optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
+                            try {
+                                roomlist.get(roomlistno).put("room_name",friendinfo.optString("user_name"));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                        }else{//그룹 채팅이라면
+                            ArrayList<String> friendArray=dBhelper.getRoominfo(roomlist.get(roomlistno).getString("room_id"));//방의 친구들에 대한 정보를 불러옴
+                            ArrayList<String> roomname = new ArrayList<>();
+                            for(int j=0;j<friendArray.size();j++)
+                            {
+                                JSONObject friendinfo = dBhelper.getFriend(friendArray.get(j));///친구들에 대한 정보 있는 지 판단
+                                if(friendinfo.optString("user_name").equals("")||friendinfo.optString("user_name")==null)///등록된 친구가 없다면
+                                {
+                                    roomname.add(friendArray.get(j));
+                                }else{//등록된 사람이 있음
+                                    roomname.add(friendinfo.optString("user_name"));
+                                }
+                            }
+                            String[] room=new String[roomname.size()];
+                            for(int k=0;k<roomname.size();k++)
+                            {
+                                room[k]=roomname.get(k);
+                            }
+                            roomlist.get(roomlistno).put("room_name", Arrays.toString(room));///배열을 String으로 바꿈
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
                     if(roomlist.size()!=0)
                     {
                         chatroomAdapter.addRoom(0,roomlist.get(roomlistno));///같은 방이 없으면 새로 추가해줌 - 최근 값으로 추가해줌
@@ -157,14 +220,46 @@ public class TabFragment2_chat extends Fragment {
 
                 case UPDATE_CHATROOM:
                     System.out.println("UPDATE");
-                    chatroomAdapter.updateRoom(lv_roomlistno,roomlist.get(roomlistno));
+                    try {///방이름 정해주는 부분 - 같은 방에서 얘기를 나누면 이름을 그대로 바꿔주는 부분
+                        if(roomlist.get(roomlistno).getString("room_type").equals("0"))///////////방의 타입이 1:1이면 친구의 이름을 통해 채팅방 리스트에 넣어줌 - 처리는 Adapter에서
+                        {
+                            JSONObject friendinfo=dBhelper.getFriend(roomlist.get(roomlistno).optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
+                            try {
+                                roomlist.get(roomlistno).put("room_name",friendinfo.optString("user_name"));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                        }else{//그룹 채팅이라면
+                            ArrayList<String> friendArray=dBhelper.getRoominfo(roomlist.get(roomlistno).getString("room_id"));//방의 친구들에 대한 정보를 불러옴
+                            ArrayList<String> roomname = new ArrayList<>();
+                            for(int j=0;j<friendArray.size();j++)
+                            {
+                                JSONObject friendinfo = dBhelper.getFriend(friendArray.get(j));///친구들에 대한 정보 있는 지 판단
+                                if(friendinfo.optString("user_name").equals("")||friendinfo.optString("user_name")==null)///등록된 친구가 없다면
+                                {
+                                    roomname.add(friendArray.get(j));
+                                }else{//등록된 사람이 있음
+                                    roomname.add(friendinfo.optString("user_name"));
+                                }
+                            }
+                            String[] room=new String[roomname.size()];
+                            for(int k=0;k<roomname.size();k++)
+                            {
+                                room[k]=roomname.get(k);
+                            }
+                            roomlist.get(roomlistno).put("room_name", Arrays.toString(room));///배열을 String으로 바꿈
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    chatroomAdapter.updateRoom(lv_roomlistno,roomlist.get(roomlistno));//같은 id의 방이 있다면 UPDATE
                     chatroomAdapter.notifyDataSetChanged();
                     break;
             }
         }
     };
-    //TODO 2017815 - registerReceiver 관련 이슈 - 그룹채팅을 하면 채팅방이 업데이트가 안됨
-    ////registerReceiver 생명주기 고려
+    ////TODO registerReceiver 생명주기 고려
     @Override
     public void onResume() {
         super.onResume();

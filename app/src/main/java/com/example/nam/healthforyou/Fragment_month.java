@@ -151,7 +151,7 @@ public class Fragment_month extends Fragment {
             {
                 try {
                     month=getDateMonth(mydata.get(i).getString("data_signdate"),"yyyyMMdd");///데이터의 월을 받아와야됨
-                    //System.out.println(month+"DB긁어오는");
+                    System.out.println(month+"DB긁어오는");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -215,22 +215,11 @@ public class Fragment_month extends Fragment {
                 {
                     if(labels[j].equals(dataMonth))/////지금 꺼낸 JSON object의 date를 X축과 비교하여 같다면
                     {
-                        try {
-                            barEntries.add(new BarEntry(j,mydata.get(i).getInt("user_bpm")));//그 X축에 값을 넣어줌
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }else{///같지않다면 0값을 넣어줌 - 가능한 이유 DB에서 긁어올 때 오늘을 기준으로 최신순으로 긁어오기 때문에 가능할 거 같음
-                        barEntries.add(new BarEntry(j,0));
+                        barEntries.set(j,new BarEntry(j,mydata.get(i).optInt("user_bpm")));//그 X축에 값을 넣어줌
                     }
                 }
             }
-        }else{//월별 데이터가 없으면
-            for(int i=0;i<labels.length;i++)
-            {
-                barEntries.add(new BarEntry(i,0));
-            }
-        }
+        }///이미 기존에 0으로 채워놨기 때문에 처리할 필요가 없음
 
         BarDataSet dataset = new BarDataSet(barEntries,"심박수");//Y축값을 입력
         dataset.setValueTextSize(15);

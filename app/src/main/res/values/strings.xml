@@ -30,7 +30,6 @@
     <string name="ruleforuse3">전반적인 건강상태를 검사받고자 하는 경우에는 의사에게 문의하시기 바랍니다.</string>
 
 
-
     <string name="quickstart_message">Click the SUBSCRIBE TO NEWS button below to subscribe to the
     news topic. Messages sent to the news topic will be received. The LOG TOKEN button logs the
     InstanceID token to logcat.</string>
@@ -46,5 +45,6 @@
         It should describe the category of notifications that will be sent through this channel
      -->
     <string name="default_notification_channel_name" translatable="true">News</string>
+    <string name="title_activity_choose_datasigndate">chooseDatasigndate</string>
 
 </resources>

@@ -46,6 +46,8 @@ dependencies {
     compile group: 'com.kakao.sdk', name: 'usermgmt', version: project.KAKAO_SDK_VERSION
     // 카카오링크 sdk를 사용하기 위해 필요.
     //compile group: 'com.kakao.sdk', name: 'kakaolink', version: project.KAKAO_SDK_VERSION compile 'junit:junit:4.12'
+
+    // ADD THIS AT THE BOTTOM
     compile 'com.github.clans:fab:1.6.4'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
@@ -55,9 +57,7 @@ dependencies {
     compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
     compile 'com.github.wendykierp:JTransforms:3.1'
     compile 'org.apache.commons:commons-math3:3.6.1'
-    provided 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
     compile 'com.google.firebase:firebase-messaging:10.2.6'
-
-    // ADD THIS AT THE BOTTOM
+    provided 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
     apply plugin: 'com.google.gms.google-services'
 }

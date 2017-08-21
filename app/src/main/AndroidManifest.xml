@@ -35,7 +35,6 @@
                 <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".DatabaseChangedReceiver"
             android:enabled="true">
@@ -47,21 +46,18 @@
         <service android:name=".ClientSocketService" />
         <service android:name=".Syncdbservice" />
 
-        <!--FireBase manifest등록 부분-->
-        <service
-            android:name=".MyFirebaseMessagingService">
+        <!-- FireBase manifest등록 부분 -->
+        <service android:name=".MyFirebaseMessagingService">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
-        <service
-            android:name=".MyFirebaseInstanceIDService">
+        <service android:name=".MyFirebaseInstanceIDService">
             <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
-        <!--FireBase manifest등록 종료-->
+        <!-- FireBase manifest등록 종료 -->
 
         <activity
             android:name=".MainActivity"
@@ -120,10 +116,10 @@
         <activity
             android:name=".Chatroom"
             android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".AddGroupChat"
-                  android:label=""/>
-
-
+        <activity
+            android:name=".AddGroupChat"
+            android:label="" />
+        <activity android:name=".Choosedata"></activity>
     </application>
 
 </manifest>

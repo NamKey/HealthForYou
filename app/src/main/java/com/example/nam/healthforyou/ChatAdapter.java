@@ -10,6 +10,9 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +27,10 @@ public class ChatAdapter extends BaseAdapter {
     //내가 쓴 카톡과 아닌것을 구분하기 위한 type
     private static final int ITEM_VIEW_TYPE_ME = 0 ;
     private static final int ITEM_VIEW_TYPE_YOU = 1 ;
+
+    private static final int ITEM_VIEW_TYPE_HEALTHME = 2;
+    private static final int ITEM_VIEW_TYPE_HEALTHYOU= 3;
+
     LayoutInflater inflater;
 
     @Override
@@ -86,6 +93,41 @@ public class ChatAdapter extends BaseAdapter {
 
                 break;
             }
+
+            case ITEM_VIEW_TYPE_HEALTHME:
+            {
+                row = inflater.inflate(R.layout.chatlayout3_mehealth, parent, false);
+                // Inflater를 이용해서 생성한 View에, ChatMessage를 삽입한다.
+                TextView msgbpm = (TextView)row.findViewById(R.id.tv_chatHeart1);
+                TextView msgres = (TextView)row.findViewById(R.id.tv_chatRes1);
+                TextView msgDate = (TextView)row.findViewById(R.id.tv_sendtime);
+                TextView chatDatasigndate = (TextView)row.findViewById(R.id.tv_chatdatasigndate);
+                /////리스트에 정보를 출력
+                msgbpm.setText(msg.user_bpm+"bpm");
+                msgres.setText(msg.user_res+"/min");
+                msgDate.setText(msg.item_date);
+                chatDatasigndate.setText("측정날짜 :"+msg.data_signdate);
+                break;
+            }
+
+            case ITEM_VIEW_TYPE_HEALTHYOU:
+            {
+                row = inflater.inflate(R.layout.chatlayout4_youhealth, parent, false);
+                // Inflater를 이용해서 생성한 View에, ChatMessage를 삽입한다.
+                TextView msgId = (TextView)row.findViewById(R.id.tv_sender);
+                TextView msgbpm = (TextView)row.findViewById(R.id.tv_chatHeart1);
+                TextView msgres = (TextView)row.findViewById(R.id.tv_chatRes1);
+                TextView msgDate = (TextView)row.findViewById(R.id.tv_sendtime);
+                TextView chatDatasigndate = (TextView)row.findViewById(R.id.tv_chatdatasigndate);
+                /////리스트에 정보를 출력
+                msgId.setText(msg.item_sender);
+                msgbpm.setText(msg.user_bpm+"bpm");
+                msgres.setText(msg.user_res+"/min");
+                msgDate.setText(msg.item_date);
+                chatDatasigndate.setText("측정날짜 :"+msg.data_signdate);
+
+                break;
+            }
         }
         return row;
     }
@@ -94,12 +136,47 @@ public class ChatAdapter extends BaseAdapter {
     {
         item.setType(ITEM_VIEW_TYPE_YOU);
         chatItemList.add(item);
+    }
 
+    public void addItemYou(int index,ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TYPE_YOU);
+        chatItemList.add(0,item);
     }
 
     public void addItemME(ChatItem item)
     {
         item.setType(ITEM_VIEW_TYPE_ME);
         chatItemList.add(item);
+    }
+
+    public void addItemME(int index,ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TYPE_ME);
+        chatItemList.add(0,item);
+    }
+
+    public void addItemHealthME(ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TYPE_HEALTHME);
+        chatItemList.add(item);
+    }
+
+    public void addItemHealthME(int index,ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TYPE_HEALTHME);
+        chatItemList.add(0,item);
+    }
+
+    public void addItemHealthYou(ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TYPE_HEALTHYOU);
+        chatItemList.add(item);
+    }
+
+    public void addItemHealthYou(int index,ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TYPE_HEALTHYOU);
+        chatItemList.add(0,item);
     }
 }
