@@ -114,7 +114,7 @@
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
-                android:padding="20sp"
+                android:padding="25sp"
                 android:progressDrawable="@drawable/custom_progressbar_drawable" />
 
         </RelativeLayout>

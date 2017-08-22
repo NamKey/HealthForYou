@@ -430,7 +430,7 @@ public class Chatroom extends AppCompatActivity{
 
                 case all_messageUpdate:{
                     ///기존에 있던 채팅을 뿌려주는 부분
-                    ArrayList<JSONObject> messageList = dBhelper.getAllmessage("SELECT * from ChatMessage WHERE is_looked=1 and room_id= '" + who + "'"+"ORDER BY message_no DESC");
+                    ArrayList<JSONObject> messageList = dBhelper.getAllmessage("SELECT * from ChatMessage WHERE room_id= '" + who + "'"+"ORDER BY message_no DESC");
                     System.out.println(messageList+"굿굿");
                     for(int i=0;i<messageList.size();i++)
                     {
@@ -503,6 +503,8 @@ public class Chatroom extends AppCompatActivity{
                             }
                         }
                     }
+                    String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
+                    dBhelper.update(updateStateQuery);
                     chatAdapter.notifyDataSetChanged();
                 }
 

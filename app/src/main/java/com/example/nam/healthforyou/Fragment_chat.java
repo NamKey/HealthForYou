@@ -30,10 +30,30 @@ public class Fragment_chat extends Fragment{
             R.drawable.friend,
             R.drawable.chat
     };
-
+    String who;//FCM을 보낸 사람을 나타냄
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         chat = (LinearLayout)inflater.inflate(R.layout.frag_chat,container,false);
+        //
+        Bundle extra = getArguments();
+        if(extra!=null)
+        {
+            String who = extra.getString("WHO");
+            String type = extra.getString("TYPE");
+            Intent intent = new Intent(getActivity(),Chatroom.class);
+            //그룹간의 대화를 나타내는 건지 개인간의 대화를 나타내는 건지
+            if(type.equals("0"))
+            {
+                intent.putExtra("from",0);//개인 채팅 의미
+                intent.putExtra("who",who);
+            }else if(type.equals("1"))
+            {
+                intent.putExtra("from",2);//그룹채팅 의미
+                intent.putExtra("room_id",who);
+            }
+            startActivity(intent);
+        }
+
 
         //채팅창을 누를 시에 Socket을 연다
         ServicesocketThread servicesocketThread = new ServicesocketThread();
@@ -86,6 +106,4 @@ public class Fragment_chat extends Fragment{
         Intent Service = new Intent(getActivity(), ClientSocketService.class);
         getActivity().startService(Service);
     }
-
-
 }

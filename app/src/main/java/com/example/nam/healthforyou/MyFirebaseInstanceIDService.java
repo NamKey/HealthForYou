@@ -8,6 +8,7 @@ import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
@@ -77,9 +78,7 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
             System.out.println(s);
             if(s.equals("true"))
             {
-
-            }else{
-
+                Toast.makeText(getApplicationContext(),"FCM Token refresh",Toast.LENGTH_SHORT).show();
             }
         }
 

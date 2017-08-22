@@ -220,10 +220,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_result())
                     .commit();
-//            getSupportFragmentManager()
-//                    .beginTransaction()
-//                    .replace(R.id.frag_container_, new Fragment_chat())
-//                    .commit();
+
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_meas())
@@ -232,6 +229,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_main())
                     .commit();
+
+            Intent intent =getIntent();
+            int FCMrequest = intent.getIntExtra("FCM",1001);
+            if(FCMrequest==0)
+            {
+                String who=intent.getStringExtra("WHO");
+                String type=intent.getStringExtra("TYPE");
+
+                Fragment_chat fragment_chat = new Fragment_chat();//프래그먼트와 액티비티가 통신
+                Bundle bundle = new Bundle();//번들에
+                bundle.putString("WHO", who);//누구한테 온건지
+                bundle.putString("TYPE",type);//방의 종류 0-개인채팅 , 1-그룹채팅
+
+                fragment_chat.setArguments(bundle);
+
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.frag_container_, fragment_chat)
+                        .commit();
+
+                System.out.println(who);
+            }
         }
 
         @Override

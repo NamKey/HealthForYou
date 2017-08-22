@@ -163,12 +163,15 @@ public class TabFragment1_friend extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if(requestCode==ACT_ADDFRIEND)////최근에 추가한 친구를 상단에 표시
+        if(resultCode==-1)//RESULT_CODE OK
         {
-            listViewAdapter.addItemNewFriend(dBhelper.getnewfriend());///최근에 등록된 친구를 리스트뷰에 등록
-            listViewAdapter.notifyDataSetChanged();
+            if(requestCode==ACT_ADDFRIEND)////최근에 추가한 친구를 상단에 표시
+            {
+                listViewAdapter.addItemNewFriend(dBhelper.getnewfriend());///최근에 등록된 친구를 리스트뷰에 등록
+                listViewAdapter.notifyDataSetChanged();
+            }
         }
+
 
     }
 

@@ -574,7 +574,6 @@ public class DBhelper extends SQLiteOpenHelper {
             {
                 values.put("room_id",roomInfo.getString("room_no"));
                 values.put("room_member",memberList[i]);
-                System.out.println(memberList[i]);
                 db.insert("GroupChat",null,values);
             }
 

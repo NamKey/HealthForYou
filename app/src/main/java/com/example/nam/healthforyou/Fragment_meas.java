@@ -627,9 +627,9 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        Log.d("생명주기","Stop");
+    public void onPause() {
+        super.onPause();
+        Log.d("생명주기","Pause");
         mOpenCvCameraView.disableView();//카메라를 꺼줌
         //쓰레드 제어부분-종료
         detectStart=false;
@@ -682,6 +682,64 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         phase1=false;
         phase2=false;
         phase3=false;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+//        Log.d("생명주기","Stop");
+//        mOpenCvCameraView.disableView();//카메라를 꺼줌
+//        //쓰레드 제어부분-종료
+//        detectStart=false;
+//        if(setTextthread!=null)//null check
+//        {
+//            if(!setTextthread.isInterrupted())//isInterrupted check
+//            {
+//                setTextthread.interrupt();//텍스를 바꿔주는 쓰레드
+//            }
+//        }
+//        if(thread!=null)//null check
+//        {
+//            if(!thread.isInterrupted())//isInterrupted check
+//            {
+//                thread.interrupt();///데이터를 처리하는 쓰레드
+//            }
+//        }
+//        if(setHeartratethread!=null)//null check
+//        {
+//            if(!setHeartratethread.isInterrupted())//isInterrupted check
+//            {
+//                setHeartratethread.interrupt();//심박수를 갱신하는 쓰레드
+//            }
+//        }
+//
+//        if(setProgressthread!=null)//null check
+//        {
+//            if(!setProgressthread.isInterrupted())//isInterrupted check
+//            {
+//                setProgressthread.interrupt();//심박수를 갱신하는 쓰레드
+//            }
+//        }
+//
+//        btn_start.setVisibility(View.VISIBLE);
+//        follow_message.setText("측정 시작 버튼을 눌러주세요");//
+//        heart_rate.setText("--");
+//        ///그동안 사용했던 데이터 초기화
+//        heart_data.clear(); // 심장에 대한 데이터 clear
+//        heart_maf.clear(); // 심장에 valley를 구하기 위한 데이터 clear
+//        peakPoint.clear(); // peakPoint 초기화
+//        localMinX.clear(); // 윈도우를 정하기 위한 데이터 clear
+//        arraybpm.clear(); // 박동에 대한 데이터 clear
+//        W_size=20;//윈도우 사이즈 초기화
+//        X=0;
+//        meaning_data.clear();//FFT를 수행하기 위한 데이터 clear
+//        max_index=-1;//max_index초기화
+//        max_magnitude=Double.MIN_VALUE;//max_value초기화
+//
+//        //FFT 측정 초기화
+//        phase1=false;
+//        phase2=false;
+//        phase3=false;
     }
 
     @Override
@@ -823,6 +881,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     if(heart_data.size()<=128)
                     {
                         handler.sendEmptyMessage(detectGo);//시작 핸들러
+
                         ////윈도우 크기를 정해주는 부분
                         if(heart_maf.size()>2)////
                         {
