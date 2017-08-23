@@ -1,5 +1,6 @@
 package com.example.nam.healthforyou;
 
+import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
@@ -58,11 +59,9 @@ import static com.example.nam.healthforyou.Login.msCookieManager;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG ="MainActivity";
+    //Back button
+    private BackPressCloseHandler backPressCloseHandler;
 
-    static {
-        System.loadLibrary("native-lib");
-    }
-    private TextView tv_outPut;
     HttpURLConnection con;
 
     UiTask uiTask;
@@ -97,6 +96,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return dayMonth+1;////MONTH는 JAVA에서 0~11이므로 1씩더해줘야됨 -> 1~12
     }
 
+    @Override////메뉴 세팅
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch(id)
+        {
+            case R.id.action_settings:
+            {
+                Intent intent = new Intent(this,Setting.class);
+                startActivity(intent);
+                finish();
+                break;
+            }
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,10 +125,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //메인 페이지를 불러옴
     setContentView(R.layout.activity_main);
-    //Fragment 2017.07.22 현재 측정 fragment의 layout과 복잡도로 인해 최초 전환시 깜빡임
+
     //AsyncTask를 통해 미리 불러옴
     uiTask = new UiTask();
     uiTask.execute();
+
+    //뒤로가는 부분
+    backPressCloseHandler = new BackPressCloseHandler(this);
 
     findViewById(R.id.btn_frag1_main).setOnClickListener(this);
     findViewById(R.id.btn_frag2_chat).setOnClickListener(this);
@@ -179,37 +203,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .replace(R.id.frag_container_, new Fragment_result())
                         .commit();
                 break;
-        }
-
-    }
-
-    public class NetworkTask extends AsyncTask<Void, Void, String> {
-
-        private String url;
-        private ContentValues values;
-
-        public NetworkTask(String url, ContentValues values) {
-
-            this.url = url;
-            this.values = values;
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-
-            String result; // 요청 결과를 저장할 변수.
-            RequestHttpConnection requestHttpURLConnection = new RequestHttpConnection();
-            result = requestHttpURLConnection.request(url, values); // 해당 URL로 부터 결과물을 얻어온다.
-
-            return result;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-
-            //doInBackground()로 부터 리턴된 값이 onPostExecute()의 매개변수로 넘어오므로 s를 출력한다.
-            tv_outPut.setText(s);
         }
     }
 
@@ -342,6 +335,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onDestroy();
         Intent Service = new Intent(MainActivity.this, ClientSocketService.class);///메인액티비티가 destroy되면
         stopService(Service);//서비스를 중지시키고 socket연결을 종료
+    }
+
+    @Override
+    public void onBackPressed() {
+        backPressCloseHandler.onBackPressed();
+    }
+
+    public class BackPressCloseHandler {
+        private long backKeyPressedTime = 0;
+        private Toast toast;
+
+        private Activity activity;
+
+        public BackPressCloseHandler(Activity context) {
+            this.activity = context;
+        }
+
+        public void onBackPressed() {
+            if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
+                backKeyPressedTime = System.currentTimeMillis();
+                showGuide();
+                return;
+            }
+            if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
+                toast.cancel();
+                Intent t = new Intent(activity, MainActivity.class);
+                activity.startActivity(t);
+                activity.moveTaskToBack(true);
+                activity.finish();
+
+                System.exit(0);
+            }
+        }
+
+        public void showGuide() {
+            toast = Toast.makeText(activity, "한번 더 누르시면 종료됩니다.", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 }
 

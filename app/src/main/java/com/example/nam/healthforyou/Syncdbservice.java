@@ -48,7 +48,6 @@ public class Syncdbservice extends Service{
 
         List<JSONObject> notsynced_list = dbManager.getAllinfo();
         System.out.println(notsynced_list+"notsynced");
-        //////Sync localto server확인할것 20170802!!!!
         if(notsynced_list.size()>0)
         {
             JSONArray jsonArray = new JSONArray();//연동이 되지 않은 데이터

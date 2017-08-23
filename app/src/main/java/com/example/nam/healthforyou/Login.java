@@ -124,20 +124,29 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     SharedPreferences.Editor loginemail_editor;
     private String loginemailid;
 
-
+    //나의정보를 저장할 DB선언
+    DBhelper dBhelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = getApplicationContext();
+        //SharedPreference
         session = getApplicationContext().getSharedPreferences("session",MODE_PRIVATE);//SharedPreference에 저장할 준비
         session_editor = session.edit();
 
         loginemail = getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
         loginemail_editor = loginemail.edit();
 
-        mContext = getApplicationContext();
+        //SQlite
+        dBhelper = new DBhelper(mContext, "healthforyou.db", null, 1);//SQLite DBhelper
+
+
         FacebookSdk.sdkInitialize(this.getApplicationContext());
         //session id 가 있으면
         session_id=session.getString("session","false");
+
+        System.out.println(session_id+"세션아이디 체크");
+
         if(!session_id.equals("false"))
         {
             //Shared에 저장되어 있는 Session id를 불러와 쿠키매니저에 넣어줌
@@ -160,6 +169,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             startActivity(intent);
             finish();
         }
+
+
 
         setContentView(R.layout.activity_login);
 
@@ -421,7 +432,8 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
 
     public class LoginTask extends AsyncTask<String,String,String>
-    {   JSONObject loginresult;
+    {
+        JSONObject loginresult;
         String result;
         @Override
         protected void onPostExecute(String s) {
@@ -437,15 +449,21 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
             if(result.equals("true"))
             {
                 String useremail;
-                ///로그인에 성공하면 로그인한 유저의 이메일을 받을 수 있음
+                String username;
+                ///로그인에 성공하면 로그인한 유저의 이메일과 이름을 받을 수 있음
                 try {
                     useremail=loginresult.getString("useremail");
+                    username=loginresult.getString("username");
                     System.out.println(useremail);
 
                     //Shared에 로그인한 user의 이메일을 저장 - 로그아웃시 삭제 필요
                     loginemail_editor.putString("useremail",useremail);
                     loginemail_editor.apply();
 
+                    JSONObject Mejson = new JSONObject();
+                    Mejson.put("user_friend",useremail);
+                    Mejson.put("user_name",username);
+                    dBhelper.friendinsert(Mejson);
 
                 } catch (JSONException e) {
                     e.printStackTrace();

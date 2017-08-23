@@ -2,6 +2,7 @@ package com.example.nam.healthforyou;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -27,6 +28,7 @@ import org.json.JSONObject;
 import java.util.List;
 
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by NAM on 2017-08-04.
@@ -46,10 +48,15 @@ public class TabFragment1_friend extends Fragment {
     final static int ACT_ADDFRIEND =0;
     private FloatingActionMenu fam;
     private FloatingActionButton fab_team_chat, fab_add_user;
+
+    private String loginemailid;
     @Override
     public View onCreateView(final LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         tabfrag_friend = (RelativeLayout)inflater.inflate(R.layout.tab_frag_friend,container,false); //친구목록을 갖고 있는 프레그먼트의 레이아웃
         dBhelper = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB 접근
+
+        SharedPreferences useremail = getActivity().getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
+        String loginemailid=useremail.getString("useremail","false");
 
         int count=dBhelper.PrintCountfriend();
         listViewAdapter = new ListViewAdapter();//////아답터 선언
@@ -63,7 +70,11 @@ public class TabFragment1_friend extends Fragment {
 
             for(int i=0;i<friendlist.size();i++)//NULLPointer Exception 주의
             {
-                listViewAdapter.addItemFriend(friendlist.get(i));///친구를 불러오는 부분
+                //나와 친구들을 분리 - 나를 제외한 친구들만 추가해야함
+                if(!loginemailid.equals(friendlist.get(i).optString("user_friend")))//로그인한 유저의 아이디는 나를 의미 - SQlite에 저장된 데이터와 비교
+                {
+                    listViewAdapter.addItemFriend(friendlist.get(i));///친구를 불러오는 부분
+                }
             }
             listViewAdapter.notifyDataSetChanged();
         }

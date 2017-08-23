@@ -120,7 +120,6 @@ public class DBhelper extends SQLiteOpenHelper {
                         + "\n";
             }
 
-
         cursor.close();
         db.close();
         return cursor.getCount();
@@ -370,6 +369,32 @@ public class DBhelper extends SQLiteOpenHelper {
         return newfriend;
     }
 
+    public JSONObject getFriend(String friendid)
+    {
+        // Select All Query
+        String selectQuery = "SELECT * FROM User_friend WHERE user_friend= '" + friendid + "';";
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        JSONObject friendinfo = new JSONObject();
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                try {
+                    friendinfo.put("user_friend",(cursor.getString(1)));
+                    friendinfo.put("user_name",(cursor.getString(2)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        // 모든 healdata를 갖고옴
+        return friendinfo;
+    }
+
     public int PrintCountfriend() {
         SQLiteDatabase db = getReadableDatabase();
         String str="";
@@ -385,32 +410,6 @@ public class DBhelper extends SQLiteOpenHelper {
 
         return cursor.getCount();
     }
-
-    public JSONObject getFriend(String friendid)
-    {
-        // Select All Query
-        String selectQuery = "SELECT * FROM User_friend WHERE user_friend= '" + friendid + "';";
-
-        SQLiteDatabase db = this.getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
-        JSONObject friendinfo = new JSONObject();
-        // looping through all rows and adding to list
-        if (cursor.moveToFirst()) {
-            do {
-                try {
-                    friendinfo.put("user_name",(cursor.getString(2)));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        db.close();
-        // 모든 healdata를 갖고옴
-        return friendinfo;
-    }
-
 
     ////메세지를 등록 - 보내는 형식부터 JSON으로 할것
     public void messagejsoninsert(JSONObject jsonMessage) {

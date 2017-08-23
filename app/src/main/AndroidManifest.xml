@@ -119,7 +119,8 @@
         <activity
             android:name=".AddGroupChat"
             android:label="" />
-        <activity android:name=".Choosedata"></activity>
+        <activity android:name=".Choosedata" />
+        <activity android:name=".Setting"></activity>
     </application>
 
 </manifest>

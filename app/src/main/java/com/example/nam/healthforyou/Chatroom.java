@@ -17,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.PopupMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
@@ -55,6 +56,7 @@ public class Chatroom extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chatroom);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         registerReceiver(broadcastReceiver, new IntentFilter("updateChat"));///새로 온메세지를 확인해보라는 말
         mContext = getApplicationContext();
@@ -291,6 +293,18 @@ public class Chatroom extends AppCompatActivity{
         @Override
         public void run() {
             startServiceMethod();////상대방과 채팅을 해서 오면 서비스 호출
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
