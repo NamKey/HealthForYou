@@ -1271,7 +1271,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         }
     }
 
-    public class infoSaveTask extends AsyncTask<String,String,String>
+    private class infoSaveTask extends AsyncTask<String,String,String>
     {
         String result;
         @Override

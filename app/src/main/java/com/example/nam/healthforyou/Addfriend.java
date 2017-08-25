@@ -1,10 +1,14 @@
 package com.example.nam.healthforyou;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,6 +31,8 @@ import static com.example.nam.healthforyou.Login.msCookieManager;
 
 public class Addfriend extends AppCompatActivity {
     //통신부분
+    Context mContext;
+
     HttpURLConnection con;
     EditText et_email;
     DBhelper dBhelper;
@@ -36,7 +42,7 @@ public class Addfriend extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_addfriend);
         dBhelper = new DBhelper(getApplicationContext(), "healthforyou.db", null, 1);//DB 접근
-
+        mContext = getApplicationContext();
         et_email = (EditText)findViewById(R.id.et_find_friendbyemail);
         Button btn_addconfirm = (Button)findViewById(R.id.btn_addconfirm);///친구추가를 요청할 경우
         btn_addconfirm.setOnClickListener(new View.OnClickListener() {
@@ -71,7 +77,6 @@ public class Addfriend extends AppCompatActivity {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-
             switch(s){
                 case "0":
                     Toast.makeText(Addfriend.this,"존재하지 않는 아이디입니다",Toast.LENGTH_SHORT).show();
@@ -90,7 +95,16 @@ public class Addfriend extends AppCompatActivity {
 
                     try {///친구목록을 로컬 DB에 저장
                         JSONObject frienddata = new JSONObject(s);
-                        System.out.println(frienddata);
+                        String friendprofile=frienddata.optString("user_profile");
+                        String friendemail=frienddata.optString("user_friend");
+                        /////Base64로 처리되어 있는 이미지를 Bitmap으로 바꾼 후 파일로 저장
+                        byte[] a = Base64.decode(friendprofile,Base64.DEFAULT);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(a,0,a.length);////비트맵으로 변환
+                        new InternalImageManger(mContext).setFileName(friendemail+"_Image").setDirectoryName("PFImage").save(bitmap);
+
+                        frienddata.put("user_profile",friendemail+"_Image");///파일의 이름으로 덮어씌움
+
+                        System.out.println(frienddata+"새로 등록한 친구");
                         dBhelper.friendinsert(frienddata);
                     } catch (JSONException e) {
                         e.printStackTrace();

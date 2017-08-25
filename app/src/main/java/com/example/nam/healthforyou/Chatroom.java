@@ -465,6 +465,7 @@ public class Chatroom extends AppCompatActivity{
                                 if(friendinfo.length()!=0)//친구가 있음
                                 {
                                     chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }else{//친구가 없음
                                     chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }
@@ -477,6 +478,7 @@ public class Chatroom extends AppCompatActivity{
                                 if(friendinfo.length()!=0)//친구가 있음
                                 {
                                     chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }else{//친구가 없음
                                     chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }
@@ -495,9 +497,11 @@ public class Chatroom extends AppCompatActivity{
                                 chatitem.data_signdate=healthdata.optString("data_signdate");
                                 chatitem.item_date = jsonObject.optString("message_date");
                                 chatitem.setType(3);
+                                //senderId는 프로필 사진을 갖고 오기 위해 필요한 부분
                                 if(friendinfo.length()!=0)//친구가 있음
                                 {
                                     chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }else{//친구가 없음
                                     chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }
@@ -510,6 +514,7 @@ public class Chatroom extends AppCompatActivity{
                                 if(friendinfo.length()!=0)//친구가 있음
                                 {
                                     chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }else{//친구가 없음
                                     chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                                 }
@@ -551,6 +556,7 @@ public class Chatroom extends AppCompatActivity{
                     if(friendinfo.length()!=0)//친구가 있음
                     {
                         receiveitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+                        receiveitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                     }else{//친구가 없음
                         receiveitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                     }
@@ -563,6 +569,7 @@ public class Chatroom extends AppCompatActivity{
                     if(friendinfo.length()!=0)//친구가 있음
                     {
                         receiveitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+                        receiveitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                     }else{//친구가 없음
                         receiveitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                     }
@@ -571,6 +578,7 @@ public class Chatroom extends AppCompatActivity{
                 if(friendinfo.length()!=0)//친구가 있음
                 {
                     receiveitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+                    receiveitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                 }else{//친구가 없음
                     receiveitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
                 }

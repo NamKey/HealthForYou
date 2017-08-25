@@ -1,20 +1,27 @@
 package com.example.nam.healthforyou;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 /**
  * Created by NAM on 2017-08-08.
@@ -84,12 +91,44 @@ public class ChatAdapter extends BaseAdapter {
                 TextView msgId = (TextView)row.findViewById(R.id.tv_sender);
                 TextView msgText = (TextView)row.findViewById(R.id.tv_content);
                 TextView msgDate = (TextView)row.findViewById(R.id.tv_sendtime);
+                ImageView profile = (ImageView)row.findViewById(R.id.iv_chatimage);
                 /////리스트에 정보를 출력
                 msgText.setText(msg.item_content);
                 msgId.setText(msg.item_sender);
                 msgDate.setText(msg.item_date);
-
                 msgText.setTextColor(Color.parseColor("#000000"));
+                if(msg.item_senderId!=null)
+                {
+                    Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
+                            setFileName(msg.item_senderId+"_Image").///파일 이름
+                            setDirectoryName("PFImage").
+                            load();
+                    if(bitmap!=null)
+                    {
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        Glide.with(context)
+                                .load(stream.toByteArray())
+                                .asBitmap()
+                                .override(50,50)
+                                .error(R.drawable.no_profile)
+                                .transform(new CropCircleTransformation(context))
+                                .into(profile);
+                    }else{
+                        Glide.with(context)
+                                .load(R.drawable.no_profile)
+                                .asBitmap()
+                                .override(50,50)
+                                .into(profile);
+                    }
+
+                }else{
+                    Glide.with(context)
+                            .load(R.drawable.no_profile)
+                            .asBitmap()
+                            .override(50,50)
+                            .into(profile);
+                }
 
                 break;
             }
@@ -119,12 +158,46 @@ public class ChatAdapter extends BaseAdapter {
                 TextView msgres = (TextView)row.findViewById(R.id.tv_chatRes1);
                 TextView msgDate = (TextView)row.findViewById(R.id.tv_sendtime);
                 TextView chatDatasigndate = (TextView)row.findViewById(R.id.tv_chatdatasigndate);
+                ImageView profile = (ImageView)row.findViewById(R.id.iv_healthchatimage);
                 /////리스트에 정보를 출력
                 msgId.setText(msg.item_sender);
                 msgbpm.setText(msg.user_bpm+"bpm");
                 msgres.setText(msg.user_res+"/min");
                 msgDate.setText(msg.item_date);
                 chatDatasigndate.setText("측정날짜 :"+msg.data_signdate);
+
+                if(msg.item_senderId!=null)
+                {
+                    Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
+                            setFileName(msg.item_senderId+"_Image").///파일 이름
+                            setDirectoryName("PFImage").
+                            load();
+                    if(bitmap!=null)
+                    {
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        Glide.with(context)
+                                .load(stream.toByteArray())
+                                .asBitmap()
+                                .override(50,50)
+                                .error(R.drawable.no_profile)
+                                .transform(new CropCircleTransformation(context))
+                                .into(profile);
+                    }else{
+                        Glide.with(context)
+                                .load(R.drawable.no_profile)
+                                .asBitmap()
+                                .override(50,50)
+                                .into(profile);
+                    }
+
+                }else{
+                    Glide.with(context)
+                            .load(R.drawable.no_profile)
+                            .asBitmap()
+                            .override(50,50)
+                            .into(profile);
+                }
 
                 break;
             }

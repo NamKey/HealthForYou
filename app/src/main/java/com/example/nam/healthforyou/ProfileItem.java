@@ -7,7 +7,7 @@ package com.example.nam.healthforyou;
 public class ProfileItem {
     private int type;
 
-    public String profile;
+    public String profileName;
     public String name;
     public String email;
     public boolean checked=false;

@@ -6,6 +6,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -14,7 +16,9 @@ import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.widget.TextView;
@@ -30,6 +34,7 @@ import android.widget.Toast;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
@@ -49,6 +54,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import org.opencv.android.OpenCVLoader;
@@ -58,6 +64,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import static com.example.nam.healthforyou.Login.msCookieManager;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    Context mContext;
     private static final String TAG ="MainActivity";
     //Back button
     private BackPressCloseHandler backPressCloseHandler;
@@ -66,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     UiTask uiTask;
 
+    DBhelper dBhelper;
     ////날짜에 따른 요일 알려주는 메쏘드
     static public int getDateDay(String date, String dateType) throws Exception {
 
@@ -125,7 +133,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //메인 페이지를 불러옴
     setContentView(R.layout.activity_main);
-
+    mContext = getApplicationContext();
+    dBhelper = new DBhelper(getApplicationContext(),"healthforyou.db", null, 1);
     //AsyncTask를 통해 미리 불러옴
     uiTask = new UiTask();
     uiTask.execute();
@@ -150,8 +159,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }
 
-
-
         String token=FirebaseInstanceId.getInstance().getToken();/////Firebase에서 Token을 받아오는 부분
         ///내 서버에 토큰을 저장을 해야함
         System.out.println(token+" tokentoken");
@@ -165,6 +172,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         savetokenTask savetokenTask = new savetokenTask();
         savetokenTask.execute(jsonObject.toString());
 
+        //기존의 친구들 정보를 가지고 와야함
+        List<JSONObject> friendList = dBhelper.getAllfriend();
+        System.out.println(friendList+"보낼친구");
+        //친구의 새로운 정보를 받아오는 부분
+        syncfriendTask syncfriendTask = new syncfriendTask();
+        syncfriendTask.execute(friendList.toString());
     }
 
     @Override
@@ -271,6 +284,99 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         protected String doInBackground(String... params) {
             String strUrl="http://kakapo12.vps.phps.kr/fcmtokenrequest.php";
+
+            try {
+                URL url = new URL(strUrl);
+                con = (HttpURLConnection) url.openConnection();//커넥션을 여는 부분
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");// 타입설정(application/json) 형식으로 전송 (Request Body 전달시 application/json로 서버에 전달.)
+                con.setDoInput(true);
+                con.setDoOutput(true);
+                //쿠키매니저에 저장되어있는 세션 쿠키를 사용하여 통신
+                if (msCookieManager.getCookieStore().getCookies().size() > 0) {
+                    // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
+                    con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
+                    System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
+                }
+                OutputStream os = con.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
+
+                writer.write(params[0]);
+
+                writer.flush();
+                writer.close();
+                os.close();
+
+                con.connect();
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(),"UTF-8"));
+
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while((line = br.readLine())!=null)
+                {
+                    if(sb.length()>0)
+                    {
+                        sb.append("\n");
+                    }
+                    sb.append(line);
+                }
+
+                //결과를 보여주는 부분 서버에서 true or false
+                result = sb.toString();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                if(con!=null)
+                {
+                    con.disconnect();
+                }
+            }
+
+            return result;
+        }
+    }
+
+    public class syncfriendTask extends AsyncTask<String,String,String>
+    {
+        DBhelper dbhelper = new DBhelper(MainActivity.this, "healthforyou.db", null, 1);
+        String result;
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            System.out.println(s+"결과");
+            System.out.println("서비스 실행");
+            if(s.equals("false"))///친구의 정보중 바뀐게 없음
+            {
+
+            }else{
+                try {
+                    JSONArray jsonArray = new JSONArray(s);
+                    for(int i=0;i<jsonArray.length();i++)
+                    {
+                        JSONObject profile_data=new JSONObject(jsonArray.getString(i));
+                        String Id=profile_data.optString("user_friend");
+
+                        byte[] a = Base64.decode(profile_data.optString("user_profile"),Base64.DEFAULT);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(a,0,a.length);////비트맵으로 변환
+                        new InternalImageManger(mContext).setFileName(Id+"_Image").setDirectoryName("PFImage").save(bitmap);//저장
+                        //파일의 이름, update 된 날짜, 사용자 정보
+                        dbhelper.updateProfile(Id+"_Image",profile_data.optString("user_update"),profile_data.optString("user_friend"));
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("업데이트 완료");
+            dbhelper.close();
+
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String strUrl="http://kakapo12.vps.phps.kr/syncfriendinfo.php";
 
             try {
                 URL url = new URL(strUrl);

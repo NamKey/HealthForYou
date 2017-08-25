@@ -1,6 +1,7 @@
 package com.example.nam.healthforyou;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,9 +11,12 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 /**
@@ -23,11 +27,11 @@ public class ListViewAdapter extends BaseAdapter {
 
     /* 아이템을 세트로 담기 위한 어레이 */
     private ArrayList<ProfileItem> profileItems = new ArrayList<>();
-
     private static final int FRIENDLIST_TYPE=0;
     private static final int GROUPCHATLIST_TYPE=1;
     LayoutInflater inflater;
-
+    Context mContext;
+    ByteArrayOutputStream stream;
     @Override
     public int getCount() {
         return profileItems.size();
@@ -61,8 +65,29 @@ public class ListViewAdapter extends BaseAdapter {
                 convertView = inflater.inflate(R.layout.listitem, parent, false);
                 /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
                 ImageView iv_img = (ImageView) convertView.findViewById(R.id.iv_profile) ;
-                TextView tv_name = (TextView) convertView.findViewById(R.id.tv_name) ;
-                iv_img.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
+                TextView tv_name = (TextView) convertView.findViewById(R.id.tv_name);
+                Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
+                        setFileName(profileItem.profileName).///파일 이름
+                        setDirectoryName("PFImage").
+                        load();
+                if(bitmap!=null)
+                {
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    Glide.with(context)
+                            .load(stream.toByteArray())
+                            .asBitmap()
+                            .override(128,128)
+                            .error(R.drawable.no_profile)
+                            .into(iv_img);
+                }else{
+                    Glide.with(context)
+                            .load(R.drawable.no_profile)
+                            .asBitmap()
+                            .override(128,128)
+                            .into(iv_img);
+                }
+
                 tv_name.setText(profileItem.name);
                 break;
             }
@@ -77,7 +102,28 @@ public class ListViewAdapter extends BaseAdapter {
                 checkBox.setFocusable(false);
                 checkBox.setClickable(false);
 
-                iv_img.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
+                Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
+                        setFileName(profileItem.profileName).///파일 이름
+                        setDirectoryName("PFImage").
+                        load();
+                if(bitmap!=null)
+                {
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    Glide.with(context)
+                            .load(stream.toByteArray())
+                            .asBitmap()
+                            .override(128,128)
+                            .error(R.drawable.no_profile)
+                            .into(iv_img);
+                }else{
+                    Glide.with(context)
+                            .load(R.drawable.no_profile)
+                            .asBitmap()
+                            .override(128,128)
+                            .into(iv_img);
+                }
+
                 tv_name.setText(profileItem.name);
                 checkBox.setChecked(((ListView)parent).isItemChecked(position));////체크 박스 기억
                 if(checkBox.isChecked())
@@ -99,6 +145,7 @@ public class ListViewAdapter extends BaseAdapter {
         try {
             profileItem.name=friendprofile.getString("user_name");//이름을 담고
             profileItem.email=friendprofile.getString("user_friend");//이메일을 담고
+            profileItem.profileName=friendprofile.getString("user_profile");//프로필 이미지를 담는다
             profileItem.setType(FRIENDLIST_TYPE);
             ////프로필 사진을 담아야됨
         } catch (JSONException e) {
@@ -113,6 +160,7 @@ public class ListViewAdapter extends BaseAdapter {
         try {
             profileItem.name=friendprofile.getString("user_name");//이름을 담고
             profileItem.email=friendprofile.getString("user_friend");//이메일을 담고
+            profileItem.profileName=friendprofile.getString("user_profile");//프로필 이미지를 담는다
             profileItem.setType(FRIENDLIST_TYPE);
             ////프로필 사진을 담아야됨
         } catch (JSONException e) {

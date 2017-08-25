@@ -9,6 +9,7 @@ public class ChatItem {
     private int type ;///내가 보낸 카톡과 아닌것을 구분하기 위함
 
     String item_sender;
+    String item_senderId;
     String item_content;
     String item_date;
 

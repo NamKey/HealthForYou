@@ -1,8 +1,10 @@
 package com.example.nam.healthforyou;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -20,11 +22,13 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
@@ -50,11 +54,12 @@ public class TabFragment1_friend extends Fragment {
     private FloatingActionButton fab_team_chat, fab_add_user;
 
     private String loginemailid;
+    Context mContext;
     @Override
     public View onCreateView(final LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         tabfrag_friend = (RelativeLayout)inflater.inflate(R.layout.tab_frag_friend,container,false); //친구목록을 갖고 있는 프레그먼트의 레이아웃
         dBhelper = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB 접근
-
+        mContext = getActivity().getApplicationContext();
         SharedPreferences useremail = getActivity().getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
         String loginemailid=useremail.getString("useremail","false");
 
@@ -73,6 +78,7 @@ public class TabFragment1_friend extends Fragment {
                 //나와 친구들을 분리 - 나를 제외한 친구들만 추가해야함
                 if(!loginemailid.equals(friendlist.get(i).optString("user_friend")))//로그인한 유저의 아이디는 나를 의미 - SQlite에 저장된 데이터와 비교
                 {
+                    System.out.println(friendlist.get(i));
                     listViewAdapter.addItemFriend(friendlist.get(i));///친구를 불러오는 부분
                 }
             }
@@ -115,8 +121,20 @@ public class TabFragment1_friend extends Fragment {
                 layout = inflater.inflate(R.layout.custom_profiledialog,null);
 
                 final ProfileItem clickProfile= listViewAdapter.getprofile(position);
-
+                Bitmap bitmap = new InternalImageManger(mContext).//내부저장공간에서 불러옴
+                        setFileName(clickProfile.profileName).///파일 이름
+                        setDirectoryName("PFImage").
+                        load();
                 ImageView iv_profile = (ImageView)layout.findViewById(R.id.iv_dialogprofile);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                Glide.with(mContext)
+                        .load(stream.toByteArray())
+                        .asBitmap()
+                        .override(256,256)
+                        .error(R.drawable.no_profile)
+                        .into(iv_profile);
+                //iv_profile.setImageBitmap(bitmap);
                 iv_profile.bringToFront();
                 iv_profile.invalidate();
                 TextView tv_name = (TextView)layout.findViewById(R.id.tv_dialogname);

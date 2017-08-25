@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -29,7 +30,7 @@ public class DBhelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER,graph_image TEXT);");//건강데이터에 관한 로컬 DB table
-        db.execSQL("CREATE TABLE User_friend(friend_no INTEGER PRIMARY KEY AUTOINCREMENT,user_friend TEXT,friendname TEXT);");//친구목록에 대한 로컬 DB table
+        db.execSQL("CREATE TABLE User_friend(friend_no INTEGER PRIMARY KEY AUTOINCREMENT,user_friend TEXT,friendname TEXT,user_profile TEXT,user_update TEXT);");//친구목록에 대한 로컬 DB table
         db.execSQL("CREATE TABLE ChatMessage(message_no INTEGER PRIMARY KEY AUTOINCREMENT,room_type INTEGER,room_id TEXT,message_sender TEXT,message_content TEXT,message_date TEXT,is_looked INTEGER);");//채팅방에 따른 메세지 정보
         db.execSQL("CREATE TABLE GroupChat(room_no INTEGER PRIMARY KEY AUTOINCREMENT,room_id TEXT,room_member TEXT)");//그룹 채팅에 대한 방정보 생성 - 멤버만 표시
         Toast.makeText(mContext,"Table 생성완료", Toast.LENGTH_SHORT).show();
@@ -80,6 +81,18 @@ public class DBhelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.execSQL(_query);
         db.close();
+    }
+
+    public void updateProfile(String user_profile,String user_update,String userId)
+    {
+        SQLiteDatabase db = getWritableDatabase();
+        String sql="UPDATE User_friend SET user_profile=?,user_update=? WHERE user_friend=?";
+        SQLiteStatement stmt = db.compileStatement(sql);
+        stmt.bindString(1,user_profile);
+        stmt.bindString(2,user_update);
+        stmt.bindString(3,userId);
+        stmt.executeUpdateDelete();
+        Log.d("DB","완료");
     }
 
     public String PrintData(String _query) {
@@ -302,6 +315,8 @@ public class DBhelper extends SQLiteOpenHelper {
         try {
             values.put("user_friend",friendinfo.getString("user_friend"));
             values.put("friendname",friendinfo.getString("user_name"));
+            values.put("user_profile",friendinfo.getString("user_profile"));
+            values.put("user_update",friendinfo.getString("user_update"));
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -327,7 +342,14 @@ public class DBhelper extends SQLiteOpenHelper {
                 try {
                     friend.put("user_friend",(cursor.getString(1)));
                     friend.put("user_name",(cursor.getString(2)));
-
+                    try{
+                        friend.put("user_profile",(cursor.getString(3)));
+                        friend.put("user_update",(cursor.getString(4)));
+                    }catch(NullPointerException e)
+                    {
+                        friend.put("user_profile","0");
+                        friend.put("user_update","0");
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -356,6 +378,7 @@ public class DBhelper extends SQLiteOpenHelper {
                 try {
                     newfriend.put("user_friend",(cursor.getString(1)));
                     newfriend.put("user_name",(cursor.getString(2)));
+                    newfriend.put("user_profile",(cursor.getString(3)));
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -383,6 +406,7 @@ public class DBhelper extends SQLiteOpenHelper {
                 try {
                     friendinfo.put("user_friend",(cursor.getString(1)));
                     friendinfo.put("user_name",(cursor.getString(2)));
+                    friendinfo.put("user_profile",(cursor.getString(3)));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
