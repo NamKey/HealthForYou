@@ -1,33 +1,53 @@
 package com.example.nam.healthforyou;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.media.RingtoneManager;
 import android.net.Uri;
+
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.RemoteViews;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.NotificationTarget;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "MyFirebaseMsgService";
     DBhelper dBhelper = new DBhelper(this, "healthforyou.db", null, 1);
     final static int FCMintent = 0;
+    Context context = MyFirebaseMessagingService.this;
+
+    ByteArrayOutputStream stream;
     /**
      * Called when message is received.
      *
      * @param remoteMessage Object representing the message received from Firebase Cloud Messaging.
      */
     // [START receive_message]
+
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         // [START_EXCLUDE]
@@ -57,6 +77,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             String message= data.get("body");
             System.out.println(message+"text");
             String who;
+            String name;
             String bodymessage;
             JSONObject messageJSON = null;
             try {
@@ -82,12 +103,24 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     if(messageJSON.optString("command").equals("/to")||messageJSON.optString("command").equals("/tohealth"))//개인간의 대화
                     {
                         room_type="0"; //찾아갈때 ID로 방을 찾아감
-                        who = messageJSON.optString("from");
+                        who = messageJSON.optString("from");////상대방의 id
+                        name = messageJSON.optString("name");////상대방의 이름
                     }else{//그룹간의 대화
                         room_type="1"; //찾아갈때 방번호로 찾아감
-                        who = messageJSON.optString("room_no");
+                        who = messageJSON.optString("room_no");////상대방의 id
+                        name = messageJSON.optString("name");////상대방의 이름
                     }
-                    sendNotification(who,bodymessage,room_type);//누구에게,메세지,방의 종류
+                    Bitmap bitmap = new InternalImageManger(context).
+                            setFileName(who+"_Image").
+                            setDirectoryName("PFImage").
+                            load();
+                    Bitmap myBitmap=null;
+                    if(bitmap!=null)
+                    {
+                        myBitmap=getCircularBitmap(resizeBitmap(bitmap));
+                    }
+
+                    sendNotification(who,name,bodymessage,room_type,myBitmap);//누구에게,메세지,방의 종류
                     dBhelper.messagejsoninsert(messageJSON);
                 }
             }else{//Message가 오지 않았는데???
@@ -122,14 +155,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    private void sendNotification(String who,String messageBody,String type) {
+    private void sendNotification(String who,String name,String messageBody,String type,Bitmap myBitmap) {
+        String message="";
+        //건강정보 처리부분
         try {
             JSONObject fcmJSON = new JSONObject(messageBody);
-            System.out.println(fcmJSON);
-
+            message="건강정보";
         } catch (JSONException e) {
-            e.printStackTrace();
+            message=messageBody;
         }
+
+
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("FCM",FCMintent);//////MainActivity를 실행하라는 intent
@@ -139,14 +175,88 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,intent,PendingIntent.FLAG_ONE_SHOT);
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+        //TODO Custom NOtification
+        //RemoteView
+        /*final RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.remoteview_notification);
+        // build notification
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.cardiogram2)
+                        .setContentTitle(who)
+                        .setContentText(messageBody)
+                        .setContent(rv)
+                        .setAutoCancel(true)
+                        .setSound(defaultSoundUri)
+                        .setContentIntent(pendingIntent);
+
+        final Notification notification = mBuilder.build();
+
+        Bitmap bitmap = new InternalImageManger(context).
+                setFileName(who+"_Image").
+                setDirectoryName("PFImage").
+                load();
+        Bitmap myBitmap=null;
+        if(bitmap!=null)
+        {
+            myBitmap=getCircularBitmap(resizeBitmap(bitmap));
+        }
+
+        rv.setImageViewBitmap(R.id.remoteview_notification_icon,myBitmap);
+        //rv.setImageViewResource(R.id.remoteview_notification_icon, R.drawable.cardiogram2);
+        rv.setTextViewText(R.id.remoteview_notification_headline, who);
+        rv.setTextViewText(R.id.remoteview_notification_short_message, messageBody);
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(0, notification);*/
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.custom_progressbar_drawable)///아이콘 바꾸는 거 생각
-                .setContentTitle(who)
-                .setContentText(messageBody)
+                .setSmallIcon(R.drawable.cardiogram2)
+                .setLargeIcon(myBitmap)
+                .setContentTitle(name)
+                .setContentText(message)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
+
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0, notificationBuilder.build());
+    }
+
+    public static Bitmap getCircularBitmap(@NonNull Bitmap bitmap)
+    {
+        final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(output);
+
+        final int color = Color.RED;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawOval(rectF, paint);
+
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+
+        bitmap.recycle();
+
+        return output;
+    }
+
+    static public Bitmap resizeBitmap(Bitmap original) {
+
+        int resizeWidth = 100;
+
+        double aspectRatio = (double) original.getHeight() / (double) original.getWidth();
+        int targetHeight = (int) (resizeWidth * aspectRatio);
+        Bitmap result = Bitmap.createScaledBitmap(original, resizeWidth, targetHeight, false);
+        if (result != original) {
+            original.recycle();
+        }
+        return result;
     }
 }

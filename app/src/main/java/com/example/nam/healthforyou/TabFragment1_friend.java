@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -39,6 +41,8 @@ import static android.content.Context.MODE_PRIVATE;
  */
 
 public class TabFragment1_friend extends Fragment {
+
+    final static int UPDATE_FRIEND=0;
     RelativeLayout tabfrag_friend;///
     List<JSONObject> friendlist;
     DBhelper dBhelper;
@@ -61,7 +65,8 @@ public class TabFragment1_friend extends Fragment {
         dBhelper = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB 접근
         mContext = getActivity().getApplicationContext();
         SharedPreferences useremail = getActivity().getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
-        String loginemailid=useremail.getString("useremail","false");
+        loginemailid=useremail.getString("useremail","false");
+        listViewAdapter = new ListViewAdapter();//////아답터 선언
 
         int count=dBhelper.PrintCountfriend();
         listViewAdapter = new ListViewAdapter();//////아답터 선언
@@ -127,7 +132,7 @@ public class TabFragment1_friend extends Fragment {
                         load();
                 ImageView iv_profile = (ImageView)layout.findViewById(R.id.iv_dialogprofile);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
                 Glide.with(mContext)
                         .load(stream.toByteArray())
                         .asBitmap()
@@ -200,8 +205,6 @@ public class TabFragment1_friend extends Fragment {
                 listViewAdapter.notifyDataSetChanged();
             }
         }
-
-
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.example.nam.healthforyou;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,11 +9,16 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 /**
  * Created by NAM on 2017-08-14.
@@ -43,27 +49,82 @@ public class ChatroomAdapter extends BaseAdapter {
         if(convertView==null)
         {
             inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.chatroomlist, parent, false);//viewholder 추천
         }
 
         Chatroomitem chatroomitem = chatroomitemList.get(position);
 
-        convertView = inflater.inflate(R.layout.chatroomlist, parent, false);//viewholder 추천
                 /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
         ImageView iv_chatroomprofile = (ImageView) convertView.findViewById(R.id.iv_chatroomprofile) ;
         TextView tv_chatroomid = (TextView) convertView.findViewById(R.id.tv_chatroomid);
         TextView tv_recentdate = (TextView)convertView.findViewById(R.id.tv_recentdate);
         TextView tv_recentmessage = (TextView)convertView.findViewById(R.id.tv_recentchat);
 
-        iv_chatroomprofile.setImageResource(R.drawable.no_profile);////크기 조정해줘야됨
-        if(chatroomitem.room_name.equals("")||chatroomitem.room_name==null)
+        if(chatroomitem.roomtype==0)//1:1 채팅
         {
-            tv_chatroomid.setText(chatroomitem.room_id);
-        }else{
+            if(chatroomitem.room_name.equals("")||chatroomitem.room_name==null)//방이름이 안정해진 경우 - 친구가 아닌경우
+           {
+                tv_chatroomid.setText(chatroomitem.room_name);
+                ////방 프로필 설정해주는 부분
+
+                Glide.with(context)
+                        .load(R.drawable.no_profile)
+                        .asBitmap()
+                        .override(64,64)
+                        .centerCrop()
+                        .error(R.drawable.no_profile)
+                        .transform(new CropCircleTransformation(context))
+                        .into(iv_chatroomprofile);
+
+            }else{//방이름이 정해진 경우 - 친구인 경우 - 친구의 프로필 사진을 띄어줌
+                tv_chatroomid.setText(chatroomitem.room_name);
+                ////방 프로필 설정해주는 부분
+                Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
+                        setFileName(chatroomitem.room_id+"_Image").///파일 이름
+                        setDirectoryName("PFImage").
+                        load();
+                if(bitmap!=null)
+                {
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+                    Glide.with(context)
+                            .load(stream.toByteArray())
+                            .asBitmap()
+                            .override(64,64)
+                            .centerCrop()
+                            .error(R.drawable.no_profile)
+                            .transform(new CropCircleTransformation(context))
+                            .into(iv_chatroomprofile);
+                }
+            }
+            try {//건강정보 체크
+                JSONObject is_healthinfo = new JSONObject(chatroomitem.recentmessage);
+                tv_recentmessage.setText("건강 정보");
+            } catch (JSONException e) {
+                tv_recentmessage.setText(chatroomitem.recentmessage);
+            }
+
+        }else if(chatroomitem.roomtype==1)//그룹채팅
+        {
             tv_chatroomid.setText(chatroomitem.room_name);
+            Glide.with(context)
+                    .load(R.drawable.teamchat)
+                    .asBitmap()
+                    .override(64,64)
+                    .centerCrop()
+                    .error(R.drawable.no_profile)
+                    .transform(new CropCircleTransformation(context))
+                    .into(iv_chatroomprofile);
         }
 
         tv_recentdate.setText(chatroomitem.recentdate);
-        tv_recentmessage.setText(chatroomitem.recentmessage);
+        try {
+            JSONObject is_healthinfo = new JSONObject(chatroomitem.recentmessage);
+            tv_recentmessage.setText("건강 정보");
+        } catch (JSONException e) {
+            tv_recentmessage.setText(chatroomitem.recentmessage);
+        }
+
 
         return convertView;
     }
@@ -124,5 +185,9 @@ public class ChatroomAdapter extends BaseAdapter {
     public Chatroomitem getRoomitem(int position)
     {
         return chatroomitemList.get(position);
+    }
+
+    public void deleteRoomItem(){
+        chatroomitemList.clear();
     }
 }

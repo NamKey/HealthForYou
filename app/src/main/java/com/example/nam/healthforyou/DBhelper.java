@@ -31,8 +31,8 @@ public class DBhelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE User_health(health_no INTEGER PRIMARY KEY AUTOINCREMENT,user_bpm INTEGER,user_res INTEGER,data_signdate TEXT,is_synced INTEGER,graph_image TEXT);");//건강데이터에 관한 로컬 DB table
         db.execSQL("CREATE TABLE User_friend(friend_no INTEGER PRIMARY KEY AUTOINCREMENT,user_friend TEXT,friendname TEXT,user_profile TEXT,user_update TEXT);");//친구목록에 대한 로컬 DB table
-        db.execSQL("CREATE TABLE ChatMessage(message_no INTEGER PRIMARY KEY AUTOINCREMENT,room_type INTEGER,room_id TEXT,message_sender TEXT,message_content TEXT,message_date TEXT,is_looked INTEGER);");//채팅방에 따른 메세지 정보
-        db.execSQL("CREATE TABLE GroupChat(room_no INTEGER PRIMARY KEY AUTOINCREMENT,room_id TEXT,room_member TEXT)");//그룹 채팅에 대한 방정보 생성 - 멤버만 표시
+        db.execSQL("CREATE TABLE ChatMessage(message_no INTEGER PRIMARY KEY AUTOINCREMENT,room_type INTEGER,room_id TEXT,message_sender TEXT,senderName TEXT,message_content TEXT,message_date TEXT,is_looked INTEGER);");//채팅방에 따른 메세지 정보
+        db.execSQL("CREATE TABLE GroupChat(room_no INTEGER PRIMARY KEY AUTOINCREMENT,room_id TEXT,room_member TEXT,room_name TEXT)");//그룹 채팅에 대한 방정보 생성 - 멤버만 표시
         Toast.makeText(mContext,"Table 생성완료", Toast.LENGTH_SHORT).show();
     }
 
@@ -445,7 +445,7 @@ public class DBhelper extends SQLiteOpenHelper {
 
         ContentValues values = new ContentValues();
         /////메세지에 들어있는 정보를 분류해야함
-        /////TODO 사진, 심박데이터가 있는 판단해야됨
+        /////심박데이터가 있는 판단해야됨
         try {
             if(jsonMessage.getString("command").equals("/to")||jsonMessage.getString("command").equals("/tohealth"))///개인간의 대화를 나타냄
             {
@@ -460,7 +460,7 @@ public class DBhelper extends SQLiteOpenHelper {
                 values.put("message_sender",jsonMessage.getString("from"));//보낸 사람이 누구인지
                 values.put("message_content",jsonMessage.getString("message"));///메세지의 내용
                 values.put("message_date",jsonMessage.getString("date"));///메세지를 보낸 시간
-
+                values.put("senderName",jsonMessage.getString("name"));//보낸 사람의 이름
                 values.put("room_type",0);///개인간의 대화인지 그룹간의 대화인지 판단 0 - 개인, 1 - 그룹
 
             }else if(jsonMessage.getString("command").equals("/inform")||jsonMessage.getString("command").equals("/informhealth")){///그룹채팅을 의미 방번호가 오게됨
@@ -469,6 +469,7 @@ public class DBhelper extends SQLiteOpenHelper {
                 values.put("message_sender",jsonMessage.getString("from"));////보낸 사람이 누구인지
                 values.put("message_content",jsonMessage.getString("message"));
                 values.put("message_date",jsonMessage.getString("date"));
+                values.put("senderName",jsonMessage.getString("name"));//보낸 사람의 이름
                 if(jsonMessage.optString("from").equals("me"))//구분하는 이유 내가 적은거는 나한테 바로 보임
                 {
                     values.put("is_looked",1);///보였는지 판단 보였으면 1,안보였으면 0
@@ -497,9 +498,10 @@ public class DBhelper extends SQLiteOpenHelper {
                     message.put("room_type",(cursor.getString(1)));
                     message.put("room_id",cursor.getString(2));
                     message.put("message_sender",cursor.getString(3));
-                    message.put("message_content",(cursor.getString(4)));
-                    message.put("message_date",cursor.getString(5));
-                    message.put("is_looked",cursor.getInt(6));
+                    message.put("senderName",(cursor.getString(4)));
+                    message.put("message_content",(cursor.getString(5)));
+                    message.put("message_date",cursor.getString(6));
+                    message.put("is_looked",cursor.getInt(7));
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -523,11 +525,12 @@ public class DBhelper extends SQLiteOpenHelper {
                 JSONObject message =new JSONObject();
                 try {
                     message.put("room_type",(cursor.getString(1)));
-                    message.put("room_id",cursor.getString(2));
-                    message.put("message_sender",cursor.getString(3));
-                    message.put("message_content",(cursor.getString(4)));
-                    message.put("message_date",cursor.getString(5));
-                    message.put("is_looked",cursor.getInt(6));
+                    message.put("room_id",(cursor.getString(2)));
+                    message.put("message_sender",(cursor.getString(3)));
+                    message.put("senderName",(cursor.getString(4)));
+                    message.put("message_content",(cursor.getString(5)));
+                    message.put("message_date",(cursor.getString(6)));
+                    message.put("is_looked",(cursor.getString(7)));
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -554,12 +557,13 @@ public class DBhelper extends SQLiteOpenHelper {
             do {
                 JSONObject chatList = new JSONObject();
                 try {
-                    chatList.put("room_type",(cursor.getString(1)));
+                    chatList.put("room_type",(cursor.getInt(1)));
                     chatList.put("room_id",(cursor.getString(2)));
                     chatList.put("message_sender",(cursor.getString(3)));
-                    chatList.put("message_content",(cursor.getString(4)));
-                    chatList.put("message_date",(cursor.getString(5)));
-                    chatList.put("is_looked",(cursor.getString(6)));
+                    chatList.put("senderName",(cursor.getString(4)));
+                    chatList.put("message_content",(cursor.getString(5)));
+                    chatList.put("message_date",(cursor.getString(6)));
+                    chatList.put("is_looked",(cursor.getString(7)));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -592,14 +596,13 @@ public class DBhelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
 
         try {
-
             for(int i=0;i<memberList.length;i++)
             {
                 values.put("room_id",roomInfo.getString("room_no"));
                 values.put("room_member",memberList[i]);
+                values.put("room_name",roomInfo.optString("room_name"));
                 db.insert("GroupChat",null,values);
             }
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -607,24 +610,24 @@ public class DBhelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public ArrayList<String> getRoominfo(String room_no)
+    public String getRoominfo(String room_no)
     {
         // Select All Query
         String selectQuery = "SELECT * FROM GroupChat WHERE room_id= '" + room_no + "';";
-        ArrayList<String> friendlist = new ArrayList<>();
+        String room_name=null;
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
 
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                friendlist.add(cursor.getString(2));//친구의 리스트를 저장해줌
+                room_name = cursor.getString(3);
             } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
 
-        return friendlist;
+        return room_name;
     }
 
 }

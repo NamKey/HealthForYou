@@ -10,8 +10,9 @@ public class ChatItem {
 
     String item_sender;
     String item_senderId;
-    String item_content;
-    String item_date;
+    String item_content;//내용
+    String item_date;//보낸 날짜
+    String item_senderName;
 
     int user_bpm;//건강 데이터를 보내기 위한 부분
     int user_res;

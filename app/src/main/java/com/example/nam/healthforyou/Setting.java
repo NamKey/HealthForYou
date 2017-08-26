@@ -331,14 +331,19 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 if(extras != null)
                 {
                     Bitmap photo = extras.getParcelable("data");
-                    photo.compress(Bitmap.CompressFormat.JPEG, 100, stream);//이미지를 JPEG 형식으로 압축
+                    try{
+                        photo.compress(Bitmap.CompressFormat.JPEG, 90, stream);//이미지를 JPEG 형식으로 압축
+                    }catch(NullPointerException e)
+                    {
+                        Toast.makeText(mContext,"프로필 사진업로드 실패",Toast.LENGTH_SHORT).show();
+                    }
+
                     byte[] byteArray = stream.toByteArray();//스트림을 통해 bytearray로 만들고
                     Glide.with(this).load(byteArray).into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
 
                     /////나의 프로필에 대한 이미지를 InternalStorage에 저장
-                    Bitmap bitmap = ((BitmapDrawable)iv_myprofileImage.getDrawable()).getBitmap();
                     new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").save(photo);
-                    photo.compress(Bitmap.CompressFormat.JPEG, 100, stream);//이미지를 stream으로 옮김 - TODO 테스트 필요 두번 압축하기 때문에
+                    photo.compress(Bitmap.CompressFormat.JPEG, 90, stream);//이미지를 stream으로 옮김 - TODO 테스트 필요 두번 압축하기 때문에
                     byte[] byteArrayForupload = stream.toByteArray();//스트림을 통해 bytearray로 만들고
                     String base64Image = Base64.encodeToString(byteArrayForupload,Base64.DEFAULT);
 
@@ -373,11 +378,15 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 }
 
                 // 임시 파일 삭제
-                File f = new File(mImageCaptureUri.getPath());
-                if(f.exists())
+                if(mImageCaptureUri.getPath()!=null)
                 {
-                    f.delete();
+                    File f = new File(mImageCaptureUri.getPath());
+                    if(f.exists())
+                    {
+                        f.delete();
+                    }
                 }
+
 
                 break;
             }

@@ -8,6 +8,7 @@
         android:id="@+id/iv_chatroomprofile"
         android:layout_width="60sp"
         android:layout_height="60sp"
+        android:padding="6sp"
         app:srcCompat="@drawable/no_profile" />
 
     <LinearLayout

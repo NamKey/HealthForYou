@@ -19,6 +19,8 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
+import jp.wasabeef.glide.transformations.CropCircleTransformation;
+
 /**
  * Created by NAM on 2017-08-04.
  */
@@ -76,8 +78,8 @@ public class ListViewAdapter extends BaseAdapter {
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     Glide.with(context)
                             .load(stream.toByteArray())
-                            .asBitmap()
-                            .override(128,128)
+                            .override(64,64)
+                            .centerCrop()
                             .error(R.drawable.no_profile)
                             .into(iv_img);
                 }else{
@@ -112,8 +114,8 @@ public class ListViewAdapter extends BaseAdapter {
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     Glide.with(context)
                             .load(stream.toByteArray())
-                            .asBitmap()
-                            .override(128,128)
+                            .override(64,64)
+                            .centerCrop()
                             .error(R.drawable.no_profile)
                             .into(iv_img);
                 }else{

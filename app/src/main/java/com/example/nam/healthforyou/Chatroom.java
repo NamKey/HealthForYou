@@ -37,7 +37,7 @@ import java.util.Date;
 public class Chatroom extends AppCompatActivity{
     //액티비티에서 선언.
     private ClientSocketService mService; //서비스 클래스
-    private String who;//누구한테 보낼지
+    private String who=null;//누구한테 보낼지
     ChatAdapter chatAdapter;
     ListView chatlist;
     final static int update_message=1;
@@ -125,6 +125,7 @@ public class Chatroom extends AppCompatActivity{
                                 sendptopJSON.put("command","/to");///서버에 보낼 명령어
                                 sendptopJSON.put("from","me");///내가 보낸거임
                                 sendptopJSON.put("who",who);
+                                sendptopJSON.put("senderName","me");///나의 이름은 me
                                 sendptopJSON.put("message",message);///어떤 내용인지
                                 sendptopJSON.put("date",formatDate);///보낸 시간은
                             } catch (JSONException e) {
@@ -141,6 +142,7 @@ public class Chatroom extends AppCompatActivity{
                                 sendgroupJSON.put("command","/inform");///서버에 보낼 명령어
                                 sendgroupJSON.put("room_no",who);
                                 sendgroupJSON.put("from","me");///누가 받을 건지
+                                sendgroupJSON.put("name","me");
                                 sendgroupJSON.put("message",message);///어떤 내용인지
                                 sendgroupJSON.put("date",formatDate);///보낸 시간은
                             } catch (JSONException e) {
@@ -275,8 +277,11 @@ public class Chatroom extends AppCompatActivity{
     private ClientSocketService.ICallback mCallback = new ClientSocketService.ICallback() {
         @Override
         public void Knowroom(String room_no){
-            who = room_no;///////room_no를 who에다가 담음
-            System.out.println(who+"넘어온 who");
+            if(who==null)////기존에 대화하고 있는지 판단해야됨
+            {
+                who = room_no;///////room_no를 who에다가 담음
+                System.out.println(who+"넘어온 who");
+            }
         }
     };
 
@@ -301,6 +306,7 @@ public class Chatroom extends AppCompatActivity{
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
+                overridePendingTransition(0,0);
                 return true;
 
             default:
@@ -462,26 +468,20 @@ public class Chatroom extends AppCompatActivity{
                                 chatitem.data_signdate=healthdata.optString("data_signdate");
                                 chatitem.item_date = jsonObject.optString("message_date");
                                 chatitem.setType(2);
-                                if(friendinfo.length()!=0)//친구가 있음
-                                {
-                                    chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
-                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }else{//친구가 없음
-                                    chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }
+
+                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
                                 chatAdapter.addItemHealthME(0,chatitem);
 
                             } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지임 - //건강데이터가 아닌것은 그냥 메세지
                                 chatitem.item_content = jsonObject.optString("message_content");
                                 chatitem.item_date = jsonObject.optString("message_date");
                                 chatitem.setType(0);
-                                if(friendinfo.length()!=0)//친구가 있음
-                                {
-                                    chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
-                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }else{//친구가 없음
-                                    chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }
+
+                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
                                 chatAdapter.addItemME(0,chatitem);
                             }
 
@@ -498,26 +498,20 @@ public class Chatroom extends AppCompatActivity{
                                 chatitem.item_date = jsonObject.optString("message_date");
                                 chatitem.setType(3);
                                 //senderId는 프로필 사진을 갖고 오기 위해 필요한 부분
-                                if(friendinfo.length()!=0)//친구가 있음
-                                {
-                                    chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
-                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }else{//친구가 없음
-                                    chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }
+
+                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
                                 chatAdapter.addItemHealthYou(0,chatitem);
 
                             } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지임 - //건강데이터가 아닌것은 그냥 메세지
                                 chatitem.item_content = jsonObject.optString("message_content");
                                 chatitem.item_date = jsonObject.optString("message_date");
                                 chatitem.setType(1);
-                                if(friendinfo.length()!=0)//친구가 있음
-                                {
-                                    chatitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
-                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }else{//친구가 없음
-                                    chatitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                                }
+
+                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
                                 chatAdapter.addItemYou(0,chatitem);
                             }
                         }
@@ -534,11 +528,10 @@ public class Chatroom extends AppCompatActivity{
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {////
         @Override
         public void onReceive(Context context, Intent intent) {
-
-            String query = "SELECT * FROM ChatMessage WHERE is_looked=0 and room_id= '" + who + "'"+"ORDER BY message_no DESC LIMIT 1;";//////번호 순으로 처리
+            System.out.println(who+"BroadCastReceiver 처리");
+            String query = "SELECT * FROM ChatMessage WHERE is_looked=0 and room_id= '" + who + "'"+" ORDER BY message_no DESC LIMIT 1;";//////번호 순으로 처리
             JSONObject jsonObject=dBhelper.updatemessage(query);//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
             System.out.println(jsonObject);
-            JSONObject friendinfo=dBhelper.getFriend(jsonObject.optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
 
             //분리한 데이터를 리스트뷰에 들어갈 아이템 객체로 변환 - 다른 사람이 보낸 메세지 타입
             if(jsonObject.length()!=0){//////JSONObject가 비었는지 판단 - 길이로 판단해야됨
@@ -553,34 +546,21 @@ public class Chatroom extends AppCompatActivity{
                     receiveitem.data_signdate=healthdata.optString("data_signdate");
                     receiveitem.item_date = jsonObject.optString("message_date");
                     receiveitem.setType(3);
-                    if(friendinfo.length()!=0)//친구가 있음
-                    {
-                        receiveitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
-                        receiveitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                    }else{//친구가 없음
-                        receiveitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                    }
+
+                    receiveitem.item_sender = jsonObject.optString("senderName");//친구의 이름을 넣어줌
+                    receiveitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
                     handler.sendEmptyMessage(update_healthmessage);
 
                 } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지임
                     receiveitem.item_content = jsonObject.optString("message_content");
                     receiveitem.item_date = jsonObject.optString("message_date");
                     receiveitem.setType(1);
-                    if(friendinfo.length()!=0)//친구가 있음
-                    {
-                        receiveitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
-                        receiveitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                    }else{//친구가 없음
-                        receiveitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                    }
-                    handler.sendEmptyMessage(update_message);
-                }
-                if(friendinfo.length()!=0)//친구가 있음
-                {
-                    receiveitem.item_sender = friendinfo.optString("user_name");//친구의 이름을 넣어줌
+
+                    receiveitem.item_sender = jsonObject.optString("senderName");//친구의 이름을 넣어줌
                     receiveitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-                }else{//친구가 없음
-                    receiveitem.item_sender = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
+                    handler.sendEmptyMessage(update_message);
                 }
 
                 String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";

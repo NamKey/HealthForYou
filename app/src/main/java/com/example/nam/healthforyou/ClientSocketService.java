@@ -223,15 +223,15 @@ public class ClientSocketService extends Service {
                     JSONObject getjson = new JSONObject(line);
                     System.out.println(getjson);
                     //없는 값을 찾으려고 하면 JSON exception을 통해 while문을 빠져나감
-                    if(getjson.getString("command").equals("/makeroom"))//TODO 방완성과 메세지를 받는 것을 구분해야함
+                    if(getjson.getString("command").equals("/makeroom"))
                     {
                         if(mCallback!=null)//////이부분이 필요한 이유 - 채팅방과 연결되는 메쏘드 Knowroom은 mCallback 인터페이스를 통해 구현되는데
                         {//방을 만든 당사자는 채팅창에 있지만 나머지 사람은 채팅창에 있을지 모르기 때문에 null 예외처리를 통해 nullpointer exception을 막음
                             mCallback.Knowroom(getjson.getString("room_no"));//int로 넘겨주는 이유 String은 객체이므로 넘겨주는 것은 값이 아닌 주소이므로 값을 넘겨줘야됨
-                        }
+                        }//방을 만들 사람이 메세지를 적을때 사용하려고 만든 부분
                         dBhelper.makeRoominsert(getjson);//방의 정보를 저장 room_no,chatmember
                     }
-                    else{//TODO JSON으로 바꿀 예정 20170819
+                    else{
                         dBhelper.messagejsoninsert(getjson);
                         ///////LocalDB에 저장
                         ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄

@@ -11,13 +11,12 @@
     <ImageView
         android:id="@+id/iv_profile"
         android:layout_width="40sp"
-        android:layout_height="wrap_content"
+        android:layout_height="60sp"
         android:layout_margin="5sp"
         android:layout_weight="1"
         android:adjustViewBounds="true"
         android:background="@drawable/profile_border"
-        android:padding="5sp"
-        android:scaleType="centerCrop"
+        android:padding="3sp"
         app:srcCompat="@drawable/no_profile" />
 
     <TextView

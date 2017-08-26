@@ -18,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,7 +107,7 @@ public class ChatAdapter extends BaseAdapter {
                     if(bitmap!=null)
                     {
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
                         Glide.with(context)
                                 .load(stream.toByteArray())
                                 .asBitmap()
@@ -175,7 +176,7 @@ public class ChatAdapter extends BaseAdapter {
                     if(bitmap!=null)
                     {
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
                         Glide.with(context)
                                 .load(stream.toByteArray())
                                 .asBitmap()

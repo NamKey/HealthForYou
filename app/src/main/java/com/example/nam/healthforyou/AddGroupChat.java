@@ -2,6 +2,9 @@ package com.example.nam.healthforyou;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,6 +22,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.nam.healthforyou.TabFragment1_friend.UPDATE_FRIEND;
+
 public class AddGroupChat extends AppCompatActivity {
     DBhelper dBhelper;
     ListViewAdapter listViewAdapter;
@@ -28,6 +33,7 @@ public class AddGroupChat extends AppCompatActivity {
     Button btn_confirm;
     int friendcount;////내가 체크한 친구의 인원
     int checkcount;////내가 체크한 리스트 체크 - 0개일때 확인 버튼 비활성화, 1개일때부터 활성화
+    String loginemailid;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +41,8 @@ public class AddGroupChat extends AppCompatActivity {
         getSupportActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);//액션바 숨기기
 
         dBhelper = new DBhelper(getApplicationContext(), "healthforyou.db", null, 1);//DB 접근
+        SharedPreferences useremail = getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
+        loginemailid=useremail.getString("useremail","false");
         showActionBar();//액션바 보여주기
         int count=dBhelper.PrintCountfriend();
         listViewAdapter = new ListViewAdapter();//////아답터 선언
@@ -50,16 +58,21 @@ public class AddGroupChat extends AppCompatActivity {
             for(int i=0;i<friendlist.size();i++)//NULLPointer Exception 주의
             {
                 //JSONObject -> ProfileItem
-                JSONObject jsonObject = friendlist.get(i);
-                ProfileItem profileItem = new ProfileItem();
-                try {
-                    profileItem.name=jsonObject.getString("user_name");//이름을 담고
-                    profileItem.email=jsonObject.getString("user_friend");//이메일을 담고
-                    profileItem.setType(1);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                //나와 친구들을 분리 - 나를 제외한 친구들만 추가해야함
+                if(!loginemailid.equals(friendlist.get(i).optString("user_friend")))//로그인한 유저의 아이디는 나를 의미 - SQlite에 저장된 데이터와 비교
+                {
+                    JSONObject jsonObject = friendlist.get(i);
+                    ProfileItem profileItem = new ProfileItem();
+                    try {
+                        profileItem.name=jsonObject.getString("user_name");//이름을 담고
+                        profileItem.email=jsonObject.getString("user_friend");//이메일을 담고
+                        profileItem.profileName=profileItem.email+"_Image";///프로필 사진을 정해줌
+                        profileItem.setType(1);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    listViewAdapter.addGroupFriend(profileItem);///친구를 불러오는 부분
                 }
-                listViewAdapter.addGroupFriend(profileItem);///친구를 불러오는 부분
             }
             listViewAdapter.notifyDataSetChanged();
         }

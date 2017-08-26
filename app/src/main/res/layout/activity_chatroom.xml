@@ -61,9 +61,10 @@
                 android:layout_width="275sp"
                 android:layout_height="30sp"
                 android:background="#ffffff"
-                android:ems="12"
-                android:gravity="center_vertical"
-                android:inputType="text" />
+                android:scrollHorizontally="true"
+                android:maxLines="10"
+                android:gravity="start|center_vertical"
+                android:inputType="text|textMultiLine|textCapSentences" />
 
         </FrameLayout>
 

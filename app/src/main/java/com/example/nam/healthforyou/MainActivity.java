@@ -273,12 +273,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             System.out.println(s);
-            if(s.equals("true"))
-            {
-
-            }else{
-
-            }
         }
 
         @Override
@@ -296,7 +290,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (msCookieManager.getCookieStore().getCookies().size() > 0) {
                     // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
                     con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
-                    System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
                 }
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
@@ -389,7 +382,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (msCookieManager.getCookieStore().getCookies().size() > 0) {
                     // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
                     con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
-                    System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
                 }
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
