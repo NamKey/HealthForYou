@@ -333,7 +333,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public class syncfriendTask extends AsyncTask<String,String,String>
     {
-        DBhelper dbhelper = new DBhelper(MainActivity.this, "healthforyou.db", null, 1);
         String result;
         @Override
         protected void onPostExecute(String s) {
@@ -355,7 +354,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Bitmap bitmap = BitmapFactory.decodeByteArray(a,0,a.length);////비트맵으로 변환
                         new InternalImageManger(mContext).setFileName(Id+"_Image").setDirectoryName("PFImage").save(bitmap);//저장
                         //파일의 이름, update 된 날짜, 사용자 정보
-                        dbhelper.updateProfile(Id+"_Image",profile_data.optString("user_update"),profile_data.optString("user_friend"));
+                        dBhelper.updateProfile(Id+"_Image",profile_data.optString("user_update"),profile_data.optString("user_friend"));
                     }
 
                 } catch (JSONException e) {
@@ -363,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
             System.out.println("업데이트 완료");
-            dbhelper.close();
+            dBhelper.close();
 
         }
 

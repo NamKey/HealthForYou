@@ -75,7 +75,7 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            System.out.println(s);
+            System.out.println(s+"FireBase");
             if(s.equals("true"))
             {
                 Toast.makeText(getApplicationContext(),"FCM Token refresh",Toast.LENGTH_SHORT).show();
@@ -98,6 +98,8 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
                     // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
                     con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
                     System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
+                }else{
+                    System.out.println("쿠키값이 없음????");
                 }
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));

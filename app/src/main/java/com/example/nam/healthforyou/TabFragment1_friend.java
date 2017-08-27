@@ -201,6 +201,7 @@ public class TabFragment1_friend extends Fragment {
         {
             if(requestCode==ACT_ADDFRIEND)////최근에 추가한 친구를 상단에 표시
             {
+                System.out.println(dBhelper.getnewfriend());
                 listViewAdapter.addItemNewFriend(dBhelper.getnewfriend());///최근에 등록된 친구를 리스트뷰에 등록
                 listViewAdapter.notifyDataSetChanged();
             }

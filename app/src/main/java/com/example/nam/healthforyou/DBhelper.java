@@ -613,7 +613,7 @@ public class DBhelper extends SQLiteOpenHelper {
     public String getRoominfo(String room_no)
     {
         // Select All Query
-        String selectQuery = "SELECT * FROM GroupChat WHERE room_id= '" + room_no + "';";
+        String selectQuery = "SELECT * FROM GroupChat GROUP by room_id HAVING room_id= '" + room_no + "';";
         String room_name=null;
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);

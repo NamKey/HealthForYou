@@ -18,7 +18,7 @@
             android:id="@+id/iv_settingProfile"
             android:layout_width="40sp"
             android:layout_height="60sp"
-            android:layout_weight="1"
+            android:layout_weight="3"
             android:background="@drawable/btn_add"
             android:padding="5sp"
             android:scaleType="centerInside"
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginStart="15sp"
-            android:layout_weight="3"
+            android:layout_weight="5"
             android:orientation="vertical">
 
             <TextView
@@ -50,7 +50,7 @@
 
         <Button
             android:id="@+id/btn_logout"
-            android:layout_width="50sp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"

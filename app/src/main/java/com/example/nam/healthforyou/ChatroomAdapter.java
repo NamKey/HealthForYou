@@ -62,7 +62,7 @@ public class ChatroomAdapter extends BaseAdapter {
 
         if(chatroomitem.roomtype==0)//1:1 채팅
         {
-            if(chatroomitem.room_name.equals("")||chatroomitem.room_name==null)//방이름이 안정해진 경우 - 친구가 아닌경우
+            if(!chatroomitem.is_friend)//방이름이 안정해진 경우 - 친구가 아닌경우
            {
                 tv_chatroomid.setText(chatroomitem.room_name);
                 ////방 프로필 설정해주는 부분
@@ -137,6 +137,7 @@ public class ChatroomAdapter extends BaseAdapter {
             chatroomitem.recentdate = chatroom.getString("message_date");
             chatroomitem.recentmessage = chatroom.getString("message_content");
             chatroomitem.roomtype = chatroom.getInt("room_type");
+            chatroomitem.is_friend = chatroom.getBoolean("is_friend");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -153,6 +154,7 @@ public class ChatroomAdapter extends BaseAdapter {
             chatroomitem.recentdate = chatroom.getString("message_date");
             chatroomitem.recentmessage = chatroom.getString("message_content");
             chatroomitem.roomtype = chatroom.getInt("room_type");
+            chatroomitem.is_friend = chatroom.getBoolean("is_friend");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -169,6 +171,7 @@ public class ChatroomAdapter extends BaseAdapter {
             chatroomitem.recentdate = chatroom.getString("message_date");
             chatroomitem.recentmessage = chatroom.getString("message_content");
             chatroomitem.roomtype = chatroom.getInt("room_type");
+            chatroomitem.is_friend = chatroom.getBoolean("is_friend");
         } catch (JSONException e) {
             e.printStackTrace();
         }
