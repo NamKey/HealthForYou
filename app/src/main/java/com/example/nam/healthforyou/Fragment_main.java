@@ -2,6 +2,7 @@ package com.example.nam.healthforyou;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -119,7 +120,17 @@ public class Fragment_main extends Fragment {
         String init=dbManager.PrintData("SELECT * FROM User_health;");//유저의 건강정보 모두 받아오기
         int datacount = dbManager.PrintCountData();
         System.out.println(datacount);
+
+        int type=NetworkUtil.getConnectivityStatus(getActivity().getApplicationContext());
+        if(type==NetworkUtil.TYPE_MOBILE||type==NetworkUtil.TYPE_WIFI)
+        {
+            //채팅창을 누를 시에 Socket을 연다
+            ServicesocketThread servicesocketThread = new ServicesocketThread();
+            servicesocketThread.start();
+        }
+
         //생각해야 될 부분
+
 
         /*
         1. SQLite와 서버 DB연동
@@ -163,6 +174,20 @@ public class Fragment_main extends Fragment {
 
         // AsyncTask를 통해 HttpURLConnection 수행.
         return main;
+    }
+
+    //UI-Thread를 통해서 Socket을 열면 netWorkThreadException 발생 - Thread를 통해 쓰레드 시작
+    public class ServicesocketThread extends Thread{
+        @Override
+        public void run() {
+            startServiceMethod();
+        }
+    }
+
+    //서비스 시작. - 소켓 연결
+    public void startServiceMethod(){
+        Intent Service = new Intent(getActivity(), ClientSocketService.class);
+        getActivity().startService(Service);
     }
 
     @Override

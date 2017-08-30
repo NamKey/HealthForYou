@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -132,7 +133,7 @@ public class Addfriend extends AppCompatActivity {
                 if (msCookieManager.getCookieStore().getCookies().size() > 0) {
                     // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
                     con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
-                    System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
+                    Log.d("addfriend",msCookieManager.getCookieStore().getCookies()+"");
                 }
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));

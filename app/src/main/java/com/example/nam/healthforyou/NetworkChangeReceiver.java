@@ -3,8 +3,13 @@ package com.example.nam.healthforyou;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -27,22 +32,40 @@ import static com.example.nam.healthforyou.Login.msCookieManager;
  */
 
 public class NetworkChangeReceiver extends BroadcastReceiver {
-
+    String action;
     @Override
     public void onReceive(Context context, Intent intent) {
-        String status = NetworkUtil.getConnectivityStatusString(context);//인터넷의 변화를 띄워주는 부분
-        Toast.makeText(context, status, Toast.LENGTH_SHORT).show();
-        int con = NetworkUtil.getConnectivityStatus(context);///네트워크의 상태를 받아옴
-        if (con == NetworkUtil.TYPE_WIFI || con== NetworkUtil.TYPE_MOBILE) {///인터넷에 연결된 상태이면 WIFI ? LTE ?
-            if( con == NetworkUtil.TYPE_WIFI)
-            {
-                Intent startIntent = new Intent(context, Syncdbservice.class);
-                context.startService(startIntent);
-            }else if(con == NetworkUtil.TYPE_MOBILE){
-                //다이얼로그 - 연동하시겠습니까?
-            }
-        }else{//네트워크가 연결이 안된 경우
 
-        }
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork != null) {
+            Intent startIntent = new Intent(context, Syncdbservice.class);
+            context.startService(startIntent);
+
+
+            Log.d("networkState","변경이 감지됨");
+            Intent Service = new Intent(context, ClientSocketService.class);
+            context.startService(Service);
+         }
+
+//        String status = NetworkUtil.getConnectivityStatusString(context);//인터넷의 변화를 띄워주는 부분
+//        Toast.makeText(context, status, Toast.LENGTH_SHORT).show();
+//        int con = NetworkUtil.getConnectivityStatus(context);///네트워크의 상태를 받아옴
+//        System.out.println(con+"TYPE");
+//        if (con == NetworkUtil.TYPE_WIFI || con== NetworkUtil.TYPE_MOBILE) {///인터넷에 연결된 상태이면 WIFI ? LTE ?
+//            if( con == NetworkUtil.TYPE_WIFI)
+//            {
+//                Intent startIntent = new Intent(context, Syncdbservice.class);
+//                context.startService(startIntent);
+//
+//            }else if(con == NetworkUtil.TYPE_MOBILE){
+//                Intent startIntent = new Intent(context, Syncdbservice.class);
+//                context.startService(startIntent);
+//            }
+//        }else{//네트워크가 연결이 안된 경우
+//
+//        }
     }
+
+
 }

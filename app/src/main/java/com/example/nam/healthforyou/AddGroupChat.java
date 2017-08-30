@@ -3,14 +3,10 @@ package com.example.nam.healthforyou;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -19,10 +15,7 @@ import android.widget.ListView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static com.example.nam.healthforyou.TabFragment1_friend.UPDATE_FRIEND;
 
 public class AddGroupChat extends AppCompatActivity {
     DBhelper dBhelper;
@@ -103,7 +96,7 @@ public class AddGroupChat extends AppCompatActivity {
 
     private void showActionBar() {
         LayoutInflater inflator = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View v = inflator.inflate(R.layout.ab_custom, null);
+        View v = inflator.inflate(R.layout.ab_addfriend, null);
 
         //취소버튼
         Button btn_cancel = (Button)v.findViewById(R.id.btn1);

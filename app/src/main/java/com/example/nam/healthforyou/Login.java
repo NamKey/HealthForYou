@@ -130,9 +130,7 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = getApplicationContext();
-        //SharedPreference
-        session = getApplicationContext().getSharedPreferences("session",MODE_PRIVATE);//SharedPreference에 저장할 준비
-        session_editor = session.edit();
+
 
         loginemail = getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
         loginemail_editor = loginemail.edit();
@@ -143,6 +141,9 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
 
         FacebookSdk.sdkInitialize(this.getApplicationContext());
         //session id 가 있으면
+        //SharedPreference
+        session = getApplicationContext().getSharedPreferences("session",MODE_PRIVATE);//SharedPreference에 저장할 준비
+        session_editor = session.edit();
         session_id=session.getString("session","false");
 
         System.out.println(session_id+"세션아이디 체크");

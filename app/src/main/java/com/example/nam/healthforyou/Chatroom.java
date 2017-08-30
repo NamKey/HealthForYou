@@ -10,12 +10,14 @@ import android.content.ServiceConnection;
 import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.PopupMenu;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -52,13 +54,20 @@ public class Chatroom extends AppCompatActivity{
     boolean mServiceIsregistered;
     int sendtype;///채팅방의 종류
     String choose_date;///데이터를 선택할때 선택한 날짜!
+    NetworkChangeReceiver networkChangeReceiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chatroom);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
         registerReceiver(broadcastReceiver, new IntentFilter("updateChat"));///새로 온메세지를 확인해보라는 말
+
+        //네트워크 변경감지
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        networkChangeReceiver = new NetworkChangeReceiver();
+        registerReceiver(networkChangeReceiver, intentFilter);
+
         mContext = getApplicationContext();
         dBhelper = new DBhelper(mContext, "healthforyou.db", null, 1);///DB정의
         ///채팅 ListviewAdapter 정의
@@ -125,7 +134,7 @@ public class Chatroom extends AppCompatActivity{
                                 sendptopJSON.put("command","/to");///서버에 보낼 명령어
                                 sendptopJSON.put("from","me");///내가 보낸거임
                                 sendptopJSON.put("who",who);
-                                sendptopJSON.put("senderName","me");///나의 이름은 me
+                                sendptopJSON.put("name","me");///나의 이름은 me
                                 sendptopJSON.put("message",message);///어떤 내용인지
                                 sendptopJSON.put("date",formatDate);///보낸 시간은
                             } catch (JSONException e) {
@@ -236,6 +245,8 @@ public class Chatroom extends AppCompatActivity{
                 case 0:
                 {
                     who = intent.getStringExtra("who");////누구한테 보낼지 정하는 부분
+                    String roomname = intent.getStringExtra("room_name");
+                    getSupportActionBar().setTitle(roomname);
                     System.out.println("who"+who);
                     sendtype = 0;
                     break;
@@ -258,6 +269,9 @@ public class Chatroom extends AppCompatActivity{
                 case 2://채팅방은 이미 만들어져 있어서 보내기만 하면 되는 상황
                 {
                     who = intent.getStringExtra("room_id");///room_id를 받아옴
+                    String roomname = intent.getStringExtra("room_name");
+                    System.out.println(roomname+"액션바 타이틀");
+                    getSupportActionBar().setTitle(roomname);
                     sendtype=1;
                     System.out.println("방아이디 " + who);
                 }
@@ -320,6 +334,7 @@ public class Chatroom extends AppCompatActivity{
         if(mServiceIsregistered){/////
             unbindService(mConnection);//서비스와 액티비티의 통신을 끊음
             mServiceIsregistered=false;
+            mService.unregisterCallback(mCallback);//Callback을 해제함
         }
     }
 
@@ -362,6 +377,7 @@ public class Chatroom extends AppCompatActivity{
                                         sendptophealthJSON.put("command","/tohealth");///서버에 보낼 명령어
                                         sendptophealthJSON.put("from","me");///내가 보낸거임
                                         sendptophealthJSON.put("who",who);
+                                        sendptophealthJSON.put("senderName","me");///나의 이름은 me
                                         sendptophealthJSON.put("message",recent_healthdata);///어떤 내용인지
                                         sendptophealthJSON.put("date",formatDate);///보낸 시간은
                                     } catch (JSONException e) {
@@ -376,6 +392,7 @@ public class Chatroom extends AppCompatActivity{
                                         sendgrouphealthJSON.put("command","/informhealth");///서버에 보낼 명령어
                                         sendgrouphealthJSON.put("room_no",who);
                                         sendgrouphealthJSON.put("from","me");///내가 보낸거임
+                                        sendgrouphealthJSON.put("name","me");
                                         sendgrouphealthJSON.put("message",recent_healthdata);///어떤 내용인지
                                         sendgrouphealthJSON.put("date",formatDate);///보낸 시간은
                                     } catch (JSONException e) {
@@ -446,6 +463,7 @@ public class Chatroom extends AppCompatActivity{
                 case update_healthmessage:{
                     chatAdapter.addItemHealthYou(receiveitem);
                     chatAdapter.notifyDataSetChanged();
+                    break;//이게 없어서 밑에부분이 실행됨
                 }
 
                 case all_messageUpdate:{
@@ -519,6 +537,8 @@ public class Chatroom extends AppCompatActivity{
                     String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
                     dBhelper.update(updateStateQuery);
                     chatAdapter.notifyDataSetChanged();
+
+                    break;
                 }
 
             }
@@ -531,7 +551,7 @@ public class Chatroom extends AppCompatActivity{
             System.out.println(who+"BroadCastReceiver 처리");
             String query = "SELECT * FROM ChatMessage WHERE is_looked=0 and room_id= '" + who + "'"+" ORDER BY message_no DESC LIMIT 1;";//////번호 순으로 처리
             JSONObject jsonObject=dBhelper.updatemessage(query);//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
-            System.out.println(jsonObject);
+            System.out.println(jsonObject+"새로온 메세지를 불러옴");
 
             //분리한 데이터를 리스트뷰에 들어갈 아이템 객체로 변환 - 다른 사람이 보낸 메세지 타입
             if(jsonObject.length()!=0){//////JSONObject가 비었는지 판단 - 길이로 판단해야됨
@@ -563,8 +583,7 @@ public class Chatroom extends AppCompatActivity{
                     handler.sendEmptyMessage(update_message);
                 }
 
-                String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
-                dBhelper.update(updateStateQuery);
+                dBhelper.updateMessageState(who);
 
             }else{
                 System.out.println("다른 사람이 메세지를 보냄");
@@ -581,5 +600,6 @@ public class Chatroom extends AppCompatActivity{
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(broadcastReceiver);
+        unregisterReceiver(networkChangeReceiver);
     }
 }

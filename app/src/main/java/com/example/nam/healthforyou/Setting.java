@@ -6,10 +6,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
@@ -25,8 +27,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-//import com.bumptech.glide.Glide;
-
 import com.bumptech.glide.Glide;
 
 import org.json.JSONException;
@@ -39,13 +39,37 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.HttpCookie;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
+
+
+import android.Manifest;
+import android.content.ComponentName;
+
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+
+import android.media.MediaScannerConnection;
+
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import static com.example.nam.healthforyou.Login.msCookieManager;
 
@@ -60,14 +84,25 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
     SharedPreferences loginemail;
     SharedPreferences.Editor loginemail_editor;
 
-    private Uri mImageCaptureUri;
-    private static final int PICK_FROM_CAMERA = 0;
-    private static final int PICK_FROM_ALBUM = 1;
-    private static final int CROP_FROM_CAMERA = 2;
+    private static final int PICK_FROM_CAMERA = 1;
+    private static final int PICK_FROM_ALBUM = 2;
+    private static final int CROP_FROM_CAMERA = 3;
 
+    private Uri photoUri;
+    private String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA};
+    private static final int MULTIPLE_PERMISSIONS = 101;
+
+    private String mCurrentPhotoPath;
     ImageView iv_myprofileImage;
     ByteArrayOutputStream stream;
     String myId;
+
+    private Uri mImageCaptureUri;
+    private static final int PICK_FROM_CAMERA_2 = 4;
+    private static final int PICK_FROM_ALBUM_2 = 5;
+    private static final int CROP_FROM_CAMERA_2 = 6;
 
     //통신부분
     HttpURLConnection con;
@@ -89,6 +124,11 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         tv_settingName.setText(mejson.optString("user_name"));
         TextView tv_settingEmail = (TextView)findViewById(R.id.tv_settingEmail);
         tv_settingEmail.setText(mejson.optString("user_friend"));
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        {
+            checkPermissions();//권한 체크
+        }
+
 
         Button btn_logout = (Button)findViewById(R.id.btn_logout);
         btn_logout.setOnClickListener(new View.OnClickListener() {
@@ -110,6 +150,85 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         iv_myprofileImage.setImageBitmap(bitmap);
         iv_myprofileImage.setOnClickListener(this);
     }
+    ///API 19
+    private void doTakePhotoAction()
+    {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        // 임시로 사용할 파일의 경로를 생성
+        String url = "tmp_" + String.valueOf(System.currentTimeMillis()) + ".jpg";
+        mImageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), url));
+
+        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
+        // 특정기기에서 사진을 저장못하는 문제가 있어 다음을 주석처리 합니다.
+        intent.putExtra("return-data", true);
+        startActivityForResult(intent, PICK_FROM_CAMERA_2);
+    }
+
+    /**
+     * 앨범에서 이미지 가져오기
+     */
+    private void doTakeAlbumAction()
+    {
+        // 앨범 호출
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType(android.provider.MediaStore.Images.Media.CONTENT_TYPE);
+        intent.setData(MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        startActivityForResult(intent, PICK_FROM_ALBUM_2);
+    }
+
+
+    private boolean checkPermissions() {
+        int result;
+        List<String> permissionList = new ArrayList<>();
+        for (String pm : permissions) {
+            result = ContextCompat.checkSelfPermission(this, pm);
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(pm);
+            }
+        }
+        if (!permissionList.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionList.toArray(new String[permissionList.size()]), MULTIPLE_PERMISSIONS);
+            return false;
+        }
+        return true;
+    }
+
+    private void takePhoto() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File photoFile = null;
+        try {
+            photoFile = createImageFile();
+        } catch (IOException e) {
+            Toast.makeText(Setting.this, "이미지 처리 오류! 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
+            finish();
+            e.printStackTrace();
+        }
+        if (photoFile != null) {
+            photoUri = FileProvider.getUriForFile(Setting.this,"com.example.nam.healthforyou.provider", photoFile);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+            startActivityForResult(intent, PICK_FROM_CAMERA);
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("HHmmss").format(new Date());
+        String imageFileName = "nostest_" + timeStamp + "_";
+        File storageDir = new File(Environment.getExternalStorageDirectory() + "/NOSTest/");
+        if (!storageDir.exists()) {
+            storageDir.mkdirs();
+        }
+        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+        mCurrentPhotoPath = "file:" + image.getAbsolutePath();
+        return image;
+    }
+
+    private void goToAlbum() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
+        startActivityForResult(intent, PICK_FROM_ALBUM);
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -134,10 +253,10 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
 
         @Override
         protected String doInBackground(String... params) {
-            String strUrl="http://kakapo12.vps.phps.kr/uploadProfile.php";
+            String strUrl2="http://kakapo12.vps.phps.kr/uploadProfile.php";
 
             try {
-                URL url = new URL(strUrl);
+                URL url = new URL(strUrl2);
                 con = (HttpURLConnection) url.openConnection();//커넥션을 여는 부분
                 con.setRequestMethod("POST");
                 con.setRequestProperty("Content-Type", "application/json");// 타입설정(application/json) 형식으로 전송 (Request Body 전달시 application/json로 서버에 전달.)
@@ -190,6 +309,8 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         }
     }
 
+
+
     @Override//Setting에서는 로그아웃을 생각해 MainActivity를 finish 하므로 MainActivity를 다시 띄워줘야함
     public void onBackPressed() {
         Intent intent = new Intent(this,MainActivity.class);
@@ -227,8 +348,6 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             startActivity(intent);
             finish();
         }
-
-
 
         @Override
         protected Void doInBackground(Void... params) {
@@ -285,43 +404,95 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         }
     }//Async End
 
-    private void doTakePhotoAction()
-    {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        // 임시로 사용할 파일의 경로를 생성
-        String url = "tmp_" + String.valueOf(System.currentTimeMillis()) + ".jpg";
-        mImageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), url));
-
-        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
-        // 특정기기에서 사진을 저장못하는 문제가 있어 다음을 주석처리 합니다.
-        intent.putExtra("return-data", true);
-        startActivityForResult(intent, PICK_FROM_CAMERA);
-    }
-
-    /**
-     * 앨범에서 이미지 가져오기
-     */
-    private void doTakeAlbumAction()
-    {
-        // 앨범 호출
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType(android.provider.MediaStore.Images.Media.CONTENT_TYPE);
-        intent.setData(MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-        startActivityForResult(intent, PICK_FROM_ALBUM);
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        if(resultCode != RESULT_OK)
-        {
+        if (resultCode != RESULT_OK) {
+            Toast.makeText(this, "취소 되었습니다.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         switch(requestCode)
         {
+            case PICK_FROM_ALBUM:
+            {
+                if (data == null) {
+                    return;
+                }
+                photoUri = data.getData();
+                cropImage();
+
+                break;
+            }
+
+            case PICK_FROM_CAMERA:
+            {
+                cropImage();
+                // 갤러리에 나타나게
+                MediaScannerConnection.scanFile(Setting.this,
+                        new String[]{photoUri.getPath()}, null,
+                        new MediaScannerConnection.OnScanCompletedListener() {
+                            public void onScanCompleted(String path, Uri uri) {
+                            }
+                        });
+            }
+
             case CROP_FROM_CAMERA:
+            {
+                iv_myprofileImage.setImageURI(null);
+                Bitmap bitmap=null;
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoUri);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                int bitmapWidth=bitmap.getWidth();
+                int bitmapHeight=bitmap.getHeight();
+
+                Glide.with(this).
+                      load(photoUri).
+                      override(bitmapWidth/4,bitmapHeight/4).
+                      into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
+
+                /////나의 프로필에 대한 이미지를 InternalStorage에 저장
+
+                Bitmap resizedBmp = Bitmap.createScaledBitmap(bitmap, bitmapWidth/4, bitmapHeight/4, true);
+                new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").save(resizedBmp);
+                resizedBmp.compress(Bitmap.CompressFormat.JPEG, 10, stream);//이미지를 stream으로 옮김 - TODO 테스트 필요 두번 압축하기 때문에
+                byte[] byteArrayForupload = stream.toByteArray();//스트림을 통해 bytearray로 만들고
+                String base64Image = Base64.encodeToString(byteArrayForupload,Base64.DEFAULT);
+
+                ///////byteArray로 보내는 이유는 Bitmap은 이미 메모리에 올라가 있으므로 Array로 바꿀시 접근이 더 용이
+                //////file로 보낼 시 file로 생성 후 보내야 되는 시간 필요
+
+                //업데이트 된 내용에 대한 upload 요청
+                JSONObject uploadprofile = new JSONObject();
+
+                long now = System.currentTimeMillis();
+                // 현재시간을 date 변수에 저장한다.
+                Date date = new Date(now);
+                // 시간을 나타냇 포맷을 정한다 ( yyyy/MM/dd 같은 형태로 변형 가능 )
+                SimpleDateFormat sdfNow = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                // nowDate 변수에 값을 저장한다.
+                final String formatDate = sdfNow.format(date);
+
+                profileSaveTask profileSaveTask = new profileSaveTask();///네트워크 부분 AsyncTask 로 기록 후 측정내역으로 넘어감
+
+                try {
+                    uploadprofile.put("profile",base64Image);
+                    uploadprofile.put("update",formatDate);
+                    System.out.println(uploadprofile);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                /////나의 프로필을 서버에 업로드 - MariaDB - HTTP -PHP -MariaDB
+                profileSaveTask.execute(uploadprofile.toString());
+
+                /////나의 프로필이 바뀐 날짜, 이미지의 경로를 DB에 저장 - SQlite
+                dBhelper.updateProfile(myId+"_Image",formatDate,myId);
+                break;
+            }
+
+            case CROP_FROM_CAMERA_2:
             {
                 // 크롭이 된 이후의 이미지를 넘겨 받습니다.
                 // 이미지뷰에 이미지를 보여준다거나 부가적인 작업 이후에
@@ -391,18 +562,18 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 break;
             }
 
-            case PICK_FROM_ALBUM:
+            case PICK_FROM_ALBUM_2:
             {
                 mImageCaptureUri = data.getData();
             }
 
-            case PICK_FROM_CAMERA:
+            case PICK_FROM_CAMERA_2:
             {
                 Intent intent = new Intent("com.android.camera.action.CROP");
                 intent.setDataAndType(mImageCaptureUri, "image");
                 intent.putExtra("scale", true);
                 intent.putExtra("return-data", true);
-                startActivityForResult(intent, CROP_FROM_CAMERA);
+                startActivityForResult(intent, CROP_FROM_CAMERA_2);
 
                 break;
             }
@@ -417,7 +588,13 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
-                doTakePhotoAction();
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)//Android 버전에 따라 다르게 구현
+                {
+                    takePhoto();
+                }else{
+                    doTakePhotoAction();
+                }
+
             }
         };
 
@@ -426,7 +603,12 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
-                doTakeAlbumAction();
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                {
+                    goToAlbum();
+                }else{
+                    doTakeAlbumAction();
+                }
             }
         };
 
@@ -446,4 +628,123 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 .setPositiveButton("취소", cancelListener)
                 .show();
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MULTIPLE_PERMISSIONS: {
+                if (grantResults.length > 0) {
+                    for (int i = 0; i < permissions.length; i++) {
+                        if (permissions[i].equals(this.permissions[0])) {
+                            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                                showNoPermissionToastAndFinish();
+                            }
+                        } else if (permissions[i].equals(this.permissions[1])) {
+                            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                                showNoPermissionToastAndFinish();
+
+                            }
+                        } else if (permissions[i].equals(this.permissions[2])) {
+                            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                                showNoPermissionToastAndFinish();
+
+                            }
+                        }
+                    }
+                } else {
+                    showNoPermissionToastAndFinish();
+                }
+            }
+        }
+    }
+
+    private void showNoPermissionToastAndFinish() {
+        Toast.makeText(this, "권한 요청에 동의 해주셔야 이용 가능합니다. 설정에서 권한 허용 하시기 바랍니다.", Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    //Android N crop image
+    public void cropImage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            this.grantUriPermission("com.android.camera", photoUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(photoUri, "image/*");
+
+        List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, 0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            grantUriPermission(list.get(0).activityInfo.packageName, photoUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        int size = list.size();
+        if (size == 0) {
+            Toast.makeText(this, "취소 되었습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        } else {
+            Toast.makeText(this, "용량이 큰 사진의 경우 시간이 오래 걸릴 수 있습니다.", Toast.LENGTH_SHORT).show();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            }
+            intent.putExtra("crop", "true");
+            intent.putExtra("aspectX", 1);
+            intent.putExtra("aspectY", 1);
+            intent.putExtra("scale", true);
+            File croppedFileName = null;
+            try {
+                croppedFileName = createImageFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            File folder = new File(Environment.getExternalStorageDirectory() + "/NOSTest/");
+            File tempFile = new File(folder.toString(), croppedFileName.getName());
+
+            photoUri = FileProvider.getUriForFile(Setting.this,
+                    "com.example.nam.healthforyou.provider", tempFile);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            }
+
+            intent.putExtra("return-data", false);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+
+            Intent i = new Intent(intent);
+            ResolveInfo res = list.get(0);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                i.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+                grantUriPermission(res.activityInfo.packageName, photoUri,
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+            i.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
+            startActivityForResult(i, CROP_FROM_CAMERA);
+        }
+    }
+
+    public Bitmap resizeBitmap(String photoPath, int targetW, int targetH) {
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(photoPath, bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
+
+        int scaleFactor = 1;
+        if ((targetW > 0) || (targetH > 0)) {
+            scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+        }
+
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true; //Deprecated API 21
+
+        return BitmapFactory.decodeFile(photoPath, bmOptions);
+    }
+
 }

@@ -77,6 +77,16 @@ public class DBhelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void updateMessageState(String who)
+    {
+        SQLiteDatabase db = getWritableDatabase();
+        String sql="UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id=?";
+        SQLiteStatement stmt = db.compileStatement(sql);
+        stmt.bindString(1,who);
+        stmt.executeUpdateDelete();
+        db.close();
+    }
+
     public void delete(String _query) {
         SQLiteDatabase db = getWritableDatabase();
         db.execSQL(_query);
@@ -184,7 +194,7 @@ public class DBhelper extends SQLiteOpenHelper {
         return healthInfo;
     }
 
-    public ArrayList<JSONObject> PrintMyAvgDataForgridView(String _query) {/////나의 심박수 평균과 호흡 수 평균 데이터
+    public ArrayList<JSONObject> PrintMyAvgDataForChat(String _query) {/////나의 심박수 평균과 호흡 수 평균 데이터
         SQLiteDatabase db = getReadableDatabase();
 
         ArrayList<JSONObject> healthInfoGridArray = new ArrayList<>();
@@ -628,6 +638,46 @@ public class DBhelper extends SQLiteOpenHelper {
         db.close();
 
         return room_name;
+    }
+
+    public List<String> getYearofHealthdata()
+    {
+        String selectQuery = "SELECT strftime('%Y',data_signdate) as date from User_health GROUP BY strftime('%Y',data_signdate) ORDER BY date desc;";
+        List<String> year=new ArrayList<>();
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                year.add(cursor.getString(0));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+
+        return year;
+    }
+
+    public List<String> getMonthofHealthdata(String year)
+    {
+        year=year+"-01-01";
+        String selectQuery = "SELECT substr(strftime('%Y-%m-%d',data_signdate),6,2) as month,substr(strftime('%Y-%m-%d',data_signdate),1,4) as year from User_health WHERE year = strftime('%Y','" + year + "') GROUP BY strftime('%Y-%m',data_signdate) ORDER BY month ASC;";
+        List<String> month=new ArrayList<>();
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                month.add(cursor.getString(0));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+
+        return month;
     }
 
 }

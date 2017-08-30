@@ -83,12 +83,8 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     }
     /*
     * OPENCV를 컴퓨터에 지우면 컴파일이 안됨
-    * -현재 2017.08.08 기준 2017.08.06일에 한 디버깅자료가 지워짐 다시 해야됨
-    *
-    *
-    *
-    *
-    *
+    * - 현재 2017.08.08 기준 2017.08.06일에 한 디버깅자료가 지워짐 다시 해야됨
+    * -
     *
     * */
     Context mContext;
@@ -126,7 +122,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     int X=0;
     int max=0;
 
-    private YAxis leftAxis;
     private ArrayList<Integer> heart_data; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
 
 
@@ -375,7 +370,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         meas = (LinearLayout) inflater.inflate(R.layout.frag_meas,container,false);
         mOpenCvCameraView =(javaViewCameraControl)meas.findViewById(R.id.activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
-        mOpenCvCameraView.setAlpha(0);
+        mOpenCvCameraView.setAlpha(0);//프리뷰
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
         mOpenCvCameraView.setMaxFrameSize(200, 200);
@@ -582,7 +577,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         xl.setAvoidFirstLastClipping(true);
         xl.setEnabled(false);
 
-        leftAxis = mChart.getAxisLeft();
+        YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setTextColor(Color.WHITE);
         leftAxis.setInverted(true);
         mChart.setAutoScaleMinMaxEnabled(true);
@@ -763,7 +758,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         mOpenCvCameraView.setFrameRate(30,30);
         matInput = inputFrame.rgba();
         /////빨간색을 받아오는 부분
-        if ( matResult != null ) matResult.release();
+        if ( matResult != null )matResult.release();
         matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
         sum=redDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
@@ -784,7 +779,8 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         previous = current;/////비교후에 현재프레임을 이전 프레임에 넣어줌
         ////움직이지 않을때 - 손가락을 갖다댔을 때 값이 3 나옴(실험 결과)
         ////손가락을 갖다댔을 때와 평상시인데 움직임이 없는 경우를 구분해야됨
-        return matInput;
+        //return matInput;
+        return inputFrame.rgba();
     }
 
     @Override

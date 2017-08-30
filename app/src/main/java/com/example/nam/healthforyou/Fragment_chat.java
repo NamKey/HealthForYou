@@ -35,9 +35,9 @@ public class Fragment_chat extends Fragment{
 
         chat = (LinearLayout)inflater.inflate(R.layout.frag_chat,container,false);
 
-        //채팅창을 누를 시에 Socket을 연다
-        ServicesocketThread servicesocketThread = new ServicesocketThread();
-        servicesocketThread.start();
+//        //채팅창을 누를 시에 Socket을 연다
+//        ServicesocketThread servicesocketThread = new ServicesocketThread();
+//        servicesocketThread.start();
 
         tabLayout = (TabLayout)chat.findViewById(R.id.tabLayout);
         tabLayout.addTab(tabLayout.newTab().setText("친구목록").setIcon(R.drawable.friend));

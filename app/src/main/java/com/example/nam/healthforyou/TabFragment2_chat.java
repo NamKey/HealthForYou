@@ -104,11 +104,13 @@ public class TabFragment2_chat extends Fragment {
                     Intent intent = new Intent(getActivity(),Chatroom.class);
                     intent.putExtra("from",2);///그룹간의 대화방을 나타내는 인텐트 + 이미 채팅방은 생성되어 있고 방한테 메세지를 바로 보낼 수 있음
                     intent.putExtra("room_id",chatroomAdapter.getRoomitem(position).room_id);///방번호를 채팅방에 알려줌
+                    intent.putExtra("room_name",chatroomAdapter.getRoomitem(position).room_name);
                     startActivity(intent);
                 }else{///개인 채팅방임
                     Intent intent = new Intent(getActivity(),Chatroom.class);
                     intent.putExtra("from",0);////- 개인 채팅방에서는 room_id를 기준으로 메세지를 보냄
                     intent.putExtra("who",chatroomAdapter.getRoomitem(position).room_id);///인텐트를 통해 내가 누구한테 보내는지 채팅 액티비티로 넘겨줌
+                    intent.putExtra("room_name",chatroomAdapter.getRoomitem(position).room_name);
                     startActivity(intent);
                 }
             }
@@ -170,6 +172,10 @@ public class TabFragment2_chat extends Fragment {
                 case ADD_CHATROOM:
                     System.out.println("ADDDDD");
                     try {///방이름 정해주는 부분 - 새로운 방이 생기면 바로 이름을 반영할 수 있도록 함
+                        if(roomlist.size()==0)
+                        {
+                            return;
+                        }
                         if(roomlist.get(roomlistno).optInt("room_type")==0)///////////방의 타입이 1:1이면 친구의 이름을 통해 채팅방 리스트에 넣어줌 - 처리는 Adapter에서
                         {
                             JSONObject friendinfo=dBhelper.getFriend(roomlist.get(roomlistno).optString("room_id"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
@@ -191,7 +197,7 @@ public class TabFragment2_chat extends Fragment {
                             }
 
                         }else{//그룹 채팅이라면
-                            String room_name=dBhelper.getRoominfo(roomlist.get(roomlistno).optString("room_id"));
+                            String room_name="그룹채팅 "+roomlist.get(roomlistno).optString("room_id");
                             roomlist.get(roomlistno).put("room_name",room_name);///배열을 String으로 바꿈
                         }
                     } catch (JSONException e){
@@ -231,8 +237,8 @@ public class TabFragment2_chat extends Fragment {
                             }
 
                         }else{//그룹 채팅이라면
-                            String room_name=dBhelper.getRoominfo(roomlist.get(roomlistno).optString("room_id"));
-                            roomlist.get(roomlistno).put("room_name",room_name);///배열을 String으로 바꿈
+                            String room_name="그룹채팅 "+roomlist.get(roomlistno).optString("room_id");
+                            roomlist.get(roomlistno).put("room_name",room_name);///이름 설정
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -280,9 +286,10 @@ public class TabFragment2_chat extends Fragment {
 
                     chatroomAdapter.addRoom(roomlist.get(i));
                 }else{//그룹 채팅이라면
-                    String room_name=dBhelper.getRoominfo(roomlist.get(i).optString("room_id"));
+                    String room_name="그룹채팅 "+roomlist.get(i).optString("room_id");
                     System.out.println(room_name+"방이름");
-                    roomlist.get(i).put("room_name",room_name);///배열을 String으로 바꿈
+                    roomlist.get(i).put("room_name",room_name);///배열을 String으로 바꿈roo
+                    roomlist.get(i).put("is_friend",false);
                     chatroomAdapter.addRoom(roomlist.get(i));
                 }
             } catch (JSONException e) {

@@ -1,16 +1,24 @@
 package com.example.nam.healthforyou;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.renderscript.ScriptGroup;
 import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,21 +32,22 @@ import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
 
+import static com.example.nam.healthforyou.MainActivity.getCircularBitmap;
+import static com.example.nam.healthforyou.MainActivity.resizeBitmap;
+
 /**
  * Created by NAM on 2017-08-08.
  */
 
 public class ClientSocketService extends Service {
 
-    private String html = "";
-    private Handler mHandler;
+    final static int FCMintent = 0;
 
     private Socket socket;
 
     private BufferedReader networkReader;
-    private BufferedWriter networkWriter;
     private PrintWriter networkPrintwriter;
-    boolean endflag = false;
+
     private Context mContext;
     String line="";
     private String ip = "115.71.232.242"; //SERVER IP
@@ -91,7 +100,17 @@ public class ClientSocketService extends Service {
     //액티비티에서 콜백 함수를 등록하기 위함.
     public void registerCallback(ICallback cb) {
         mCallback = cb;
+        Log.d("mCallback","콜백 등록완료");
     }
+
+    public void unregisterCallback(ICallback cb){
+        if(mCallback!=null)//mCallback이 해제됨
+        {
+            Log.d("mCallback","콜백 해제완료");
+            mCallback=null;
+        }
+    }
+
 
     //액티비티에서 서비스 함수를 호출하기 위한 함수 생성
     public void ChatServiceFunc(){
@@ -197,7 +216,7 @@ public class ClientSocketService extends Service {
         try {
             socket = new Socket(ip, port);
         }catch (IOException e) {
-         System.out.println("서버 재가동 요망");
+            System.out.println("서버 재가동 요망");
         }finally{
             //System.out.println("서버 재가동 요망");
         }
@@ -214,7 +233,9 @@ public class ClientSocketService extends Service {
             this.sock = sock;
             this.br = br;
         }
-
+        String inputYou;
+        String inputName;
+        String bodymessage;
         public void run(){
             try{
                 while((line = br.readLine())!=null){
@@ -233,11 +254,56 @@ public class ClientSocketService extends Service {
                     }
                     else{
                         dBhelper.messagejsoninsert(getjson);
-                        ///////LocalDB에 저장
-                        ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄
-                        Intent intent = new Intent();
-                        intent.setAction("com.example.nam.healthforyou.DATABASE_CHANGED");
-                        mContext.sendBroadcast(intent);
+                        if(mCallback!=null)//대화목록 Activity에 Service가 붙어 있는 경우
+                        {
+                            ///////LocalDB에 저장
+                            ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄
+                            Intent intent = new Intent();
+                            intent.setAction("com.example.nam.healthforyou.DATABASE_CHANGED");
+                            mContext.sendBroadcast(intent);
+                        }else{//붙어 있지 않은 경우
+                            ///////LocalDB에 저장
+                            ///////데이터베이스가 바뀌었음을 브로드캐스트 리시버에게 보냄
+                            Intent intent = new Intent();
+                            intent.setAction("com.example.nam.healthforyou.DATABASE_CHANGED");
+                            mContext.sendBroadcast(intent);
+
+                            bodymessage = getjson.optString("message");
+                            try {///건강 데이터인 경우
+                                JSONObject healthJSON = new JSONObject(bodymessage);
+                                bodymessage = "건강 정보";
+                            } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지
+                                bodymessage = getjson.optString("message");
+                            }
+                            String room_type;
+                            Bitmap bitmap=null;
+                            if(getjson.optString("command").equals("/to")||getjson.optString("command").equals("/tohealth"))//개인간의 대화
+                            {
+                                room_type="0"; //찾아갈때 ID로 방을 찾아감
+                                inputYou = getjson.optString("from");////상대방의 id
+                                inputName = getjson.optString("name");////상대방의 이름
+                                bitmap = new InternalImageManger(mContext).
+                                        setFileName(inputYou+"_Image").
+                                        setDirectoryName("PFImage").
+                                        load();
+                            }else{//그룹간의 대화
+                                room_type="1"; //찾아갈때 방번호로 찾아감
+                                inputYou = getjson.optString("room_no");////상대방의 id
+                                inputName = getjson.optString("name");////상대방의 이름
+                                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.teamchat);
+                            }
+
+                            Bitmap myBitmap=null;
+                            if(bitmap!=null)
+                            {
+                                myBitmap=getCircularBitmap(resizeBitmap(bitmap));
+                            }
+                            System.out.println(inputYou+"inputYou");
+                            System.out.println(inputName+"inputName");
+                            sendNotification(inputYou,inputName,bodymessage,room_type,myBitmap);//누구에게,메세지,방의 종류
+                        }
+
+
                     }
                 }
 
@@ -256,7 +322,7 @@ public class ClientSocketService extends Service {
                 networkPrintwriter = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
                 networkReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.d("SocketState","소켓이 응답하지 않습니다");
             }
 
             ////서버에 접속
@@ -273,9 +339,7 @@ public class ClientSocketService extends Service {
             try {
                     socket.shutdownOutput();//소켓의 아웃풋 종료
                     socket.shutdownInput();//소켓의 인풋 종료
-
                     socket.close();///소켓연결 종료
-
                     inputThread.interrupt();
 
             } catch (IOException e) {
@@ -283,4 +347,72 @@ public class ClientSocketService extends Service {
             }
         }
     }
+
+    private void sendNotification(String who,String name,String messageBody,String type,Bitmap myBitmap) {//Notification
+        String message="";
+        //건강정보 처리부분
+        try {
+            JSONObject fcmJSON = new JSONObject(messageBody);
+            message="건강정보";
+        } catch (JSONException e) {
+            message=messageBody;
+        }
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("FCM",FCMintent);//////MainActivity를 실행하라는 intent
+        intent.putExtra("WHO",who);
+        intent.putExtra("TYPE",type);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,intent,PendingIntent.FLAG_ONE_SHOT);
+
+        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.cardiogram2)
+                .setLargeIcon(myBitmap)
+                .setContentTitle(name)
+                .setContentText(message)
+                .setAutoCancel(true)
+                .setSound(defaultSoundUri)
+                .setContentIntent(pendingIntent);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(0, notificationBuilder.build());
+    }
+
 }
+
+//TODO Custom NOtification
+//RemoteView
+        /*final RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.remoteview_notification);
+        // build notification
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.cardiogram2)
+                        .setContentTitle(who)
+                        .setContentText(messageBody)
+                        .setContent(rv)
+                        .setAutoCancel(true)
+                        .setSound(defaultSoundUri)
+                        .setContentIntent(pendingIntent);
+
+        final Notification notification = mBuilder.build();
+
+        Bitmap bitmap = new InternalImageManger(context).
+                setFileName(who+"_Image").
+                setDirectoryName("PFImage").
+                load();
+        Bitmap myBitmap=null;
+        if(bitmap!=null)
+        {
+            myBitmap=getCircularBitmap(resizeBitmap(bitmap));
+        }
+
+        rv.setImageViewBitmap(R.id.remoteview_notification_icon,myBitmap);
+        //rv.setImageViewResource(R.id.remoteview_notification_icon, R.drawable.cardiogram2);
+        rv.setTextViewText(R.id.remoteview_notification_headline, who);
+        rv.setTextViewText(R.id.remoteview_notification_short_message, messageBody);
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(0, notification);*/

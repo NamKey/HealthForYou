@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -80,6 +81,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             String name;
             String bodymessage;
             JSONObject messageJSON = null;
+            Bitmap bitmap=null;
             try {
                 messageJSON = new JSONObject(message);
             } catch (JSONException e) {
@@ -105,15 +107,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                         room_type="0"; //찾아갈때 ID로 방을 찾아감
                         who = messageJSON.optString("from");////상대방의 id
                         name = messageJSON.optString("name");////상대방의 이름
+                        bitmap = new InternalImageManger(context).
+                                setFileName(who+"_Image").
+                                setDirectoryName("PFImage").
+                                load();
                     }else{//그룹간의 대화
                         room_type="1"; //찾아갈때 방번호로 찾아감
                         who = messageJSON.optString("room_no");////상대방의 id
                         name = messageJSON.optString("name");////상대방의 이름
+                        bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.teamchat);
                     }
-                    Bitmap bitmap = new InternalImageManger(context).
-                            setFileName(who+"_Image").
-                            setDirectoryName("PFImage").
-                            load();
+
                     Bitmap myBitmap=null;
                     if(bitmap!=null)
                     {
@@ -164,8 +168,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         } catch (JSONException e) {
             message=messageBody;
         }
-
-
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("FCM",FCMintent);//////MainActivity를 실행하라는 intent

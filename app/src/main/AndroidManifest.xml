@@ -3,23 +3,21 @@
     package="com.example.nam.healthforyou">
 
     <uses-permission android:name="android.permission.INTERNET" />
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+    <uses-permission android:name="android.hardware.camera.autofocus" />
 
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.camera.autofocus"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.camera.front"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.camera.front.autofocus"
-        android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.front.autofocus"  android:required="false"/>
+
 
     <application
         android:name=".GlobalApplication"
@@ -60,6 +58,16 @@
             </intent-filter>
         </service>
         <!-- FireBase manifest등록 종료 -->
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.example.nam.healthforyou.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
 
         <activity
             android:name=".MainActivity"
@@ -121,8 +129,10 @@
         <activity
             android:name=".AddGroupChat"
             android:label="" />
-        <activity android:name=".Choosedata" />
-        <activity android:name=".Setting"></activity>
+        <activity android:name=".Choosedata"
+            android:label="신체정보 선택" />
+        <activity android:name=".Setting">
+        </activity>
     </application>
 
 </manifest>

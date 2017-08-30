@@ -1,31 +1,33 @@
 package com.example.nam.healthforyou;
 
 import android.app.Activity;
-import android.app.NotificationManager;
-import android.content.ContentValues;
+
 import android.content.Context;
 import android.content.Intent;
+
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.AsyncTask;
+
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
+
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
-import android.webkit.CookieManager;
-import android.widget.TextView;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +35,9 @@ import android.widget.Toast;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.mommoo.permission.MommooPermission;
+import com.mommoo.permission.listener.OnPermissionDenied;
+import com.mommoo.permission.repository.DenyInfo;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,6 +57,8 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -60,6 +67,8 @@ import java.util.Locale;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
+
+import android.Manifest;
 
 import static com.example.nam.healthforyou.Login.msCookieManager;
 
@@ -74,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     UiTask uiTask;
 
     DBhelper dBhelper;
+
     ////날짜에 따른 요일 알려주는 메쏘드
     static public int getDateDay(String date, String dateType) throws Exception {
 
@@ -142,15 +152,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //뒤로가는 부분
     backPressCloseHandler = new BackPressCloseHandler(this);
 
+    // 위젯에 대한 참조.
     findViewById(R.id.btn_frag1_main).setOnClickListener(this);
     findViewById(R.id.btn_frag2_chat).setOnClickListener(this);
     findViewById(R.id.btn_frag3_meas).setOnClickListener(this);
     findViewById(R.id.btn_frag4_result).setOnClickListener(this);
 
-    // 위젯에 대한 참조.
+    //카메라를 사용하기 위한 권한얻기
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+    {
+        new MommooPermission.Builder(this)
+                .setPermissions(Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.CAMERA)
+                .setOnPermissionDenied(new OnPermissionDenied() {
+                    @Override
+                    public void onDenied(List<DenyInfo> deniedPermissionList) {
+                        for (DenyInfo denyInfo : deniedPermissionList){
+                            System.out.println("isDenied : " + denyInfo.getPermission() +" , "+
+                                    "userNeverSeeChecked : " + denyInfo.isUserNeverAskAgainChecked());
+                        }
+                    }
+                })
+                .setPreNoticeDialogData("알려드립니다","Please accept all permission to using this app")
+                .setOfferGrantPermissionData("Move To App Setup","1. Touch the 'SETUP'\n" +
+                        "2. Touch the 'Permission' tab\n"+
+                        "3. Grant all permissions by dragging toggle button")
+                .build()
+                .checkPermissions();
+    }
 
-    // URL 설정.
-    String strurl = "http://kakapo12.vps.phps.kr/mainactivity.php";
+        // URL 설정.
+        String strurl = "http://kakapo12.vps.phps.kr/mainactivity.php";
 
         try {
             URL url = new URL(strurl);
@@ -158,19 +189,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        String token=FirebaseInstanceId.getInstance().getToken();/////Firebase에서 Token을 받아오는 부분
-        ///내 서버에 토큰을 저장을 해야함
-        System.out.println(token+" tokentoken");
-        JSONObject jsonObject = new JSONObject();
-        try {
-            jsonObject.put("token",token);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        savetokenTask savetokenTask = new savetokenTask();
-        savetokenTask.execute(jsonObject.toString());
 
         //기존의 친구들 정보를 가지고 와야함
         List<JSONObject> friendList = dBhelper.getAllfriend();
@@ -229,6 +247,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             getSupportFragmentManager()
                     .beginTransaction()
+                    .replace(R.id.frag_container_, new Fragment_chat())
+                    .commit();
+
+            getSupportFragmentManager()
+                    .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_meas())
                     .commit();
             getSupportFragmentManager()
@@ -254,8 +277,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .beginTransaction()
                         .replace(R.id.frag_container_, fragment_chat)
                         .commit();
-
-                System.out.println(who);
             }
         }
 
@@ -263,71 +284,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected Void doInBackground(Void... params) {
 
             return null;
-        }
-    }
-
-    public class savetokenTask extends AsyncTask<String,String,String>
-    {
-        String result;
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            System.out.println(s);
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            String strUrl="http://kakapo12.vps.phps.kr/fcmtokenrequest.php";
-
-            try {
-                URL url = new URL(strUrl);
-                con = (HttpURLConnection) url.openConnection();//커넥션을 여는 부분
-                con.setRequestMethod("POST");
-                con.setRequestProperty("Content-Type", "application/json");// 타입설정(application/json) 형식으로 전송 (Request Body 전달시 application/json로 서버에 전달.)
-                con.setDoInput(true);
-                con.setDoOutput(true);
-                //쿠키매니저에 저장되어있는 세션 쿠키를 사용하여 통신
-                if (msCookieManager.getCookieStore().getCookies().size() > 0) {
-                    // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
-                    con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
-                }
-                OutputStream os = con.getOutputStream();
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
-
-                writer.write(params[0]);
-
-                writer.flush();
-                writer.close();
-                os.close();
-
-                con.connect();
-
-                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(),"UTF-8"));
-
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while((line = br.readLine())!=null)
-                {
-                    if(sb.length()>0)
-                    {
-                        sb.append("\n");
-                    }
-                    sb.append(line);
-                }
-
-                //결과를 보여주는 부분 서버에서 true or false
-                result = sb.toString();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }finally {
-                if(con!=null)
-                {
-                    con.disconnect();
-                }
-            }
-
-            return result;
         }
     }
 
@@ -381,6 +337,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (msCookieManager.getCookieStore().getCookies().size() > 0) {
                     // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
                     con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
+                    Log.d("Main",msCookieManager.getCookieStore().getCookies()+"");
                 }
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
@@ -430,8 +387,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Intent Service = new Intent(MainActivity.this, ClientSocketService.class);///메인액티비티가 destroy되면
-        stopService(Service);//서비스를 중지시키고 socket연결을 종료
     }
 
     @Override
@@ -470,6 +425,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             toast = Toast.makeText(activity, "한번 더 누르시면 종료됩니다.", Toast.LENGTH_SHORT);
             toast.show();
         }
+    }
+
+    public static Bitmap getCircularBitmap(@NonNull Bitmap bitmap)
+    {
+        final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(output);
+
+        final int color = Color.RED;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawOval(rectF, paint);
+
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+
+        bitmap.recycle();
+
+        return output;
+    }
+
+    static public Bitmap resizeBitmap(Bitmap original) {
+
+        int resizeWidth = 100;
+
+        double aspectRatio = (double) original.getHeight() / (double) original.getWidth();
+        int targetHeight = (int) (resizeWidth * aspectRatio);
+        Bitmap result = Bitmap.createScaledBitmap(original, resizeWidth, targetHeight, false);
+        if (result != original) {
+            original.recycle();
+        }
+        return result;
     }
 }
 
