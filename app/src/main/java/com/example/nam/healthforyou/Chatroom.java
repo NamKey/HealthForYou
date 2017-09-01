@@ -17,6 +17,8 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.PopupMenu;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -114,7 +116,8 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
         * */
 
         //EditText 정의및 포커스 시 키보드 업
-        EditText yourEditText= (EditText) findViewById(R.id.et_content);
+        final EditText yourEditText= (EditText) findViewById(R.id.et_content);
+
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.showSoftInput(yourEditText, InputMethodManager.SHOW_IMPLICIT);
 
@@ -123,7 +126,7 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
         socket_thread.start();
 
         ///전송버튼에 관한 로직
-        Button btn_send = (Button)findViewById(R.id.btn_health_send);
+        final Button btn_send = (Button)findViewById(R.id.btn_health_send);
         btn_send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -202,6 +205,30 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
             }
         });
 
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0){
+                    btn_send.setEnabled(true);
+                    btn_send.setClickable(true);
+                    btn_send.setFocusable(true);
+                }
+                else{
+                    btn_send.setEnabled(false);
+                    btn_send.setClickable(false);
+                    btn_send.setFocusable(false);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable edit) {
+            }
+        };
+        yourEditText.addTextChangedListener(textWatcher);
         ImageButton btn_sendhealthdata =(ImageButton)findViewById(R.id.ib_sendhealth);//건강데이터를 보내는 부분
         btn_sendhealthdata.setOnClickListener(new View.OnClickListener() {
             @Override

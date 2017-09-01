@@ -33,6 +33,8 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
+import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
+
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 import static android.content.Context.MODE_PRIVATE;
 
@@ -137,6 +139,7 @@ public class TabFragment1_friend extends Fragment {
                         .load(stream.toByteArray())
                         .asBitmap()
                         .override(256,256)
+                        .transform(new RoundedCornersTransformation(mContext,10,10))
                         .error(R.drawable.no_profile)
                         .into(iv_profile);
                 //iv_profile.setImageBitmap(bitmap);

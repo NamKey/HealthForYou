@@ -14,9 +14,9 @@
         android:layout_height="60sp"
         android:layout_margin="5sp"
         android:layout_weight="1"
-        android:adjustViewBounds="true"
+
         android:background="@drawable/profile_border"
-        android:padding="3sp"
+        android:scaleType="fitXY"
         app:srcCompat="@drawable/no_profile" />
 
     <TextView

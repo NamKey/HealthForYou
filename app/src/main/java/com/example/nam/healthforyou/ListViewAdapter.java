@@ -2,6 +2,8 @@ package com.example.nam.healthforyou;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,9 +19,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 
 import jp.wasabeef.glide.transformations.CropCircleTransformation;
+import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
 /**
  * Created by NAM on 2017-08-04.
@@ -31,14 +35,14 @@ public class ListViewAdapter extends BaseAdapter {
         public int number;
         ImageView iv_img;
         TextView tv_name;
+        CheckBox checkBox;
     }
     /* 아이템을 세트로 담기 위한 어레이 */
     private ArrayList<ProfileItem> profileItems = new ArrayList<>();
     private static final int FRIENDLIST_TYPE=0;
     private static final int GROUPCHATLIST_TYPE=1;
-    LayoutInflater inflater;
+    Bitmap bitmap=null;
     Context mContext;
-    ByteArrayOutputStream stream;
     @Override
     public int getCount() {
         return profileItems.size();
@@ -58,87 +62,91 @@ public class ListViewAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         Context context = parent.getContext();
         View v = convertView;
-        final ViewHolder viewHolder;
+        ViewHolder viewHolder = null;
         /* 'listview_custom' Layout을 inflate하여 convertView 참조 획득 */
-        if (convertView == null) {
-            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-        }else{
-
-        }
-
         ProfileItem profileItem = profileItems.get(position);
+//        bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
+//                setFileName(profileItem.profileName+"1").///파일 이름
+//                setDirectoryName("PFImage").
+//                load();
+        String fileName = profileItem.profileName;
+        String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+fileName;
+        System.out.println(completePath+"저장소");
+        //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+        File file = new File(completePath);
+        Uri imageUri = Uri.fromFile(file);
+
+//        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+
+        if (v == null) {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+            switch(profileItem.getType())
+            {
+                case FRIENDLIST_TYPE:
+                {
+                    v = inflater.inflate(R.layout.listitem, parent, false);
+                    viewHolder = new ViewHolder();
+                /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
+                    viewHolder.iv_img = (ImageView)v.findViewById(R.id.iv_profile);
+                    viewHolder.tv_name = (TextView)v.findViewById(R.id.tv_name);
+                    v.setTag(viewHolder);
+                    break;
+                }
+
+                case GROUPCHATLIST_TYPE:
+                {
+                    v = inflater.inflate(R.layout.listitem2, parent, false);
+                /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
+                    viewHolder = new ViewHolder();
+                    viewHolder.iv_img = (ImageView) v.findViewById(R.id.iv_profilegroup);
+                    viewHolder.tv_name = (TextView) v.findViewById(R.id.tv_namegroup);
+                    viewHolder.checkBox = (CheckBox) v.findViewById(R.id.cb_addgroup);
+                    viewHolder.checkBox.setFocusable(false);
+                    viewHolder.checkBox.setClickable(false);
+                    v.setTag(viewHolder);
+                    break;
+                }
+            }
+        }else{
+            viewHolder = (ViewHolder)v.getTag();
+        }
 
         switch(profileItem.getType())
         {
             case FRIENDLIST_TYPE:
             {
-                convertView = inflater.inflate(R.layout.listitem, parent, false);
-                /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
-                ImageView iv_img = (ImageView) convertView.findViewById(R.id.iv_profile) ;
-                TextView tv_name = (TextView) convertView.findViewById(R.id.tv_name);
-                Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
-                        setFileName(profileItem.profileName).///파일 이름
-                        setDirectoryName("PFImage").
-                        load();
-                if(bitmap!=null)
-                {
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-                    Glide.with(context)
-                            .load(stream.toByteArray())
-                            .override(64,64)
-                            .centerCrop()
-                            .error(R.drawable.no_profile)
-                            .into(iv_img);
-                }else{
-                    Glide.with(context)
-                            .load(R.drawable.no_profile)
-                            .asBitmap()
-                            .override(128,128)
-                            .into(iv_img);
-                }
 
-                tv_name.setText(profileItem.name);
+                Glide.with(context)
+                        .load(imageUri)
+                        .asBitmap()
+                        .override(100,100)
+                        .centerCrop()
+                        .transform(new RoundedCornersTransformation(context,10,10))
+                        .error(R.drawable.no_profile)
+                        .into(viewHolder.iv_img);
+
+                viewHolder.tv_name.setText(profileItem.name);
                 break;
             }
 
             case GROUPCHATLIST_TYPE:
             {
 
-                convertView = inflater.inflate(R.layout.listitem2, parent, false);
-                /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
-                ImageView iv_img = (ImageView) convertView.findViewById(R.id.iv_profilegroup);
-                TextView tv_name = (TextView) convertView.findViewById(R.id.tv_namegroup);
-                CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.cb_addgroup);
-                checkBox.setFocusable(false);
-                checkBox.setClickable(false);
+                Glide.with(context)
+                        .load(imageUri)
+                        .asBitmap()
+                        .override(100,100)
+                        .centerCrop()
+                        .transform(new RoundedCornersTransformation(context,10,1))
+                        .error(R.drawable.no_profile)
+                        .into(viewHolder.iv_img);
 
-                Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
-                        setFileName(profileItem.profileName).///파일 이름
-                        setDirectoryName("PFImage").
-                        load();
-                if(bitmap!=null)
-                {
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-                    Glide.with(context)
-                            .load(stream.toByteArray())
-                            .override(64,64)
-                            .centerCrop()
-                            .error(R.drawable.no_profile)
-                            .into(iv_img);
-                }else{
-                    Glide.with(context)
-                            .load(R.drawable.no_profile)
-                            .asBitmap()
-                            .override(128,128)
-                            .into(iv_img);
-                }
 
-                tv_name.setText(profileItem.name);
-                checkBox.setChecked(((ListView)parent).isItemChecked(position));////체크 박스 기억
-                if(checkBox.isChecked())
+                viewHolder.tv_name.setText(profileItem.name);
+                viewHolder.checkBox.setChecked(((ListView)parent).isItemChecked(position));////체크 박스 기억
+                if(viewHolder.checkBox.isChecked())
                 {
                     profileItem.checked=true;
                 }else{
@@ -148,7 +156,8 @@ public class ListViewAdapter extends BaseAdapter {
             }
         }
 
-        return convertView;
+
+        return v;
     }
 
     public void addItemFriend(JSONObject friendprofile)

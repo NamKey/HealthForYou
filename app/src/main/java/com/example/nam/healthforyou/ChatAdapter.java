@@ -3,6 +3,7 @@ package com.example.nam.healthforyou;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,11 +65,16 @@ public class ChatAdapter extends BaseAdapter {
         if (row == null) {
             // inflator를 생성하여, chatting_message.xml을 읽어서 View객체로 생성한다.
             inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
         }
 
         // Array List에 들어 있는 채팅 문자열을 읽어
         ChatItem msg = chatItemList.get(position);
+
+        String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+msg.item_senderId+"_Image";
+        System.out.println(completePath+"저장소");
+        //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+        File file = new File(completePath);
+        Uri imageUri = Uri.fromFile(file);
         switch(msg.getType())
         {
             case ITEM_VIEW_TYPE_ME:
@@ -100,30 +107,14 @@ public class ChatAdapter extends BaseAdapter {
                 msgText.setTextColor(Color.parseColor("#000000"));
                 if(msg.item_senderId!=null)
                 {
-                    bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
-                            setFileName(msg.item_senderId+"_Image").///파일 이름
-                            setDirectoryName("PFImage").
-                            load();
-                    if(bitmap!=null)
-                    {
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                        Glide.with(context)
-                                .load(stream.toByteArray())
-                                .asBitmap()
-                                .override(50,50)
-                                .centerCrop()
-                                .error(R.drawable.no_profile)
-                                .transform(new CropCircleTransformation(context))
-                                .into(profile);
-                    }else{
-                        Glide.with(context)
-                                .load(R.drawable.no_profile)
-                                .asBitmap()
-                                .override(50,50)
-                                .into(profile);
-                    }
-
+                    Glide.with(context)
+                            .load(imageUri)
+                            .asBitmap()
+                            .override(50,50)
+                            .centerCrop()
+                            .error(R.drawable.no_profile)
+                            .transform(new CropCircleTransformation(context))
+                            .into(profile);
                 }else{
                     Glide.with(context)
                             .load(R.drawable.no_profile)
@@ -170,29 +161,13 @@ public class ChatAdapter extends BaseAdapter {
 
                 if(msg.item_senderId!=null)
                 {
-                    Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
-                            setFileName(msg.item_senderId+"_Image").///파일 이름
-                            setDirectoryName("PFImage").
-                            load();
-                    if(bitmap!=null)
-                    {
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-                        Glide.with(context)
-                                .load(stream.toByteArray())
-                                .asBitmap()
-                                .override(50,50)
-                                .error(R.drawable.no_profile)
-                                .transform(new CropCircleTransformation(context))
-                                .into(profile);
-                    }else{
-                        Glide.with(context)
-                                .load(R.drawable.no_profile)
-                                .asBitmap()
-                                .override(50,50)
-                                .into(profile);
-                    }
-
+                    Glide.with(context)
+                            .load(imageUri)
+                            .asBitmap()
+                            .override(50,50)
+                            .error(R.drawable.no_profile)
+                            .transform(new CropCircleTransformation(context))
+                            .into(profile);
                 }else{
                     Glide.with(context)
                             .load(R.drawable.no_profile)

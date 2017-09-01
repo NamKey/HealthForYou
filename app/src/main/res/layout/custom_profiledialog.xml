@@ -73,7 +73,7 @@
         android:layout_marginTop="50sp"
         android:adjustViewBounds="true"
         android:background="@drawable/profileimage_layout"
-        android:scaleType="centerCrop"
+        android:scaleType="fitXY"
         app:srcCompat="@drawable/no_profile" />
 
 </RelativeLayout>

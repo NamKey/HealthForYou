@@ -2,6 +2,7 @@ package com.example.nam.healthforyou;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,8 +55,13 @@ public class ChatroomAdapter extends BaseAdapter {
         }
 
         Chatroomitem chatroomitem = chatroomitemList.get(position);
+        String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+chatroomitem.room_id+"_Image";
+        System.out.println(completePath+"저장소");
+        //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+        File file = new File(completePath);
+        Uri imageUri = Uri.fromFile(file);
 
-                /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
+        /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
         ImageView iv_chatroomprofile = (ImageView) convertView.findViewById(R.id.iv_chatroomprofile) ;
         TextView tv_chatroomid = (TextView) convertView.findViewById(R.id.tv_chatroomid);
         TextView tv_recentdate = (TextView)convertView.findViewById(R.id.tv_recentdate);
@@ -66,7 +73,6 @@ public class ChatroomAdapter extends BaseAdapter {
            {
                 tv_chatroomid.setText(chatroomitem.room_name);
                 ////방 프로필 설정해주는 부분
-
                 Glide.with(context)
                         .load(R.drawable.no_profile)
                         .asBitmap()
@@ -78,24 +84,15 @@ public class ChatroomAdapter extends BaseAdapter {
 
             }else{//방이름이 정해진 경우 - 친구인 경우 - 친구의 프로필 사진을 띄어줌
                 tv_chatroomid.setText(chatroomitem.room_name);
-                ////방 프로필 설정해주는 부분
-                Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
-                        setFileName(chatroomitem.room_id+"_Image").///파일 이름
-                        setDirectoryName("PFImage").
-                        load();
-                if(bitmap!=null)
-                {
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-                    Glide.with(context)
-                            .load(stream.toByteArray())
-                            .asBitmap()
-                            .override(64,64)
-                            .centerCrop()
-                            .error(R.drawable.no_profile)
-                            .transform(new CropCircleTransformation(context))
-                            .into(iv_chatroomprofile);
-                }
+
+                Glide.with(context)
+                        .load(imageUri)
+                        .asBitmap()
+                        .override(64,64)
+                        .centerCrop()
+                        .error(R.drawable.no_profile)
+                        .transform(new CropCircleTransformation(context))
+                        .into(iv_chatroomprofile);
             }
             try {//건강정보 체크
                 JSONObject is_healthinfo = new JSONObject(chatroomitem.recentmessage);

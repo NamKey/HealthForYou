@@ -81,6 +81,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
+
 import static com.example.nam.healthforyou.Login.msCookieManager;
 
 public class Setting extends AppCompatActivity implements View.OnClickListener{
@@ -171,14 +173,15 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             }
         });
 
-        Bitmap bitmap = new InternalImageManger(mContext).
-                setFileName(myId).
-                setDirectoryName("PFImage").
-                load();
+        String completePath = mContext.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+myId;
+        System.out.println(completePath+"저장소");
+        //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+        File file = new File(completePath);
+        Uri imageUri = Uri.fromFile(file);
 
         //나의 프로필 이미지
         iv_myprofileImage = (ImageView)findViewById(R.id.iv_settingProfile);
-        iv_myprofileImage.setImageBitmap(bitmap);
+        Glide.with(this).load(imageUri).override(100,100).into(iv_myprofileImage);
         iv_myprofileImage.setOnClickListener(this);
     }
     ///API 19
@@ -483,12 +486,15 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
                 int bitmapWidth=bitmap.getWidth();
                 int bitmapHeight=bitmap.getHeight();
 
                 Glide.with(this).
                       load(photoUri).
+                      asBitmap().
                       override(bitmapWidth/4,bitmapHeight/4).
+                      transform(new RoundedCornersTransformation(mContext,10,10)).
                       into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
 
                 /////나의 프로필에 대한 이미지를 InternalStorage에 저장
@@ -521,6 +527,8 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                bitmap.recycle();//비트맵 반환
+
                 /////나의 프로필을 서버에 업로드 - MariaDB - HTTP -PHP -MariaDB
                 profileSaveTask.execute(uploadprofile.toString());
 
@@ -556,15 +564,21 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                     int bitmapWidth=photo.getWidth();
                     int bitmapHeight=photo.getHeight();
 
-                    Glide.with(this).
-                            load(photoUri).
-                            override(bitmapWidth/4,bitmapHeight/4).
-                            into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
                     byte[] byteArray = stream.toByteArray();//스트림을 통해 bytearray로 만들고
-                    Glide.with(this).load(byteArray).override(bitmapWidth/4,bitmapHeight/4).into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
 
                     /////나의 프로필에 대한 이미지를 InternalStorage에 저장
                     new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").save(photo);
+
+                    String completePath = mContext.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+myId;
+                    System.out.println(completePath+"저장소");
+                    //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+                    File file = new File(completePath);
+                    Uri imageUri = Uri.fromFile(file);
+
+                    Glide.with(this).
+                            load(imageUri).
+                            override(bitmapWidth/4,bitmapHeight/4).
+                            into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
 
                     String base64Image = Base64.encodeToString(byteArray,Base64.DEFAULT);
 
@@ -591,10 +605,9 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    if(photo!=null)
-                    {
-                        photo.recycle();
-                    }
+
+                    photo.recycle();
+
                     /////나의 프로필을 서버에 업로드 - MariaDB - HTTP -PHP -MariaDB
                     profileSaveTask.execute(uploadprofile.toString());
 

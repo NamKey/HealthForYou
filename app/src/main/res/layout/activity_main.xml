@@ -17,39 +17,43 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal">
+
         <Button
             android:id="@+id/btn_frag1_main"
             android:layout_width="match_parent"
-            android:layout_height="60sp"
+            android:layout_height="63sp"
             android:layout_weight="1"
             android:drawableTop="@drawable/home"
             android:gravity="center"
             android:text="메인"
-            android:textSize="8sp"/>
+            android:textSize="8sp" />
+
         <Button
             android:id="@+id/btn_frag2_chat"
             android:layout_width="match_parent"
-            android:layout_height="60sp"
+            android:layout_height="63sp"
             android:layout_weight="1"
             android:drawableTop="@drawable/rotate"
             android:text="헬스톡"
-            android:textSize="8sp"/>
+            android:textSize="8sp" />
+
         <Button
             android:id="@+id/btn_frag3_meas"
             android:layout_width="match_parent"
-            android:layout_height="60sp"
+            android:layout_height="63sp"
             android:layout_weight="1"
             android:drawableTop="@drawable/electrocardiogram"
             android:text="측정"
-            android:textSize="8sp"/>
+            android:textSize="8sp" />
+
         <Button
             android:id="@+id/btn_frag4_result"
             android:layout_width="match_parent"
-            android:layout_height="60sp"
-            android:drawableTop="@drawable/list"
+            android:layout_height="63sp"
             android:layout_weight="1"
+            android:drawableTop="@drawable/list"
             android:text="측정결과"
-            android:textSize="8sp"/>
+            android:textSize="8sp" />
     </LinearLayout>
 
 </LinearLayout>
