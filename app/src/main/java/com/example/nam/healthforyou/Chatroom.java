@@ -23,11 +23,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,8 +37,9 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-public class Chatroom extends AppCompatActivity{
+public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollListener{
     //액티비티에서 선언.
     private ClientSocketService mService; //서비스 클래스
     private String who=null;//누구한테 보낼지
@@ -47,6 +50,7 @@ public class Chatroom extends AppCompatActivity{
     final static int sendExactdata=3;
     final static int update_healthmessage=4;
     final static int all_messageUpdate=5;
+    final static int initialSettingMessage=6;
     ChatItem receiveitem;
     DBhelper dBhelper;
     Context mContext;
@@ -55,6 +59,30 @@ public class Chatroom extends AppCompatActivity{
     int sendtype;///채팅방의 종류
     String choose_date;///데이터를 선택할때 선택한 날짜!
     NetworkChangeReceiver networkChangeReceiver;
+
+
+    //대화목록 페이징
+    private final static int INSERT_COUNT = 20;//보여줄 아이템의 갯수
+    private int itemCount=0;//아이템의 갯수
+    private int pageCount=0;//페이지의 수를 계산해야됨
+
+    private int currentPage=0;//현재 보여주고 있는 페이지
+    private int startPage=0;//초기 페이지
+
+    private int lastPage=pageCount-1;//보여줄수 있는 마지막 페이지
+    private boolean is_loading=true;
+    private boolean is_first=false;
+
+
+    private int previousTotalItemCount=0;//이전에 불러온 데이터들
+    private int visibleThreshold = 5;//이 이상 되면 불러오는 것
+    private int callmessageCount=0;
+    private int go_position=0;
+    /*
+    * //채팅중인 것은  pastdata=false
+    * //이전 데이터를 보는 부분은 true
+    * */
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,13 +96,22 @@ public class Chatroom extends AppCompatActivity{
         networkChangeReceiver = new NetworkChangeReceiver();
         registerReceiver(networkChangeReceiver, intentFilter);
 
+
         mContext = getApplicationContext();
         dBhelper = new DBhelper(mContext, "healthforyou.db", null, 1);///DB정의
         ///채팅 ListviewAdapter 정의
         chatAdapter = new ChatAdapter();
         ///채팅 내용에 대한 리스트뷰
         chatlist = (ListView)findViewById(R.id.chat);
+        chatlist.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
         chatlist.setAdapter(chatAdapter);
+        chatlist.setOnScrollListener(this);
+
+        /*DB에서
+        * 1. 자료의 갯수를 통해
+        * 2. 총 페이지의 갯수를 구하고
+        * 3. 시작페이지와 마지막 페이지를 설정
+        * */
 
         //EditText 정의및 포커스 시 키보드 업
         EditText yourEditText= (EditText) findViewById(R.id.et_content);
@@ -84,17 +121,6 @@ public class Chatroom extends AppCompatActivity{
         ///서비스에서 소켓을 연결하므로 여기서 서비스를 호출하면 mainThread에서 소켓을 호출하게됨
         startServcie_Thread socket_thread = new startServcie_Thread();
         socket_thread.start();
-
-        // 메세지가 올때 스크롤을 아래로 내려주는 부분
-        chatAdapter.registerDataSetObserver(new DataSetObserver() {
-            @Override
-
-            public void onChanged() {
-                super.onChanged();
-                chatlist.setSelection(chatAdapter.getCount()-1);
-            }
-        });
-        chatlist.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL); // 이게 필수
 
         ///전송버튼에 관한 로직
         Button btn_send = (Button)findViewById(R.id.btn_health_send);
@@ -159,6 +185,7 @@ public class Chatroom extends AppCompatActivity{
                             }
                             dBhelper.messagejsoninsert(sendgroupJSON);///JSON 형식으로 DB에 저장
                         }
+                        scrollMyListViewToBottom();
                     }
                 });
 
@@ -182,6 +209,37 @@ public class Chatroom extends AppCompatActivity{
                 ShowDialog();
             }
         });
+    }
+
+    private void scrollMyListViewToBottom() {//TODO scrollMyListViewToBottom
+        chatlist.post(new Runnable() {
+            @Override
+            public void run() {
+                // Select the last row so it will scroll into view...
+                chatlist.setSelection(chatAdapter.getCount() - 1);
+            }
+        });
+    }
+
+    //리스트뷰 페이징 부분
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {//TODO onScroll
+        if (is_loading) {
+            if (totalItemCount > previousTotalItemCount) {
+                is_loading = false;
+                previousTotalItemCount = totalItemCount;
+                currentPage++;
+            }
+        }
+        if (!is_loading && firstVisibleItem<=5){
+            System.out.println("Scroll 호출");
+            handler.sendEmptyMessage(all_messageUpdate);
+            is_loading = true;
+        }
     }
 
     private void ShowDialog()
@@ -249,6 +307,14 @@ public class Chatroom extends AppCompatActivity{
                     getSupportActionBar().setTitle(roomname);
                     System.out.println("who"+who);
                     sendtype = 0;
+                    //1. 자료의 갯수를 구함
+                    itemCount=dBhelper.getMessageCount(who);
+                    System.out.println(itemCount+" 아이템의 갯수");
+                    pageCount = (int)Math.ceil((double)itemCount/(double)INSERT_COUNT);//총 아이템의 갯수를 한페이지에 들어갈 목록의 갯수로 나누면 페이지의 갯수가 나옴 - 반올림 생각
+                    System.out.println(pageCount+"페이지의 수");
+                    currentPage =0;
+                    lastPage = pageCount;
+
                     break;
                 }
 
@@ -264,6 +330,7 @@ public class Chatroom extends AppCompatActivity{
                     };
                     thread.start();
                     sendtype = 1;
+                    break;
                 }
 
                 case 2://채팅방은 이미 만들어져 있어서 보내기만 하면 되는 상황
@@ -274,11 +341,17 @@ public class Chatroom extends AppCompatActivity{
                     getSupportActionBar().setTitle(roomname);
                     sendtype=1;
                     System.out.println("방아이디 " + who);
+                    //1. 자료의 갯수를 구함
+                    itemCount=dBhelper.getMessageCount(who);
+                    System.out.println(itemCount);
+                    pageCount = (int)Math.ceil((double)itemCount/(double)INSERT_COUNT);//총 아이템의 갯수를 한페이지에 들어갈 목록의 갯수로 나누면 페이지의 갯수가 나옴 - 반올림 생각
+                    currentPage =0;
+                    lastPage = pageCount;
+                    break;
                 }
             }
             ///기존에 있던 채팅을 뿌려주는 부분
             handler.sendEmptyMessage(all_messageUpdate);
-
         }
 
         // Called when the connection with the service disconnects unexpectedly
@@ -305,6 +378,8 @@ public class Chatroom extends AppCompatActivity{
         Intent Service = new Intent(this, ClientSocketService.class);
         bindService(Service, mConnection, Context.BIND_AUTO_CREATE);
     }
+    //
+
 
     //액티비티에서 서비스 함수 호출
     public class startServcie_Thread extends Thread
@@ -351,6 +426,7 @@ public class Chatroom extends AppCompatActivity{
 
                 case sendRecentdata://최근 건강 데이터를 보냄
                     {
+                        scrollMyListViewToBottom();
                         final JSONObject recent_healthdata=dBhelper.PrintHealthChatdata("SELECT * FROM User_health ORDER BY data_signdate desc limit 1;");
                         System.out.println("recent"+recent_healthdata);
                         //내가 보낸 메세지를 Listview에 추가
@@ -419,6 +495,7 @@ public class Chatroom extends AppCompatActivity{
 
                 case sendExactdata:
                     {
+                        scrollMyListViewToBottom();
                         final JSONObject recent_healthdata=dBhelper.PrintHealthChatdata_forgrid("SELECT avg(user_bpm),avg(user_res),strftime('%Y-%m-%d',data_signdate) as date from User_health WHERE date= '" + choose_date + "' GROUP BY strftime('%Y-%m-%d',data_signdate);");
                         System.out.println("recent"+recent_healthdata);
                         //내가 보낸 메세지를 Listview에 추가
@@ -467,9 +544,12 @@ public class Chatroom extends AppCompatActivity{
                 }
 
                 case all_messageUpdate:{
-                    ///기존에 있던 채팅을 뿌려주는 부분
-                    ArrayList<JSONObject> messageList = dBhelper.getAllmessage("SELECT * from ChatMessage WHERE room_id= '" + who + "'"+"ORDER BY message_no DESC");
-                    System.out.println(messageList+"굿굿");
+                    ///기존에 있던 채팅을 뿌려주는 부분//TODO paging
+                    //ArrayList<JSONObject> messageList = dBhelper.getAllmessage("SELECT * from ChatMessage WHERE room_id= '" + who + "'"+"ORDER BY message_no DESC");
+                    ArrayList<JSONObject> messageList = dBhelper.getPagingMessage(who,String.valueOf((currentPage)*INSERT_COUNT),String.valueOf(INSERT_COUNT));
+                    System.out.println(messageList);
+                    System.out.println(messageList.size()+"불리는 메세지의 갯수");
+                    callmessageCount=messageList.size();
                     for(int i=0;i<messageList.size();i++)
                     {
                         JSONObject jsonObject=messageList.get(i);
@@ -535,13 +615,24 @@ public class Chatroom extends AppCompatActivity{
                         }
                     }
                     String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
+
                     dBhelper.update(updateStateQuery);
                     chatAdapter.notifyDataSetChanged();
 
+                    chatlist.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
+                    if(chatAdapter.getCount()>20){
+                        chatlist.setSelection(callmessageCount+visibleThreshold+1);
+                        System.out.println("20<x Call");
+                    }else{
+                        chatlist.setSelection(chatAdapter.getCount()-1);
+                        System.out.println("20>=x Call");
+                    }
+
                     break;
                 }
-
             }
+
+
         }
     };
 
@@ -549,10 +640,16 @@ public class Chatroom extends AppCompatActivity{
         @Override
         public void onReceive(Context context, Intent intent) {
             System.out.println(who+"BroadCastReceiver 처리");
+
+            //메세지가 추가되면 - DB가 변경되면 페이지를 바꿔야됨
+            itemCount=dBhelper.getMessageCount(who);
+            System.out.println(itemCount+" 아이템의 갯수");
+            pageCount = (int)Math.ceil((double)itemCount/(double)INSERT_COUNT);//총 아이템의 갯수를 한페이지에 들어갈 목록의 갯수로 나누면 페이지의 갯수가 나옴 - 반올림 생각
+            chatlist.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+            /////////////////////페이지 다시 계산해주는 부분
             String query = "SELECT * FROM ChatMessage WHERE is_looked=0 and room_id= '" + who + "'"+" ORDER BY message_no DESC LIMIT 1;";//////번호 순으로 처리
             JSONObject jsonObject=dBhelper.updatemessage(query);//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
             System.out.println(jsonObject+"새로온 메세지를 불러옴");
-
             //분리한 데이터를 리스트뷰에 들어갈 아이템 객체로 변환 - 다른 사람이 보낸 메세지 타입
             if(jsonObject.length()!=0){//////JSONObject가 비었는지 판단 - 길이로 판단해야됨
                 receiveitem = new ChatItem();
@@ -582,8 +679,8 @@ public class Chatroom extends AppCompatActivity{
 
                     handler.sendEmptyMessage(update_message);
                 }
-
                 dBhelper.updateMessageState(who);
+
 
             }else{
                 System.out.println("다른 사람이 메세지를 보냄");

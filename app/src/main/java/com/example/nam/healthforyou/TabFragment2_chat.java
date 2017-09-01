@@ -57,43 +57,6 @@ public class TabFragment2_chat extends Fragment {
         chatroomlv = (ListView)chat_list.findViewById(R.id.lv_chatlist);///채팅방 리스트뷰 선언
         chatroomlv.setAdapter(chatroomAdapter);
 
-//        roomlist = dBhelper.getChatroomList("SELECT * from ChatMessage GROUP by room_id ORDER by message_no DESC;");
-//        System.out.println(roomlist+"대화목록");
-//
-//        for(int i=0;i<roomlist.size();i++)//모든 방에 대한 정보를 조사 하는 부분 + 모든 방의 이름을 정해주는 부분
-//        {
-//            try {
-//                if(roomlist.get(i).optInt("room_type")==0)///////////방의 타입이 1:1이면 친구의 이름을 통해 채팅방 리스트에 넣어줌 - 처리는 Adapter에서
-//                {
-//
-//                    JSONObject friendinfo=dBhelper.getFriend(roomlist.get(i).optString("room_id"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
-//                    if(friendinfo.length()!=0)//친구면 친구의 이름을
-//                    {
-//                        try {
-//                            roomlist.get(i).put("room_name",friendinfo.optString("user_name"));
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }else{//친구가 아니면 보낸 사람의 이름을
-//                        try {
-//                            roomlist.get(i).put("room_name",roomlist.get(i).optString("senderName"));
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//
-//                    chatroomAdapter.addRoom(roomlist.get(i));
-//                }else{//그룹 채팅이라면
-//
-//                    String room_name=dBhelper.getRoominfo(roomlist.get(roomlistno).optString("room_id"));
-//                    roomlist.get(roomlistno).put("room_name",room_name);///배열을 String으로 바꿈
-//                    chatroomAdapter.addRoom(roomlist.get(i));
-//                }
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//        }
-
         chatroomlv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

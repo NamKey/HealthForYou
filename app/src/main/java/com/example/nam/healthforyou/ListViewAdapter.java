@@ -27,6 +27,11 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
 
 public class ListViewAdapter extends BaseAdapter {
 
+    public class ViewHolder{
+        public int number;
+        ImageView iv_img;
+        TextView tv_name;
+    }
     /* 아이템을 세트로 담기 위한 어레이 */
     private ArrayList<ProfileItem> profileItems = new ArrayList<>();
     private static final int FRIENDLIST_TYPE=0;
@@ -52,10 +57,14 @@ public class ListViewAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         Context context = parent.getContext();
-
+        View v = convertView;
+        final ViewHolder viewHolder;
         /* 'listview_custom' Layout을 inflate하여 convertView 참조 획득 */
         if (convertView == null) {
             inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        }else{
+
         }
 
         ProfileItem profileItem = profileItems.get(position);
@@ -75,7 +84,7 @@ public class ListViewAdapter extends BaseAdapter {
                 if(bitmap!=null)
                 {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
                     Glide.with(context)
                             .load(stream.toByteArray())
                             .override(64,64)
@@ -96,6 +105,7 @@ public class ListViewAdapter extends BaseAdapter {
 
             case GROUPCHATLIST_TYPE:
             {
+
                 convertView = inflater.inflate(R.layout.listitem2, parent, false);
                 /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
                 ImageView iv_img = (ImageView) convertView.findViewById(R.id.iv_profilegroup);
@@ -111,7 +121,7 @@ public class ListViewAdapter extends BaseAdapter {
                 if(bitmap!=null)
                 {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
                     Glide.with(context)
                             .load(stream.toByteArray())
                             .override(64,64)

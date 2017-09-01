@@ -554,6 +554,52 @@ public class DBhelper extends SQLiteOpenHelper {
         return allmessage;
     }
 
+    public ArrayList<JSONObject> getPagingMessage(String who,String position,String itemcount)
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT * FROM ChatMessage WHERE room_id=? ORDER BY message_no DESC LIMIT ?,?";//
+        String[] args = new String[] { who,position,itemcount };
+
+        ArrayList<JSONObject> pagingmessage = new ArrayList<>();
+        Cursor cursor = db.rawQuery(sql, args);///쿼리를 통해 불러옴
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                JSONObject message =new JSONObject();
+                try {
+                    message.put("room_type",(cursor.getString(1)));
+                    message.put("room_id",(cursor.getString(2)));
+                    message.put("message_sender",(cursor.getString(3)));
+                    message.put("senderName",(cursor.getString(4)));
+                    message.put("message_content",(cursor.getString(5)));
+                    message.put("message_date",(cursor.getString(6)));
+                    message.put("is_looked",(cursor.getString(7)));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                pagingmessage.add(message);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return pagingmessage;
+    }
+
+    public int getMessageCount(String who)//누구의 메세지를 조회 할것인지
+    {
+        SQLiteDatabase db = getReadableDatabase();
+
+
+        String sql = "SELECT COUNT(message_no) FROM ChatMessage WHERE room_id=?";
+        SQLiteStatement stmt = db.compileStatement(sql);
+        stmt.bindString(1,who);
+        long result = stmt.simpleQueryForLong();
+
+        db.close();
+        return (int)result;
+    }
+
     public List<JSONObject> getChatroomList(String _query)//메세지를 기준으로 방을 나누고 DB에서 긁어오는 메소드
     {
         SQLiteDatabase db = getReadableDatabase();

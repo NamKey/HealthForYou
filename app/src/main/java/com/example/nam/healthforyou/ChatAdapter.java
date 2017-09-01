@@ -40,7 +40,7 @@ public class ChatAdapter extends BaseAdapter {
     private static final int ITEM_VIEW_TYPE_HEALTHYOU= 3;
 
     LayoutInflater inflater;
-
+    Bitmap bitmap=null;
     @Override
     public int getCount() {
         return chatItemList.size();
@@ -100,18 +100,19 @@ public class ChatAdapter extends BaseAdapter {
                 msgText.setTextColor(Color.parseColor("#000000"));
                 if(msg.item_senderId!=null)
                 {
-                    Bitmap bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
+                    bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
                             setFileName(msg.item_senderId+"_Image").///파일 이름
                             setDirectoryName("PFImage").
                             load();
                     if(bitmap!=null)
                     {
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
                         Glide.with(context)
                                 .load(stream.toByteArray())
                                 .asBitmap()
                                 .override(50,50)
+                                .centerCrop()
                                 .error(R.drawable.no_profile)
                                 .transform(new CropCircleTransformation(context))
                                 .into(profile);

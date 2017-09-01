@@ -20,6 +20,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -31,6 +32,15 @@ import com.bumptech.glide.Glide;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -74,6 +84,11 @@ import java.util.List;
 import static com.example.nam.healthforyou.Login.msCookieManager;
 
 public class Setting extends AppCompatActivity implements View.OnClickListener{
+    private static final String TAG = "OPENCV";
+    static {
+        System.loadLibrary("native-lib");
+        System.loadLibrary("opencv_java3");
+    }
     Context mContext;
     //SQLite
     DBhelper dBhelper;
@@ -103,6 +118,22 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
     private static final int PICK_FROM_CAMERA_2 = 4;
     private static final int PICK_FROM_ALBUM_2 = 5;
     private static final int CROP_FROM_CAMERA_2 = 6;
+
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
 
     //통신부분
     HttpURLConnection con;
@@ -442,6 +473,13 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 Bitmap bitmap=null;
                 try {
                     bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoUri);
+                    Mat sourceImage = new Mat();
+                    Utils.bitmapToMat(bitmap, sourceImage);
+                    Mat resizeimage = new Mat();
+                    Size sz = new Size(960,720);
+                    Imgproc.resize( sourceImage, resizeimage, sz );
+                    bitmap = Bitmap.createBitmap(resizeimage.cols(), resizeimage.rows(), Bitmap.Config.RGB_565);//리사이즈 한 이미지를 bitmap에 덮어 씌워줌
+                    Utils.matToBitmap(resizeimage,bitmap);//비트맵으로 전환 완료
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -455,11 +493,10 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
 
                 /////나의 프로필에 대한 이미지를 InternalStorage에 저장
 
-                Bitmap resizedBmp = Bitmap.createScaledBitmap(bitmap, bitmapWidth/4, bitmapHeight/4, true);
-                new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").save(resizedBmp);
-                resizedBmp.compress(Bitmap.CompressFormat.JPEG, 10, stream);//이미지를 stream으로 옮김 - TODO 테스트 필요 두번 압축하기 때문에
+                new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").save(bitmap);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);//이미지를 stream으로 옮김
                 byte[] byteArrayForupload = stream.toByteArray();//스트림을 통해 bytearray로 만들고
-                String base64Image = Base64.encodeToString(byteArrayForupload,Base64.DEFAULT);
+                String base64Image = Base64.encodeToString(byteArrayForupload,Base64.DEFAULT);//Base64로 Encode
 
                 ///////byteArray로 보내는 이유는 Bitmap은 이미 메모리에 올라가 있으므로 Array로 바꿀시 접근이 더 용이
                 //////file로 보낼 시 file로 생성 후 보내야 되는 시간 필요
@@ -502,21 +539,34 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 if(extras != null)
                 {
                     Bitmap photo = extras.getParcelable("data");
+
                     try{
+                        Mat sourceImage = new Mat();
+                        Utils.bitmapToMat(photo, sourceImage);
+                        Mat resizeimage = new Mat();
+                        Size sz = new Size(960,720);
+                        Imgproc.resize( sourceImage, resizeimage, sz );
+                        photo = Bitmap.createBitmap(resizeimage.cols(), resizeimage.rows(), Bitmap.Config.RGB_565);//리사이즈 한 이미지를 bitmap에 덮어 씌워줌
+                        Utils.matToBitmap(resizeimage,photo);//비트맵으로 전환 완료
                         photo.compress(Bitmap.CompressFormat.JPEG, 90, stream);//이미지를 JPEG 형식으로 압축
                     }catch(NullPointerException e)
                     {
                         Toast.makeText(mContext,"프로필 사진업로드 실패",Toast.LENGTH_SHORT).show();
                     }
+                    int bitmapWidth=photo.getWidth();
+                    int bitmapHeight=photo.getHeight();
 
+                    Glide.with(this).
+                            load(photoUri).
+                            override(bitmapWidth/4,bitmapHeight/4).
+                            into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
                     byte[] byteArray = stream.toByteArray();//스트림을 통해 bytearray로 만들고
-                    Glide.with(this).load(byteArray).into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
+                    Glide.with(this).load(byteArray).override(bitmapWidth/4,bitmapHeight/4).into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
 
                     /////나의 프로필에 대한 이미지를 InternalStorage에 저장
                     new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").save(photo);
-                    photo.compress(Bitmap.CompressFormat.JPEG, 90, stream);//이미지를 stream으로 옮김 - TODO 테스트 필요 두번 압축하기 때문에
-                    byte[] byteArrayForupload = stream.toByteArray();//스트림을 통해 bytearray로 만들고
-                    String base64Image = Base64.encodeToString(byteArrayForupload,Base64.DEFAULT);
+
+                    String base64Image = Base64.encodeToString(byteArray,Base64.DEFAULT);
 
                     ///////byteArray로 보내는 이유는 Bitmap은 이미 메모리에 올라가 있으므로 Array로 바꿀시 접근이 더 용이
                     //////file로 보낼 시 file로 생성 후 보내야 되는 시간 필요
@@ -540,6 +590,10 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                         System.out.println(uploadprofile);
                     } catch (JSONException e) {
                         e.printStackTrace();
+                    }
+                    if(photo!=null)
+                    {
+                        photo.recycle();
                     }
                     /////나의 프로필을 서버에 업로드 - MariaDB - HTTP -PHP -MariaDB
                     profileSaveTask.execute(uploadprofile.toString());
@@ -747,4 +801,20 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         return BitmapFactory.decodeFile(photoPath, bmOptions);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "onResume :: Internal OpenCV library not found.");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0,this, mLoaderCallback);
+        } else {
+            Log.d(TAG, "onResume :: OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }
