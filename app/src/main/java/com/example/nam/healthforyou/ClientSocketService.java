@@ -7,8 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Binder;
@@ -296,7 +298,13 @@ public class ClientSocketService extends Service {
                             Bitmap myBitmap=null;
                             if(bitmap!=null)
                             {
-                                myBitmap=getCircularBitmap(resizeBitmap(bitmap));
+                                //기기마다의 notification크기에 따라서 resize를 다르게 해줌
+                                Resources res = mContext.getResources();
+                                int height = (int) res.getDimension(android.R.dimen.notification_large_icon_height);
+                                int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
+                                //그 이후에 notification을 Circular 형태로 바꿈
+                                //Glide로 처리하지 않는 이유는 Glide는 MainThread를 통해 이미지를 처리함 Service에서 할 수 없다
+                                myBitmap=getCircularBitmap(resizeBitmap(bitmap,height,width));
                             }
                             System.out.println(inputYou+"inputYou");
                             System.out.println(inputName+"inputName");

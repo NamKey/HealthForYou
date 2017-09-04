@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,7 +22,10 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import jp.wasabeef.glide.transformations.CropCircleTransformation;
@@ -31,8 +35,7 @@ import jp.wasabeef.glide.transformations.CropCircleTransformation;
  */
 
 public class ChatAdapter extends BaseAdapter {
-    List<ChatItem> chatItemList =new ArrayList<>();
-    boolean message_left;
+    private List<ChatItem> chatItemList =new ArrayList<>();
 
     //내가 쓴 카톡과 아닌것을 구분하기 위한 type
     private static final int ITEM_VIEW_TYPE_ME = 0 ;
@@ -41,8 +44,12 @@ public class ChatAdapter extends BaseAdapter {
     private static final int ITEM_VIEW_TYPE_HEALTHME = 2;
     private static final int ITEM_VIEW_TYPE_HEALTHYOU= 3;
 
+    private static final int ITEM_VIEW_TIME =4;
     LayoutInflater inflater;
     Bitmap bitmap=null;
+    private String timestamp=null;
+    private SimpleDateFormat chatFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",java.util.Locale.getDefault());
+    private SimpleDateFormat forChatprint = new SimpleDateFormat("a K:mm",java.util.Locale.getDefault());
     @Override
     public int getCount() {
         return chatItemList.size();
@@ -66,15 +73,13 @@ public class ChatAdapter extends BaseAdapter {
             // inflator를 생성하여, chatting_message.xml을 읽어서 View객체로 생성한다.
             inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
-
         // Array List에 들어 있는 채팅 문자열을 읽어
         ChatItem msg = chatItemList.get(position);
 
-        String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+msg.item_senderId+"_Image";
-        System.out.println(completePath+"저장소");
+//        String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+msg.item_senderId+"_Image";
+//        System.out.println(completePath+"저장소");
         //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
-        File file = new File(completePath);
-        Uri imageUri = Uri.fromFile(file);
+
         switch(msg.getType())
         {
             case ITEM_VIEW_TYPE_ME:
@@ -85,9 +90,16 @@ public class ChatAdapter extends BaseAdapter {
                 TextView msgText = (TextView)row.findViewById(R.id.tv_content);
                 TextView msgDate = (TextView)row.findViewById(R.id.tv_sendtime);
                 /////리스트에 정보를 출력
-                msgText.setText(msg.item_content);
-                msgDate.setText(msg.item_date);
 
+                try {
+                    Date date = chatFormat.parse(msg.item_date);
+                    timestamp = forChatprint.format(date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                msgText.setText(msg.item_content);
+                //msgDate.setText(msg.item_date);
+                msgDate.setText(timestamp);
                 msgText.setTextColor(Color.parseColor("#000000"));
                 break;
             }
@@ -103,14 +115,29 @@ public class ChatAdapter extends BaseAdapter {
                 /////리스트에 정보를 출력
                 msgText.setText(msg.item_content);
                 msgId.setText(msg.item_sender);
-                msgDate.setText(msg.item_date);
+                try {
+                    Date date = chatFormat.parse(msg.item_date);
+                    timestamp = forChatprint.format(date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                //msgDate.setText(msg.item_date);
+                msgDate.setText(timestamp);
+                msgText.setText(msg.item_content);
+                //msgDate.setText(msg.item_date);
                 msgText.setTextColor(Color.parseColor("#000000"));
                 if(msg.item_senderId!=null)
                 {
+                    String fileName=msg.item_senderId+"_Image";
+                    File file = new InternalImageManger(context).setFileName(fileName).setDirectoryName("PFImage").loadFile();
+                    //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+                    Uri imageUri = Uri.fromFile(file);
                     Glide.with(context)
                             .load(imageUri)
                             .asBitmap()
                             .override(50,50)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .skipMemoryCache(true)
                             .centerCrop()
                             .error(R.drawable.no_profile)
                             .transform(new CropCircleTransformation(context))
@@ -137,7 +164,15 @@ public class ChatAdapter extends BaseAdapter {
                 /////리스트에 정보를 출력
                 msgbpm.setText(msg.user_bpm+"bpm");
                 msgres.setText(msg.user_res+"/min");
-                msgDate.setText(msg.item_date);
+                //msgDate.setText(msg.item_date);
+                try {
+                    Date date = chatFormat.parse(msg.item_date);
+                    timestamp = forChatprint.format(date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                //msgDate.setText(msg.item_date);
+                msgDate.setText(timestamp);
                 chatDatasigndate.setText("측정날짜 :"+msg.data_signdate);
                 break;
             }
@@ -156,15 +191,29 @@ public class ChatAdapter extends BaseAdapter {
                 msgId.setText(msg.item_sender);
                 msgbpm.setText(msg.user_bpm+"bpm");
                 msgres.setText(msg.user_res+"/min");
-                msgDate.setText(msg.item_date);
+                //msgDate.setText(msg.item_date);
+                try {
+                    Date date = chatFormat.parse(msg.item_date);
+                    timestamp = forChatprint.format(date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                //msgDate.setText(msg.item_date);
+                msgDate.setText(timestamp);
                 chatDatasigndate.setText("측정날짜 :"+msg.data_signdate);
 
                 if(msg.item_senderId!=null)
                 {
+                    String fileName=msg.item_senderId+"_Image";
+                    File file = new InternalImageManger(context).setFileName(fileName).setDirectoryName("PFImage").loadFile();
+                    //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+                    Uri imageUri = Uri.fromFile(file);
                     Glide.with(context)
                             .load(imageUri)
                             .asBitmap()
                             .override(50,50)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .skipMemoryCache(true)
                             .error(R.drawable.no_profile)
                             .transform(new CropCircleTransformation(context))
                             .into(profile);
@@ -177,6 +226,12 @@ public class ChatAdapter extends BaseAdapter {
                 }
 
                 break;
+            }
+
+            case ITEM_VIEW_TIME:{
+                row = inflater.inflate(R.layout.chatlayout5, parent, false);
+                TextView dateline = (TextView)row.findViewById(R.id.chattime);
+                dateline.setText(msg.item_date);
             }
         }
         return row;
@@ -228,5 +283,22 @@ public class ChatAdapter extends BaseAdapter {
     {
         item.setType(ITEM_VIEW_TYPE_HEALTHYOU);
         chatItemList.add(0,item);
+    }
+
+    public boolean addItemTime(int index,ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TIME);
+        chatItemList.add(0,item);
+        return true;
+    }
+
+    public ChatItem getItemtime(int position)
+    {
+        return chatItemList.get(position);
+    }
+
+    public void deleteItemtime(int position)
+    {
+        chatItemList.remove(position);
     }
 }

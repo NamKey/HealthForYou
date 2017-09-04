@@ -8,6 +8,7 @@ public class ProfileItem {
     private int type;
 
     public String profileName;
+    public String profileLastupdate;
     public String name;
     public String email;
     public boolean checked=false;

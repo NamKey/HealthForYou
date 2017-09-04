@@ -3,6 +3,7 @@ package com.example.nam.healthforyou;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -11,7 +12,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
+import java.net.URI;
+import android.net.Uri;
 /**
  * Created by NAM on 2017-08-24.
  */
@@ -21,6 +23,7 @@ public class InternalImageManger {
     private String directoryName = "images";
     private String fileName = "image.png";
     private Context context;
+    private String filepath;
     private boolean external;
 
     public InternalImageManger(Context context) {
@@ -73,6 +76,18 @@ public class InternalImageManger {
         return new File(directory, fileName);
     }
 
+    private String fromUri() {
+        File directory;
+        if(external){
+            directory = getAlbumStorageDir(directoryName);
+        }
+        else {
+            directory = context.getDir(directoryName, Context.MODE_PRIVATE);
+        }
+
+        return new File(directory, fileName).getAbsolutePath();
+    }
+
     private File getAlbumStorageDir(String albumName) {
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), albumName);
@@ -97,6 +112,7 @@ public class InternalImageManger {
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(createFile());
+
             return BitmapFactory.decodeStream(inputStream);
         } catch (Exception e) {
             e.printStackTrace();
@@ -110,5 +126,35 @@ public class InternalImageManger {
             }
         }
         return null;
+    }
+
+    public File loadFile() {
+        FileInputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(createFile());
+
+            return createFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public String loadUri() {
+        return createFile().getAbsolutePath();
+    }
+
+    public boolean deleteFile()
+    {
+        File file = createFile();
+        return file.delete();
     }
 }

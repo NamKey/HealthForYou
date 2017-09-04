@@ -389,7 +389,7 @@ public class DBhelper extends SQLiteOpenHelper {
                     newfriend.put("user_friend",(cursor.getString(1)));
                     newfriend.put("user_name",(cursor.getString(2)));
                     newfriend.put("user_profile",(cursor.getString(3)));
-
+                    newfriend.put("user_update",(cursor.getString(4)));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

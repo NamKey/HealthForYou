@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.support.v7.widget.PopupMenu;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -36,6 +37,7 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,6 +55,8 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
     final static int update_healthmessage=4;
     final static int all_messageUpdate=5;
     final static int initialSettingMessage=6;
+
+    boolean dateposition=false;
     ChatItem receiveitem;
     DBhelper dBhelper;
     Context mContext;
@@ -80,6 +84,7 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
     private int visibleThreshold = 5;//이 이상 되면 불러오는 것
     private int callmessageCount=0;
     private int go_position=0;
+
     /*
     * //채팅중인 것은  pastdata=false
     * //이전 데이터를 보는 부분은 true
@@ -574,9 +579,9 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                     ///기존에 있던 채팅을 뿌려주는 부분//TODO paging
                     //ArrayList<JSONObject> messageList = dBhelper.getAllmessage("SELECT * from ChatMessage WHERE room_id= '" + who + "'"+"ORDER BY message_no DESC");
                     ArrayList<JSONObject> messageList = dBhelper.getPagingMessage(who,String.valueOf((currentPage)*INSERT_COUNT),String.valueOf(INSERT_COUNT));
-                    System.out.println(messageList);
                     System.out.println(messageList.size()+"불리는 메세지의 갯수");
                     callmessageCount=messageList.size();
+
                     for(int i=0;i<messageList.size();i++)
                     {
                         JSONObject jsonObject=messageList.get(i);
@@ -638,6 +643,44 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                                 chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
 
                                 chatAdapter.addItemYou(0,chatitem);
+                            }
+                        }
+                        //날짜 정해주는 부분
+
+                        Date beforedate = null;
+                        Date afterdate = null;
+                        SimpleDateFormat dateFormat = new  SimpleDateFormat("yyyy-MM-dd",java.util.Locale.getDefault());
+                        SimpleDateFormat printFormat = new  SimpleDateFormat("yyyy년 M월 d일",java.util.Locale.getDefault());
+                        if(i!=0)//0일때는 하면 안됨
+                        {
+                            String before=messageList.get(i).optString("message_date");
+                            String after=messageList.get(i-1).optString("message_date");
+                            try {
+                                beforedate = dateFormat.parse(before);
+                                afterdate = dateFormat.parse(after);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+
+                            System.out.println(beforedate+"이전");
+                            System.out.println(afterdate+"이후");
+
+                            if (beforedate != null&&afterdate!=null) {
+                                int compare = beforedate.compareTo(afterdate);
+                                System.out.println(compare+"비교비교");
+                                if ( compare < 0) { //지금 뿌려지고 있는 리스트뷰 아이템이 이전것보다 날짜가 작으면
+                                    ChatItem chatItem = new ChatItem();
+                                    chatItem.item_date = printFormat.format(afterdate);
+                                    chatAdapter.addItemTime(0, chatItem);
+                                }else if(compare==0)
+                                {
+                                    if(chatAdapter.getCount()==itemCount)
+                                    {
+                                        ChatItem chatItem = new ChatItem();
+                                        chatItem.item_date = printFormat.format(beforedate);
+                                        chatAdapter.addItemTime(0, chatItem);
+                                    }
+                                }
                             }
                         }
                     }

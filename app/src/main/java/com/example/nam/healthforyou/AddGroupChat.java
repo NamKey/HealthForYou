@@ -60,6 +60,7 @@ public class AddGroupChat extends AppCompatActivity {
                         profileItem.name=jsonObject.getString("user_name");//이름을 담고
                         profileItem.email=jsonObject.getString("user_friend");//이메일을 담고
                         profileItem.profileName=profileItem.email+"_Image";///프로필 사진을 정해줌
+                        profileItem.profileLastupdate=jsonObject.getString("user_update");//이미지 업데이트 날짜를 입력해줌
                         profileItem.setType(1);
                     } catch (JSONException e) {
                         e.printStackTrace();

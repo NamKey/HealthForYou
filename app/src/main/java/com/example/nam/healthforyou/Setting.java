@@ -29,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -162,7 +163,6 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             checkPermissions();//권한 체크
         }
 
-
         Button btn_logout = (Button)findViewById(R.id.btn_logout);
         btn_logout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -172,16 +172,41 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 logoutTask.execute();
             }
         });
-
+        //Bitmap bitmap = new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").load();
         String completePath = mContext.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+myId;
         System.out.println(completePath+"저장소");
-        //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
-        File file = new File(completePath);
-        Uri imageUri = Uri.fromFile(file);
+        ///data/user/0/com.example.nam.healthforyou/app_PFImage/
+        //File file = new File(completePath);
+        Uri imageUri=null;
+        File file = new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").loadFile();
+        if(file!=null)
+        {
+            imageUri = Uri.fromFile(file);
+        }
 
+        //Uri imageUri = new InternalImageManger(mContext).setFileName(myId).setDirectoryName("PFImage").load();
         //나의 프로필 이미지
         iv_myprofileImage = (ImageView)findViewById(R.id.iv_settingProfile);
-        Glide.with(this).load(imageUri).override(100,100).into(iv_myprofileImage);
+        //Glide.clear(iv_myprofileImage);
+        if(imageUri!=null)
+        {
+            Glide.with(this).
+                    load(imageUri).
+                    override(100,100).
+                    diskCacheStrategy(DiskCacheStrategy.NONE).
+                    skipMemoryCache(true).
+                    into(iv_myprofileImage);
+        }else{
+            Glide.with(this).
+                    load(R.drawable.no_profile).
+                    override(100,100).
+                    diskCacheStrategy(DiskCacheStrategy.NONE).
+                    skipMemoryCache(true).
+                    into(iv_myprofileImage);
+        }
+
+
+        //iv_myprofileImage.setImageBitmap(bitmap);
         iv_myprofileImage.setOnClickListener(this);
     }
     ///API 19
@@ -282,7 +307,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-
+            System.out.println(s);
         }
 
         @Override
@@ -297,11 +322,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 con.setDoInput(true);
                 con.setDoOutput(true);
                 //쿠키매니저에 저장되어있는 세션 쿠키를 사용하여 통신
-                if (msCookieManager.getCookieStore().getCookies().size() > 0) {
-                    // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
-                    con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
-                    System.out.println(msCookieManager.getCookieStore().getCookies()+"Request");
-                }
+
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
 
@@ -328,7 +349,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
 
                 //결과를 보여주는 부분 서버에서 true or false
                 result = sb.toString();
-                System.out.println(result);
+                System.out.println(result+"결과");
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -478,11 +499,13 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                     bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoUri);
                     Mat sourceImage = new Mat();
                     Utils.bitmapToMat(bitmap, sourceImage);
-                    Mat resizeimage = new Mat();
+
                     Size sz = new Size(960,720);
-                    Imgproc.resize( sourceImage, resizeimage, sz );
+                    Mat resizeimage = new Mat(sz,CvType.CV_8U);
+                    Imgproc.resize(sourceImage,resizeimage,sz);
                     bitmap = Bitmap.createBitmap(resizeimage.cols(), resizeimage.rows(), Bitmap.Config.RGB_565);//리사이즈 한 이미지를 bitmap에 덮어 씌워줌
                     Utils.matToBitmap(resizeimage,bitmap);//비트맵으로 전환 완료
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -493,6 +516,8 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 Glide.with(this).
                       load(photoUri).
                       asBitmap().
+                      diskCacheStrategy(DiskCacheStrategy.NONE).//이부분을 추가해주지 않으면 DiskCacheStrage에 저장해놔서 계속 그대로
+                      skipMemoryCache(true).//이미지를 유지하기때문에 Glide에 이미지가 바뀌지 않음
                       override(bitmapWidth/4,bitmapHeight/4).
                       transform(new RoundedCornersTransformation(mContext,10,10)).
                       into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
@@ -523,11 +548,11 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                 try {
                     uploadprofile.put("profile",base64Image);
                     uploadprofile.put("update",formatDate);
+                    uploadprofile.put("myId",myId);
                     System.out.println(uploadprofile);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                bitmap.recycle();//비트맵 반환
 
                 /////나의 프로필을 서버에 업로드 - MariaDB - HTTP -PHP -MariaDB
                 profileSaveTask.execute(uploadprofile.toString());
@@ -578,6 +603,8 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                     Glide.with(this).
                             load(imageUri).
                             override(bitmapWidth/4,bitmapHeight/4).
+                            diskCacheStrategy(DiskCacheStrategy.NONE).
+                            skipMemoryCache(true).
                             into(iv_myprofileImage);//Glide를 통해 이미지뷰에 올림
 
                     String base64Image = Base64.encodeToString(byteArray,Base64.DEFAULT);
@@ -601,12 +628,11 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
                     try {
                         uploadprofile.put("profile",base64Image);
                         uploadprofile.put("update",formatDate);
+                        uploadprofile.put("myId",myId);
                         System.out.println(uploadprofile);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-
-                    photo.recycle();
 
                     /////나의 프로필을 서버에 업로드 - MariaDB - HTTP -PHP -MariaDB
                     profileSaveTask.execute(uploadprofile.toString());
@@ -812,6 +838,17 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         bmOptions.inPurgeable = true; //Deprecated API 21
 
         return BitmapFactory.decodeFile(photoPath, bmOptions);
+    }
+
+    public static void loadImage(Context context, String url, ImageView imageView) {
+        Glide.with(context)
+                .load(url)
+                .skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(R.drawable.no_profile)
+                .centerCrop()
+                .crossFade()
+                .into(imageView);
     }
 
     @Override

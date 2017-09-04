@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,10 +56,15 @@ public class ChatroomAdapter extends BaseAdapter {
         }
 
         Chatroomitem chatroomitem = chatroomitemList.get(position);
-        String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+chatroomitem.room_id+"_Image";
-        System.out.println(completePath+"저장소");
+        //String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+chatroomitem.room_id+"_Image";
+        //System.out.println(completePath+"저장소");
         //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
-        File file = new File(completePath);
+        //File file = new File(completePath);
+        //Uri imageUri = Uri.fromFile(file);
+
+        String fileName=chatroomitem.room_id+"_Image";
+        File file = new InternalImageManger(context).setFileName(fileName).setDirectoryName("PFImage").loadFile();
+        //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
         Uri imageUri = Uri.fromFile(file);
 
         /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
@@ -77,6 +83,8 @@ public class ChatroomAdapter extends BaseAdapter {
                         .load(R.drawable.no_profile)
                         .asBitmap()
                         .override(64,64)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
                         .centerCrop()
                         .error(R.drawable.no_profile)
                         .transform(new CropCircleTransformation(context))
@@ -89,6 +97,8 @@ public class ChatroomAdapter extends BaseAdapter {
                         .load(imageUri)
                         .asBitmap()
                         .override(64,64)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
                         .centerCrop()
                         .error(R.drawable.no_profile)
                         .transform(new CropCircleTransformation(context))

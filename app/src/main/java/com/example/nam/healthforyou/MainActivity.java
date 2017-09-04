@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
@@ -33,6 +34,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.mommoo.permission.MommooPermission;
@@ -305,12 +307,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     {
                         JSONObject profile_data=new JSONObject(jsonArray.getString(i));
                         String Id=profile_data.optString("user_friend");
-
                         byte[] a = Base64.decode(profile_data.optString("user_profile"),Base64.DEFAULT);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(a,0,a.length);////비트맵으로 변환
-                        new InternalImageManger(mContext).setFileName(Id+"_Image").setDirectoryName("PFImage").save(bitmap);//저장
-                        //파일의 이름, update 된 날짜, 사용자 정보
-                        dBhelper.updateProfile(Id+"_Image",profile_data.optString("user_update"),profile_data.optString("user_friend"));
+                        boolean is_update=new InternalImageManger(mContext).setFileName(Id+"_Image").setDirectoryName("PFImage").deleteFile();
+                        System.out.println("is_update : "+is_update);
+                        if(is_update)
+                        {
+                            new InternalImageManger(mContext).setFileName(Id+"_Image").setDirectoryName("PFImage").save(bitmap);//저장
+                            //파일의 이름, update 된 날짜, 사용자 정보
+                            dBhelper.updateProfile(Id+"_Image",profile_data.optString("user_update"),profile_data.optString("user_friend"));
+                        }
                     }
 
                 } catch (JSONException e) {
@@ -333,12 +339,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 con.setRequestProperty("Content-Type", "application/json");// 타입설정(application/json) 형식으로 전송 (Request Body 전달시 application/json로 서버에 전달.)
                 con.setDoInput(true);
                 con.setDoOutput(true);
-                //쿠키매니저에 저장되어있는 세션 쿠키를 사용하여 통신
-                if (msCookieManager.getCookieStore().getCookies().size() > 0) {
-                    // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
-                    con.setRequestProperty("Cookie", TextUtils.join(",",msCookieManager.getCookieStore().getCookies()));
-                    Log.d("Main",msCookieManager.getCookieStore().getCookies()+"");
-                }
+
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os,"UTF-8"));
 
@@ -365,7 +366,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //결과를 보여주는 부분 서버에서 true or false
                 result = sb.toString();
-
             } catch (Exception e) {
                 e.printStackTrace();
             }finally {
@@ -451,13 +451,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return output;
     }
 
-    static public Bitmap resizeBitmap(Bitmap original) {
-
-        int resizeWidth = 100;
-
-        double aspectRatio = (double) original.getHeight() / (double) original.getWidth();
-        int targetHeight = (int) (resizeWidth * aspectRatio);
-        Bitmap result = Bitmap.createScaledBitmap(original, resizeWidth, targetHeight, false);
+    static public Bitmap resizeBitmap(Bitmap original,int height,int width) {
+        Bitmap result = Bitmap.createScaledBitmap(original, width, height, false);
         if (result != original) {
             original.recycle();
         }

@@ -14,6 +14,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.signature.StringSignature;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,12 +39,14 @@ public class ListViewAdapter extends BaseAdapter {
         TextView tv_name;
         CheckBox checkBox;
     }
+
     /* 아이템을 세트로 담기 위한 어레이 */
     private ArrayList<ProfileItem> profileItems = new ArrayList<>();
     private static final int FRIENDLIST_TYPE=0;
     private static final int GROUPCHATLIST_TYPE=1;
     Bitmap bitmap=null;
     Context mContext;
+    String completePath;
     @Override
     public int getCount() {
         return profileItems.size();
@@ -66,13 +70,16 @@ public class ListViewAdapter extends BaseAdapter {
         /* 'listview_custom' Layout을 inflate하여 convertView 참조 획득 */
         ProfileItem profileItem = profileItems.get(position);
 //        bitmap = new InternalImageManger(context).//내부저장공간에서 불러옴
-//                setFileName(profileItem.profileName+"1").///파일 이름
+//                setFileName(profileItem.profileName).///파일 이름
 //                setDirectoryName("PFImage").
 //                load();
         String fileName = profileItem.profileName;
-        String completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+fileName;
-        System.out.println(completePath+"저장소");
+        completePath = context.getFilesDir().getParent()+"/"+"app_PFImage"+"/"+profileItem.profileName;
+        //String completePath ="/data/user/0/com.example.nam.healthforyou/app_PFImage"+"/"+profileItem.profileName;
+        //System.out.println(completePath+"저장소");
+        //File file = new InternalImageManger(context).setFileName(fileName).setDirectoryName("PFImage").loadFile();
         //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+
         File file = new File(completePath);
         Uri imageUri = Uri.fromFile(file);
 
@@ -117,12 +124,12 @@ public class ListViewAdapter extends BaseAdapter {
         {
             case FRIENDLIST_TYPE:
             {
-
                 Glide.with(context)
                         .load(imageUri)
                         .asBitmap()
                         .override(100,100)
                         .centerCrop()
+                        .signature(new StringSignature(profileItem.profileLastupdate))
                         .transform(new RoundedCornersTransformation(context,10,10))
                         .error(R.drawable.no_profile)
                         .into(viewHolder.iv_img);
@@ -133,16 +140,15 @@ public class ListViewAdapter extends BaseAdapter {
 
             case GROUPCHATLIST_TYPE:
             {
-
                 Glide.with(context)
                         .load(imageUri)
                         .asBitmap()
                         .override(100,100)
                         .centerCrop()
-                        .transform(new RoundedCornersTransformation(context,10,1))
+                        .signature(new StringSignature(profileItem.profileLastupdate))
+                        .transform(new RoundedCornersTransformation(context,10,10))
                         .error(R.drawable.no_profile)
                         .into(viewHolder.iv_img);
-
 
                 viewHolder.tv_name.setText(profileItem.name);
                 viewHolder.checkBox.setChecked(((ListView)parent).isItemChecked(position));////체크 박스 기억
@@ -167,6 +173,7 @@ public class ListViewAdapter extends BaseAdapter {
             profileItem.name=friendprofile.getString("user_name");//이름을 담고
             profileItem.email=friendprofile.getString("user_friend");//이메일을 담고
             profileItem.profileName=friendprofile.getString("user_profile");//프로필 이미지를 담는다
+            profileItem.profileLastupdate=friendprofile.getString("user_update");
             profileItem.setType(FRIENDLIST_TYPE);
             ////프로필 사진을 담아야됨
         } catch (JSONException e) {
@@ -182,6 +189,7 @@ public class ListViewAdapter extends BaseAdapter {
             profileItem.name=friendprofile.getString("user_name");//이름을 담고
             profileItem.email=friendprofile.getString("user_friend");//이메일을 담고
             profileItem.profileName=friendprofile.getString("user_profile");//프로필 이미지를 담는다
+            profileItem.profileLastupdate=friendprofile.getString("user_update");
             profileItem.setType(FRIENDLIST_TYPE);
             ////프로필 사진을 담아야됨
         } catch (JSONException e) {
