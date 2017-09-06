@@ -868,6 +868,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     heart_data.add((int)Math.abs(filtered_Raw/100)); ///peak 값을 찾기 위해 ArrayList에 넣어줌
                     heart_maf.add((int)average(Math.abs(filtered_Raw/100)));
                     Raw_data.add((double)sum/100);
+                    Log.d("RIIV",(double)sum/100+"");
                     handler.sendEmptyMessage(setprogress);//진행상황 반영
 
                     ////초기에 데이터가 많이 튄다. 그러므로 50전까지는 데이터를 버린다.

@@ -85,6 +85,11 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
     private int callmessageCount=0;
     private int go_position=0;
 
+    SimpleDateFormat dateFormat = new  SimpleDateFormat("yyyy-MM-dd",java.util.Locale.getDefault());
+    SimpleDateFormat printFormat = new  SimpleDateFormat("yyyy년 M월 d일",java.util.Locale.getDefault());
+    Date beforedate = null;
+    Date afterdate = null;
+    int timeitemCount=0;//시간에 따라 추가된 갯수
     /*
     * //채팅중인 것은  pastdata=false
     * //이전 데이터를 보는 부분은 true
@@ -129,7 +134,7 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
         ///서비스에서 소켓을 연결하므로 여기서 서비스를 호출하면 mainThread에서 소켓을 호출하게됨
         startServcie_Thread socket_thread = new startServcie_Thread();
         socket_thread.start();
-
+        timeitemCount=0;//시간에 따라 추가된 갯수
         ///전송버튼에 관한 로직
         final Button btn_send = (Button)findViewById(R.id.btn_health_send);
         btn_send.setOnClickListener(new View.OnClickListener() {
@@ -645,12 +650,10 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                                 chatAdapter.addItemYou(0,chatitem);
                             }
                         }
-                        //날짜 정해주는 부분
+                        //날짜 정해주는 부분 - //TODO 디버깅할것!!!!!!(날짜 추가되니까 안됨)
 
-                        Date beforedate = null;
-                        Date afterdate = null;
-                        SimpleDateFormat dateFormat = new  SimpleDateFormat("yyyy-MM-dd",java.util.Locale.getDefault());
-                        SimpleDateFormat printFormat = new  SimpleDateFormat("yyyy년 M월 d일",java.util.Locale.getDefault());
+
+
                         if(i!=0)//0일때는 하면 안됨
                         {
                             String before=messageList.get(i).optString("message_date");
@@ -671,23 +674,29 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                                 if ( compare < 0) { //지금 뿌려지고 있는 리스트뷰 아이템이 이전것보다 날짜가 작으면
                                     ChatItem chatItem = new ChatItem();
                                     chatItem.item_date = printFormat.format(afterdate);
-                                    chatAdapter.addItemTime(0, chatItem);
-                                }else if(compare==0)
-                                {
-                                    if(chatAdapter.getCount()==itemCount)
-                                    {
-                                        ChatItem chatItem = new ChatItem();
-                                        chatItem.item_date = printFormat.format(beforedate);
-                                        chatAdapter.addItemTime(0, chatItem);
-                                    }
+                                    chatAdapter.addItemTime(1, chatItem);
+                                    timeitemCount++;
                                 }
                             }
                         }
                     }
+                    //가장위에 메세지를 올려주는 부분
+                    if(chatAdapter.getCount()==itemCount+timeitemCount)//모든 아이템의 갯수가 chatAdapter에 추가된 갯수와 같을때 + 날짜 추가된것도 고려
+                    {
+                        ChatItem chatItem = new ChatItem();
+                        chatItem.item_date = printFormat.format(beforedate);
+                        chatAdapter.addItemTime(0,chatItem);
+                    }
+
                     String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
 
                     dBhelper.update(updateStateQuery);
                     chatAdapter.notifyDataSetChanged();
+
+                    Log.d("Chat",chatAdapter.getCount()+"리스트뷰에 추가된갯수");
+                    Log.d("Chat",itemCount+"메세지 총갯수");
+
+
 
                     chatlist.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
                     if(chatAdapter.getCount()>20){

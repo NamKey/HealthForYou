@@ -288,7 +288,14 @@ public class ChatAdapter extends BaseAdapter {
     public boolean addItemTime(int index,ChatItem item)
     {
         item.setType(ITEM_VIEW_TIME);
-        chatItemList.add(0,item);
+        chatItemList.add(index,item);
+        return true;
+    }
+
+    public boolean addItemTime(ChatItem item)
+    {
+        item.setType(ITEM_VIEW_TIME);
+        chatItemList.add(item);
         return true;
     }
 
