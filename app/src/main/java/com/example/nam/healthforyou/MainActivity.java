@@ -35,8 +35,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.iid.FirebaseInstanceId;
+
 import com.mommoo.permission.MommooPermission;
 import com.mommoo.permission.listener.OnPermissionDenied;
 import com.mommoo.permission.repository.DenyInfo;
@@ -198,6 +197,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //친구의 새로운 정보를 받아오는 부분
         syncfriendTask syncfriendTask = new syncfriendTask();
         syncfriendTask.execute(friendList.toString());
+
+        Intent intent =getIntent();
+        int FCMrequest = intent.getIntExtra("FCM",1001);
+        if(FCMrequest==0)
+        {
+            String who=intent.getStringExtra("WHO");
+            String type=intent.getStringExtra("TYPE");
+
+            Fragment_chat fragment_chat = new Fragment_chat();//프래그먼트와 액티비티가 통신
+            Bundle bundle = new Bundle();//번들에
+            bundle.putString("WHO", who);//누구한테 온건지
+            bundle.putString("TYPE",type);//방의 종류 0-개인채팅 , 1-그룹채팅
+
+            fragment_chat.setArguments(bundle);
+
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frag_container_, fragment_chat)
+                    .commit();
+        }
     }
 
     @Override
@@ -224,9 +243,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.btn_frag3_meas:
+                Fragment_meas fragment_meas = new Fragment_meas();
                 getSupportFragmentManager()
                         .beginTransaction()
-                        .replace(R.id.frag_container_, new Fragment_meas())
+                        .replace(R.id.frag_container_, fragment_meas)
                         .commit();
                 break;
 
@@ -256,30 +276,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_meas())
                     .commit();
+
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_main())
                     .commit();
-
-            Intent intent =getIntent();
-            int FCMrequest = intent.getIntExtra("FCM",1001);
-            if(FCMrequest==0)
-            {
-                String who=intent.getStringExtra("WHO");
-                String type=intent.getStringExtra("TYPE");
-
-                Fragment_chat fragment_chat = new Fragment_chat();//프래그먼트와 액티비티가 통신
-                Bundle bundle = new Bundle();//번들에
-                bundle.putString("WHO", who);//누구한테 온건지
-                bundle.putString("TYPE",type);//방의 종류 0-개인채팅 , 1-그룹채팅
-
-                fragment_chat.setArguments(bundle);
-
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.frag_container_, fragment_chat)
-                        .commit();
-            }
         }
 
         @Override

@@ -11,7 +11,7 @@ extern "C"{
     JNIEXPORT jint JNICALL
     Java_com_example_nam_healthforyou_Fragment_1meas_redDetection(JNIEnv *env, jobject instance,jlong matAddrInput,jlong matAddrResult) {
 
-        int sum=0;
+        int sum1=0;
         Mat &matInput = *(Mat *) matAddrInput;
         Mat &matResult = * (Mat *)matAddrResult;
 
@@ -20,17 +20,42 @@ extern "C"{
         {
             for(int j=0;j<matResult.cols;j++)
             {
-                //sum+=matInput.at<cv::Vec3b>(i,j)[2];//Red
-                sum+=matInput.at<cv::Vec3b>(i,j)[1];//Green
-                //sum+=matInput.at<cv::Vec3b>(i,j)[0];//Blue
+                sum1+=matResult.at<cv::Vec3b>(i,j)[2];//Red
+                //sum+=matInput.at<cv::Vec3b>(i,j)[1];//Green
+                //sum1+=matInput.at<cv::Vec3b>(i,j)[0];//Blue
             }
         }
         // TODO
         //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
         matInput.release();
         matResult.release();
-        return sum;// TODO
+        return sum1;//
     }
+}
+
+extern "C"{
+JNIEXPORT jint JNICALL
+Java_com_example_nam_healthforyou_Fragment_1meas_greenDetection(JNIEnv *env, jobject instance,jlong matAddrInput,jlong matAddrResult) {
+
+    int sum=0;
+    Mat &matInput = *(Mat *) matAddrInput;
+    Mat &matResult = * (Mat *)matAddrResult;
+
+    cvtColor(matInput,matResult,CV_RGB2BGR);
+    for(int i=0;i<matResult.rows;i++)
+    {
+        for(int j=0;j<matResult.cols;j++)
+        {
+            //sum+=matInput.at<cv::Vec3b>(i,j)[2];//Red
+            sum+=matInput.at<cv::Vec3b>(i,j)[1];//Green - //TODO GreenComponent가 맞나?
+            //sum+=matInput.at<cv::Vec3b>(i,j)[0];//Blue
+        }
+    }
+    // TODO
+    //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
+
+    return sum;// TODO
+}
 }
 
 extern "C"{

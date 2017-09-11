@@ -49,7 +49,7 @@ public class ChatAdapter extends BaseAdapter {
     Bitmap bitmap=null;
     private String timestamp=null;
     private SimpleDateFormat chatFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",java.util.Locale.getDefault());
-    private SimpleDateFormat forChatprint = new SimpleDateFormat("a K:mm",java.util.Locale.getDefault());
+    private SimpleDateFormat forChatprint = new SimpleDateFormat("a H:mm",java.util.Locale.getDefault());
     @Override
     public int getCount() {
         return chatItemList.size();

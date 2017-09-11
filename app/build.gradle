@@ -10,6 +10,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled  true
         externalNativeBuild {
             cmake {
                 cppFlags "-std=c++11 -frtti -fexceptions"
@@ -49,7 +50,6 @@ dependencies {
     compile group: 'com.kakao.sdk', name: 'usermgmt', version: project.KAKAO_SDK_VERSION
     // 카카오링크 sdk를 사용하기 위해 필요.
     //compile group: 'com.kakao.sdk', name: 'kakaolink', version: project.KAKAO_SDK_VERSION compile 'junit:junit:4.12'
-
     // ADD THIS AT THE BOTTOM
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.github.clans:fab:1.6.4'
@@ -67,4 +67,9 @@ dependencies {
     provided 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
     compile 'com.mommoo.android:mommoo-permission:0.1.5'
     compile 'com.weiwangcn.betterspinner:library-material:1.1.0'
+    compile 'com.edwardraff:JSAT:0.0.8'
+    //compile files('libs/fastica-1.11.jar')
+    //compile files('libs/StudentFilters.jar')
+    compile files('libs/StudentFilters.jar')
+    compile files('libs/fastica-1.11.jar')
 }

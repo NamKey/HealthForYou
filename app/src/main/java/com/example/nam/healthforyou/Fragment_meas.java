@@ -2,7 +2,6 @@ package com.example.nam.healthforyou;
 
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -28,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -37,17 +35,15 @@ import android.content.Context;
 import android.graphics.Color;
 import android.widget.Toast;
 
+import org.ejml.simple.SimpleMatrix;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jtransforms.dct.DoubleDCT_1D;
 import org.jtransforms.fft.DoubleFFT_1D;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.core.Mat;
-import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.OpenCVLoader;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -65,9 +61,17 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
+import filter.Butterworth;
+import filter.FastICA;
+import filter.LogCosh;
+import filter.NegativeEntropyEstimator;
+import util.thirdparty.FastIca;
+
 import static com.example.nam.healthforyou.Login.msCookieManager;
+import static java.lang.Math.ceil;
 import static java.lang.Math.sqrt;
 
 /**
@@ -100,7 +104,8 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     ////카메라 영상 받아오는 부분
     private Mat matInput;
     private Mat matResult;
-    int sum;//intensity의 합
+    int sum;//intensity의 합 - green
+    int redsum;//intensity의 합 2 -red
     int moving;
 
     ////이전이미지와 현재이미지 비교
@@ -124,7 +129,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
     private ArrayList<Integer> heart_data; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
 
-
     ArrayList<Double> Raw_data;//카메라에서 측정된값그대로 갖고 있음
     //ExponentialMovingAverage filter;
     private ArrayList<Integer> heart_maf; ///피크값을 구하기 위해 그래프 말고 Array에도 데이터를 넣어줌
@@ -139,6 +143,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
     ////네이티브 메소드
     public native int redDetection(long matAddrInput, long matAddrResult);
+    public native int greenDetection(long matAddrInput, long matAddrResult);
     public native int moveDetection(long previous,long current);
 
     ////제어부분
@@ -294,6 +299,10 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         return y;
     }*/
 
+    //호흡 구하기 위한 ICA(Independent Component Analysis)구현
+    ArrayList<Double> red_IndeComp_array;
+    ArrayList<Double> green_IndeComp_array;
+
     //FFT 클래스 객체 선언
     ArrayList<Double> meaning_data;//의미 있는 값
     double[] fft_heart_rate;
@@ -325,7 +334,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     double[] res_magnitude = new double[256];
     double res_max_magnitude = Double.MIN_VALUE;
     int res_index =-1;
-
+    double[][] output;
     //FFT
     boolean phase1=false;//FFT 128 point
     boolean phase2=false;//FFT 256 point
@@ -604,6 +613,10 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         finger_date = new ArrayList<>();
         //호흡 filter
         //arrayListforrriiv = new ArrayList<>();
+
+        red_IndeComp_array = new ArrayList<>();
+        green_IndeComp_array = new ArrayList<>();
+
         return meas;
     }
 
@@ -760,8 +773,8 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         /////빨간색을 받아오는 부분
         if ( matResult != null )matResult.release();
         matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
-        sum=redDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
-
+        sum=greenDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());//이부분에서 Frame에 대한 메모리를 해제 하면 redDetection이 수행되지 않음
+        redsum=redDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());//여기부분에서 input메모리를 해제 시켜줘야됨
         /////움직임을 감지하는 부분
         previous = new Mat(matInput.rows(), matInput.cols(), matInput.type());
         current = new Mat(matInput.rows(), matInput.cols(), matInput.type());
@@ -868,7 +881,11 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     heart_data.add((int)Math.abs(filtered_Raw/100)); ///peak 값을 찾기 위해 ArrayList에 넣어줌
                     heart_maf.add((int)average(Math.abs(filtered_Raw/100)));
                     Raw_data.add((double)sum/100);
-                    Log.d("RIIV",(double)sum/100+"");
+
+                    //호흡을 구하기 위한 ArrayList - 실시간 처리안함
+                    red_IndeComp_array.add((double)redsum/100);
+                    green_IndeComp_array.add((double)sum/100);
+
                     handler.sendEmptyMessage(setprogress);//진행상황 반영
 
                     ////초기에 데이터가 많이 튄다. 그러므로 50전까지는 데이터를 버린다.
@@ -1462,31 +1479,13 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     System.out.println("주파수:"+freq);
                     fft_heart = (int)(freq*60);
                     System.out.println("fft_heart"+fft_heart);
-                    final_heart=(fft_heart+avebpm)/2;///Peak detection을 통해 구한 값과 FFT를 통해 구한값의 평균을 통해 최종 심박수 구함
-                    System.out.println("final_heart "+final_heart);
-
-                    //호흡 FFT
-
-                    //**************전처리 필터
-                    //LPF-cut-off(0.5)
-                    /*Butterworth butterworth_low = new Butterworth();
-                    butterworth_low.lowPass(9,30,0.3);
-
-                    //HPF-cut-off(0.1)
-                    Butterworth butterworth_high = new Butterworth();
-                    butterworth_high.highPass(9,30,0.1);
-
-                    //Band pass filter(0.1~0.3)
-                    //Butterworth butterworth_band = new Butterworth();
-                    //butterworth_band.bandPass(9,30,0.2,0.2);
-
-                    for(int i=peakPoint.get(0);i<peakPoint.get(peakPoint.size()-1);i++)
+                    if(fft_heart!=0)
                     {
-                        double temp=butterworth_low.filter(Raw_data.get(i));//Lowpass
-                        filtered_forriiv=butterworth_high.filter(temp);//Highpass
-                        //filtered_forriiv=butterworth_band.filter(temp);
-                        arrayListforrriiv.add(filtered_forriiv);
-                    }*/
+                        final_heart=(fft_heart+avebpm)/2;///Peak detection을 통해 구한 값과 FFT를 통해 구한값의 평균을 통해 최종 심박수 구함
+                    }else{
+                        final_heart=avebpm;///fft를 통해 나온 값이 0이게 되면 Peak detection을 통해 구한 값을 최종값으로 선정
+                    }
+                    System.out.println("final_heart "+final_heart);
 
                     ///그동안 사용했던 데이터 초기화
                     heart_data.clear(); // 심장에 대한 데이터 clear
@@ -1542,7 +1541,102 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                         }
                     }
 
+                    //호흡 처리
+                    List<Double> testing_red = red_IndeComp_array.subList(73,1023);
+                    List<Double> testing_green = green_IndeComp_array.subList(73,1023);
 
+                    //StackOverflow 경고
+                    //필요한 이유 : 측정시간이 짧기 때문에 적당한 크기로 반복적으로 늘려줄 필요가 있음
+                    for(int i=0;i<2;i++)
+                    {
+                        testing_red.addAll(testing_red);
+                        testing_green.addAll(testing_green);
+                    }
+
+                    double[] red_Array=new double[testing_red.size()];
+                    double[] green_Array=new double[testing_green.size()];
+
+
+                    for(int count=0;count<testing_red.size();count++)//testing_red사이즈 만큼 계속 넣어줌 4회
+                    {
+                        //ArrayList에 있는 원소를 옮겨담음
+                        red_Array[count]=testing_red.get(count);//RED
+                        green_Array[count]=testing_green.get(count);//GREEN
+                    }
+
+                    System.out.println(red_Array.length+"빨간색");
+                    System.out.println(green_Array.length+"녹색");
+                    final double[][] icadata = new double[][]{
+                            red_Array
+                            ,green_Array
+                    };
+
+                    System.out.println("2차원 배열(행)"+icadata.length);
+                    System.out.println("2차원 배열(열)"+icadata[0].length);
+
+                    output = FastIca.fastICA(icadata,100,0.01,2);
+                    System.out.println("ICA 수행완료");
+
+                    Butterworth butterworth_low = new Butterworth();
+                    butterworth_low.lowPass(2,30,1);
+
+                    for(int i=0;i<icadata[0].length;i++)//filter를 통해 처리해줌
+                    {
+                        output[0][i]=butterworth_low.filter(output[0][i]);
+                        output[1][i]=butterworth_low.filter(output[1][i]);
+                    }
+
+                    System.out.println("필터링 완료");
+                    double[] resValue=new double[3];
+                    for(int j=0;j<3;j++)
+                    {
+                        System.out.println(findFFTmax(output[j])+"여기");
+                        try{
+                            resValue[j]=findFFTmax(output[j]);//호흡과 관련된 최대값에 대한 값을 배열에 넣어줌
+                        }catch(Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+
+                    }
+                    int count=0;
+                    int caculateRes=0;
+                    for(int i=0;i<2;i++)
+                    {
+                        if(resValue[i]>0)
+                        {
+                            caculateRes+=(int)ceil(resValue[i]*60);
+                            count++;
+                        }
+                    }
+                    if(count!=0)
+                    {
+                        averes=caculateRes/count;
+                    }else{
+                        averes=101;///호흡수를 처리하지 못한것에 대한 대체값
+                    }
+
+
+                    //**************전처리 필터
+
+                    /*//HPF-cut-off(0.1)
+                    Butterworth butterworth_high = new Butterworth();
+                    butterworth_high.highPass(9,30,0.1);
+
+                    //Band pass filter(0.1~0.3)
+                    //Butterworth butterworth_band = new Butterworth();
+                    //butterworth_band.bandPass(9,30,0.2,0.2);
+
+                    for(int i=peakPoint.get(0);i<peakPoint.get(peakPoint.size()-1);i++)
+                    {
+                        double temp=butterworth_low.filter(Raw_data.get(i));//Lowpass
+                        filtered_forriiv=butterworth_high.filter(temp);//Highpass
+                        //filtered_forriiv=butterworth_band.filter(temp);
+                        arrayListforrriiv.add(filtered_forriiv);
+                    }*/
+
+                    testing_red.clear();
+                    testing_green.clear();
 
                     break;
                 }
@@ -1636,4 +1730,57 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
             }
         }
     };
+
+    public double findFFTmax(double[] value)//scale을 정하는게 나으려나??
+    {
+        double[] resdata = new double[2048];//fft를 위해 사용하는 자료
+
+        double real_part;
+        double image_part;
+        double[] fft_magnitude = new double[1024];
+        double fft_maxmag=-1;
+        int max_fftindex=-1;
+        int data_sum=0;
+        int data_average;
+
+        for (double aValue : value) {
+            data_sum += aValue;
+        }
+
+        data_average=data_sum/value.length;//값들의 평균을 구해서 빼줌
+        System.out.println(data_average+"데이터 평균");
+        for(int i=0;i<value.length;i++)//FFT를 수행하기 위하여 배열에 복사
+        {
+            value[i]= value[i]-data_average;////평균값을 빼줌
+        }
+
+        for(int i=0;i<2048/2;i++)//FFT를 수행하기 위하여 배열에 복사
+        {
+            resdata[2*i]= value[i];////
+            resdata[2*i+1]=0;
+        }
+        //--*FFT 변환
+        //System.out.println("testValue"+Arrays.toString(fft_heart_rate));
+        fft.realForward(resdata);
+        //System.out.println("fft 복소수"+Arrays.toString(fft_heart_rate));
+
+        //--**변환된 값으로부터 Magnitude 계산
+        for(int i=0;i<2048/2-1;i++)
+        {
+            real_part = resdata[2*i];
+            image_part = resdata[2*i+1];
+            fft_magnitude[i] = sqrt(real_part*real_part+image_part*image_part);
+        }
+        //System.out.println("Magnitude"+Arrays.toString(magnitude));
+        //크기를 비교하여 가장 큰값을 찾아냄
+        for(int i=0;i<2048/2-1;i++)
+        {
+            if((int)fft_magnitude[i]>(int)fft_maxmag)//부동소수점 연산때문에 Wrapper 클래스의 compare method를 사용해야함
+            {
+                fft_maxmag = fft_magnitude[i];
+                max_fftindex = i;
+            }
+        }
+        return (double)max_fftindex*sampling_rate/1024;
+    }
 }

@@ -681,7 +681,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)//Android 버전에 따라 다르게 구현
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)//Android 버전에 따라 다르게 구현
                 {
                     takePhoto();
                 }else{
@@ -696,7 +696,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                 {
                     goToAlbum();
                 }else{
@@ -758,7 +758,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
 
     //Android N crop image
     public void cropImage() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             this.grantUriPermission("com.android.camera", photoUri,
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
@@ -777,7 +777,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         } else {
             Toast.makeText(this, "용량이 큰 사진의 경우 시간이 오래 걸릴 수 있습니다.", Toast.LENGTH_SHORT).show();
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             }
@@ -798,7 +798,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             photoUri = FileProvider.getUriForFile(Setting.this,
                     "com.example.nam.healthforyou.provider", tempFile);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             }
@@ -809,7 +809,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
 
             Intent i = new Intent(intent);
             ResolveInfo res = list.get(0);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 i.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 

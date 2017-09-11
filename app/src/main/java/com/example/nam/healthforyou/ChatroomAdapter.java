@@ -62,10 +62,7 @@ public class ChatroomAdapter extends BaseAdapter {
         //File file = new File(completePath);
         //Uri imageUri = Uri.fromFile(file);
 
-        String fileName=chatroomitem.room_id+"_Image";
-        File file = new InternalImageManger(context).setFileName(fileName).setDirectoryName("PFImage").loadFile();
-        //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
-        Uri imageUri = Uri.fromFile(file);
+
 
         /* 'listview_custom'에 정의된 위젯에 대한 참조 획득 */
         ImageView iv_chatroomprofile = (ImageView) convertView.findViewById(R.id.iv_chatroomprofile) ;
@@ -91,8 +88,11 @@ public class ChatroomAdapter extends BaseAdapter {
                         .into(iv_chatroomprofile);
 
             }else{//방이름이 정해진 경우 - 친구인 경우 - 친구의 프로필 사진을 띄어줌
+                String fileName=chatroomitem.room_id+"_Image";
+                File file = new InternalImageManger(context).setFileName(fileName).setDirectoryName("PFImage").loadFile();
+                //"/data/user/0/com.example.nam.healthforyou/app_PFImage/"
+                Uri imageUri = Uri.fromFile(file);
                 tv_chatroomid.setText(chatroomitem.room_name);
-
                 Glide.with(context)
                         .load(imageUri)
                         .asBitmap()

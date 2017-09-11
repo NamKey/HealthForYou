@@ -49,7 +49,6 @@ public class DBhelper extends SQLiteOpenHelper {
     public void insert(String _query) {
         SQLiteDatabase db = getWritableDatabase();
         db.execSQL(_query);
-        db.close();
     }
 
     public void infoinsert(JSONObject healthInfo) {
@@ -68,13 +67,13 @@ public class DBhelper extends SQLiteOpenHelper {
         }
 
         db.insert("User_health",null,values);
-        db.close();
+
     }
 
     public void update(String _query) {
         SQLiteDatabase db = getWritableDatabase();
         db.execSQL(_query);
-        db.close();
+
     }
 
     public void updateMessageState(String who)
@@ -84,13 +83,13 @@ public class DBhelper extends SQLiteOpenHelper {
         SQLiteStatement stmt = db.compileStatement(sql);
         stmt.bindString(1,who);
         stmt.executeUpdateDelete();
-        db.close();
+
     }
 
     public void delete(String _query) {
         SQLiteDatabase db = getWritableDatabase();
         db.execSQL(_query);
-        db.close();
+
     }
 
     public void updateProfile(String user_profile,String user_update,String userId)
@@ -144,7 +143,7 @@ public class DBhelper extends SQLiteOpenHelper {
             }
 
         cursor.close();
-        db.close();
+
         return cursor.getCount();
     }
 
@@ -168,7 +167,7 @@ public class DBhelper extends SQLiteOpenHelper {
                 healthInfos.add(healthInfo);
             } while (cursor.moveToNext());
         }
-        db.close();
+
         cursor.close();
         return healthInfos;
     }
@@ -190,7 +189,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         return healthInfo;
     }
 
@@ -213,7 +212,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         return healthInfoGridArray;
     }
 
@@ -237,7 +236,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         return healthInfo;
     }
 
@@ -259,7 +258,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         return healthInfo;
     }
 
@@ -281,7 +280,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         return healthInfo;
     }
 
@@ -312,7 +311,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         // 모든 healdata를 갖고옴
         return healthInfos;
     }
@@ -333,7 +332,7 @@ public class DBhelper extends SQLiteOpenHelper {
         }
 
         db.insert("User_friend",null,values);
-        db.close();
+
     }
 
     public List<JSONObject> getAllfriend()
@@ -369,7 +368,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         // 모든 healdata를 갖고옴
         return friendlist;
     }
@@ -397,7 +396,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         // 모든 healdata를 갖고옴
         return newfriend;
     }
@@ -424,7 +423,7 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
+
         // 모든 healdata를 갖고옴
         return friendinfo;
     }
@@ -440,7 +439,7 @@ public class DBhelper extends SQLiteOpenHelper {
                     + "\n";
         }
         cursor.close();
-        db.close();
+
 
         return cursor.getCount();
     }
@@ -493,7 +492,6 @@ public class DBhelper extends SQLiteOpenHelper {
         }
 
         db.insert("ChatMessage",null,values);
-        db.close();
     }
 
     public JSONObject updatemessage(String _query){
@@ -519,7 +517,6 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
         return message;
     }
 
@@ -550,7 +547,6 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
         return allmessage;
     }
 
@@ -596,7 +592,6 @@ public class DBhelper extends SQLiteOpenHelper {
         stmt.bindString(1,who);
         long result = stmt.simpleQueryForLong();
 
-        db.close();
         return (int)result;
     }
 
@@ -630,7 +625,6 @@ public class DBhelper extends SQLiteOpenHelper {
         }
 
         cursor.close();
-        db.close();
         // 모든 healdata를 갖고옴
 
         return chatroomList;
@@ -663,7 +657,6 @@ public class DBhelper extends SQLiteOpenHelper {
             e.printStackTrace();
         }
 
-        db.close();
     }
 
     public String getRoominfo(String room_no)
@@ -681,7 +674,6 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
 
         return room_name;
     }
@@ -700,7 +692,6 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
 
         return year;
     }
@@ -721,7 +712,6 @@ public class DBhelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
 
         return month;
     }

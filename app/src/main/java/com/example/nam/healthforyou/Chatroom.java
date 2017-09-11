@@ -1,5 +1,6 @@
 package com.example.nam.healthforyou;
 
+
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -207,6 +208,55 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                 ///내가 보낸 메시지 타입
                 me_message.setType(0);
                 me_message.item_date=formatDate;
+                itemCount=dBhelper.getMessageCount(who);
+                System.out.println(itemCount+"아이템의 갯수");
+                if(itemCount!=0)//아이템 갯수가 없다가 메세지를 보낸경우
+                {
+                    System.out.println("여기가 호출 아이템이 있다");
+                    String rightbeforedate = chatAdapter.getItemtime(chatAdapter.getCount()-1).item_date;//지금 보내려고 하는 메세지의 날짜 이전
+                    Date rightnowdate = null;
+                    System.out.println(me_message.item_date+"과정1");
+                    System.out.println(rightbeforedate+"과정2");
+                    System.out.println(me_message.item_date.equals(rightbeforedate)+"결과");
+                    //String인 날짜를 Date로 변환
+                    Date previousdate=null;
+                    Date nextdate=null;
+                    try {
+                        previousdate=dateFormat.parse(rightbeforedate);//전 메세지의 날짜
+                        nextdate=dateFormat.parse(me_message.item_date);//지금 내가 보내는 메세지의 날짜
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+
+                    int dateResult=previousdate.compareTo(nextdate);
+                    System.out.println(previousdate.toString()+"이전에 채팅방에 있는 날짜");
+                    System.out.println(nextdate.toString()+"지금 받은 메세지");
+                    System.out.println(dateResult+"비교비교날짜가 어떻게 되려나");
+                    if (dateResult!=0)//지금 보내려고 하는 메세지의 날짜와 이전의 날짜가 같지않으면 날짜 변경선을 추가해줘야함
+                    {
+                        ChatItem chatItem = new ChatItem();
+                        try {
+                            rightnowdate = dateFormat.parse(me_message.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        chatItem.item_date = printFormat.format(rightnowdate);
+                        chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                    }
+                }
+                else//아이템 갯수가 없다가 메세지를 보낸경우
+                {
+                    System.out.println("여기가 호출 아이템이 없다");
+                    ChatItem chatItem = new ChatItem();
+                    Date rightnowdate = null;
+                    try {
+                        rightnowdate=dateFormat.parse(me_message.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    chatItem.item_date = printFormat.format(rightnowdate);
+                    chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                }
 
                 chatAdapter.addItemME(me_message);
                 chatAdapter.notifyDataSetChanged();
@@ -455,9 +505,52 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch(msg.what){
-                case update_message:{/////받은 데이터를 리스트뷰에
+                case update_message:{/////받은 데이터를 리스트뷰에 띄움
+                    if(chatAdapter.getCount()!=0)
+                    {
+                        String rightbeforedate=chatAdapter.getItemtime(chatAdapter.getCount()-1).item_date;//지금 받은 메세지의 날짜 이전
+                        Date rightnowdate=null;
+                        //String인 날짜를 Date로 변환
+                        Date previousdate=null;
+                        Date nextdate=null;
+                        try {
+                            previousdate=dateFormat.parse(rightbeforedate);//전 메세지의 날짜
+                            nextdate=dateFormat.parse(receiveitem.item_date);//지금 내가 보내는 메세지의 날짜
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+
+                        int dateResult=previousdate.compareTo(nextdate);
+                        System.out.println(previousdate.toString()+"이전에 채팅방에 있는 날짜");
+                        System.out.println(nextdate.toString()+"지금 받은 메세지");
+                        System.out.println(dateResult+"비교비교날짜가 어떻게 되려나");
+                        if (dateResult!=0)//지금 보내려고 하는 메세지의 날짜와 이전의 날짜가 같지않으면 날짜 변경선을 추가해줘야함
+                        {
+                            ChatItem chatItem = new ChatItem();
+                            try {
+                                rightnowdate = dateFormat.parse(receiveitem.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            chatItem.item_date = printFormat.format(rightnowdate);
+                            chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                        }
+                    }else{
+                        System.out.println("여기가 호출 아이템이 없다");
+                        ChatItem chatItem = new ChatItem();
+                        Date rightnowdate = null;
+                        try {
+                            rightnowdate=dateFormat.parse(receiveitem.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        chatItem.item_date = printFormat.format(rightnowdate);
+                        chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                    }
+
                     chatAdapter.addItemYou(receiveitem);
                     chatAdapter.notifyDataSetChanged();
+
                     break;
                 }
 
@@ -524,17 +617,54 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                         me_message.user_bpm = recent_healthdata.optInt("user_bpm");
                         me_message.user_res = recent_healthdata.optInt("user_res");
                         me_message.data_signdate = recent_healthdata.optString("data_signdate");
+                        String rightbeforedate=chatAdapter.getItemtime(chatAdapter.getCount()-1).item_date;//지금 보내려고 하는 메세지의 날짜 이전
+                        Date rightnowdate=null;
+                        //String인 날짜를 Date로 변환
+                        Date previousdate=null;
+                        Date nextdate=null;
+                        try {
+                            previousdate=dateFormat.parse(rightbeforedate);//전 메세지의 날짜
+                            nextdate=dateFormat.parse(me_message.item_date);//지금 내가 보내는 메세지의 날짜
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+
+                        int dateResult=previousdate.compareTo(nextdate);
+
+                        if (dateResult!=0)//지금 보내려고 하는 메세지의 날짜와 이전의 날짜가 같지않으면 날짜 변경선을 추가해줘야함
+                        {
+                            ChatItem chatItem = new ChatItem();
+                            try {
+                                rightnowdate = dateFormat.parse(me_message.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            chatItem.item_date = printFormat.format(rightnowdate);
+                            chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                        }
+
+                        if(itemCount==0)//아이템 갯수가 없다가 메세지를 보낸경우
+                        {
+                            ChatItem chatItem = new ChatItem();
+                            try {
+                                rightnowdate=dateFormat.parse(me_message.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            chatItem.item_date = printFormat.format(rightnowdate);
+                            chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                        }
                         chatAdapter.addItemHealthME(me_message);
                         chatAdapter.notifyDataSetChanged();
 
                         break;
                     }
 
-                case sendExactdata:
+                case sendExactdata://TODO 저장하는 처리를 안해줬음
                     {
                         scrollMyListViewToBottom();
-                        final JSONObject recent_healthdata=dBhelper.PrintHealthChatdata_forgrid("SELECT avg(user_bpm),avg(user_res),strftime('%Y-%m-%d',data_signdate) as date from User_health WHERE date= '" + choose_date + "' GROUP BY strftime('%Y-%m-%d',data_signdate);");
-                        System.out.println("recent"+recent_healthdata);
+                        final JSONObject choose_healthdata=dBhelper.PrintHealthChatdata_forgrid("SELECT avg(user_bpm),avg(user_res),strftime('%Y-%m-%d',data_signdate) as date from User_health WHERE date= '" + choose_date + "' GROUP BY strftime('%Y-%m-%d',data_signdate);");
+                        System.out.println("recent"+choose_healthdata);
                         //내가 보낸 메세지를 Listview에 추가
                         ChatItem me_message = new ChatItem();
                         ////시간을 나타내줌
@@ -546,17 +676,41 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                         // nowDate 변수에 값을 저장한다.
                         final String formatDate = sdfNow.format(date);
                         ///시간을 더해주기 전에 아이템에 넣어줌
-                        System.out.println(recent_healthdata+"최근 데이터Chat");
+                        System.out.println(choose_healthdata+"최근 데이터Chat");
                         //////서비스를 통해 보내는 부분
                         Thread thread = new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 if(sendtype==0)
                                 {
-                                    mService.SendHealthdata(who,recent_healthdata,formatDate);///누구에게-메세지-시간
+                                    mService.SendHealthdata(who,choose_healthdata,formatDate);///누구에게-메세지-시간
+                                    JSONObject sendptophealthJSON = new JSONObject();
+                                    try {
+                                        sendptophealthJSON.put("command","/tohealth");///서버에 보낼 명령어
+                                        sendptophealthJSON.put("from","me");///내가 보낸거임
+                                        sendptophealthJSON.put("who",who);
+                                        sendptophealthJSON.put("senderName","me");///나의 이름은 me
+                                        sendptophealthJSON.put("message",choose_healthdata);///어떤 내용인지
+                                        sendptophealthJSON.put("date",formatDate);///보낸 시간은
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    dBhelper.messagejsoninsert(sendptophealthJSON);///JSON 형식으로 DB에 저장
                                 }else if(sendtype==1)
                                 {
-                                    mService.SendHealthdata(Integer.parseInt(who),recent_healthdata,formatDate);///누구에게-메세지-시간
+                                    mService.SendHealthdata(Integer.parseInt(who),choose_healthdata,formatDate);///누구에게-메세지-시간
+                                    JSONObject sendgrouphealthJSON = new JSONObject();
+                                    try {
+                                        sendgrouphealthJSON.put("command","/informhealth");///서버에 보낼 명령어
+                                        sendgrouphealthJSON.put("room_no",who);
+                                        sendgrouphealthJSON.put("from","me");///내가 보낸거임
+                                        sendgrouphealthJSON.put("name","me");
+                                        sendgrouphealthJSON.put("message",choose_healthdata);///어떤 내용인지
+                                        sendgrouphealthJSON.put("date",formatDate);///보낸 시간은
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    dBhelper.messagejsoninsert(sendgrouphealthJSON);///JSON 형식으로 DB에 저장
                                 }
                             }
                         });
@@ -566,16 +720,82 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                         ///내가 보낸 메시지 타입
                         me_message.setType(2);//건강 데이터 보내는 형식
                         me_message.item_date=formatDate;
-                        me_message.user_bpm = recent_healthdata.optInt("user_bpm");
-                        me_message.user_res = recent_healthdata.optInt("user_res");
-                        me_message.data_signdate = recent_healthdata.optString("data_signdate");
+                        me_message.user_bpm = choose_healthdata.optInt("user_bpm");
+                        me_message.user_res = choose_healthdata.optInt("user_res");
+                        me_message.data_signdate = choose_healthdata.optString("data_signdate");
+
+                        String rightbeforedate=chatAdapter.getItemtime(chatAdapter.getCount()-1).item_date;//지금 보내려고 하는 메세지의 날짜 이전
+                        Date rightnowdate=null;
+                        //String인 날짜를 Date로 변환
+                        Date previousdate=null;
+                        Date nextdate=null;
+                        try {
+                            previousdate=dateFormat.parse(rightbeforedate);//전 메세지의 날짜
+                            nextdate=dateFormat.parse(me_message.item_date);//지금 내가 보내는 메세지의 날짜
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+
+                        int dateResult=previousdate.compareTo(nextdate);
+
+                        if (dateResult!=0)//지금 보내려고 하는 메세지의 날짜와 이전의 날짜가 같지않으면 날짜 변경선을 추가해줘야함
+                        {
+                            ChatItem chatItem = new ChatItem();
+                            try {
+                                rightnowdate = dateFormat.parse(me_message.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            chatItem.item_date = printFormat.format(rightnowdate);
+                            chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                        }
+
+                        if(itemCount==0)//아이템 갯수가 없다가 메세지를 보낸경우
+                        {
+                            ChatItem chatItem = new ChatItem();
+                            try {
+                                rightnowdate=dateFormat.parse(me_message.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            chatItem.item_date = printFormat.format(rightnowdate);
+                            chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                        }
+
                         chatAdapter.addItemHealthME(me_message);
                         chatAdapter.notifyDataSetChanged();
                         break;
                     }
 
                 case update_healthmessage:{
-                    chatAdapter.addItemHealthYou(receiveitem);
+                    chatAdapter.addItemHealthYou(receiveitem);//다른 사람이 메세지를 보내는 경우
+
+                    String rightbeforedate=chatAdapter.getItemtime(chatAdapter.getCount()-1).item_date;//지금 받은 메세지의 날짜 이전
+                    Date rightnowdate=null;
+                    //String인 날짜를 Date로 변환
+                    Date previousdate=null;
+                    Date nextdate=null;
+                    try {
+                        previousdate=dateFormat.parse(rightbeforedate);//전 메세지의 날짜
+                        nextdate=dateFormat.parse(receiveitem.item_date);//지금 내가 보내는 메세지의 날짜
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+
+                    int dateResult=previousdate.compareTo(nextdate);
+
+                    if (dateResult!=0)//지금 보내려고 하는 메세지의 날짜와 이전의 날짜가 같지않으면 날짜 변경선을 추가해줘야함
+                    {
+                        ChatItem chatItem = new ChatItem();
+                        try {
+                            rightnowdate = dateFormat.parse(receiveitem.item_date);//지금 보내고 있는 메세지의 날짜에 해당되는 날짜 변경선을 추가시켜줘야함
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        chatItem.item_date = printFormat.format(rightnowdate);
+                        chatAdapter.addItemTime(chatItem);//날짜 변경선을 추가해줌
+                    }
+
                     chatAdapter.notifyDataSetChanged();
                     break;//이게 없어서 밑에부분이 실행됨
                 }
@@ -583,128 +803,135 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
                 case all_messageUpdate:{
                     ///기존에 있던 채팅을 뿌려주는 부분//TODO paging
                     //ArrayList<JSONObject> messageList = dBhelper.getAllmessage("SELECT * from ChatMessage WHERE room_id= '" + who + "'"+"ORDER BY message_no DESC");
-                    ArrayList<JSONObject> messageList = dBhelper.getPagingMessage(who,String.valueOf((currentPage)*INSERT_COUNT),String.valueOf(INSERT_COUNT));
-                    System.out.println(messageList.size()+"불리는 메세지의 갯수");
-                    callmessageCount=messageList.size();
-
-                    for(int i=0;i<messageList.size();i++)
+                    if(itemCount!=0)
                     {
-                        JSONObject jsonObject=messageList.get(i);
-                        JSONObject friendinfo=dBhelper.getFriend(jsonObject.optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
-                        if(jsonObject.optString("message_sender").equals("me"))//나의 메세지
+                        ArrayList<JSONObject> messageList = dBhelper.getPagingMessage(who,String.valueOf((currentPage)*INSERT_COUNT),String.valueOf(INSERT_COUNT));
+
+                        System.out.println(messageList.size()+"불리는 메세지의 갯수");
+                        callmessageCount=messageList.size();
+
+                        for(int i=0;i<messageList.size();i++)
                         {
-                            ChatItem chatitem = new ChatItem();
-                            try {//JSON형식으로 파싱이 되면 message_content는 JSON 형식의 건강데이터임 - //건강데이터
-                                String message = jsonObject.optString("message_content");
-                                JSONObject healthdata = new JSONObject(message);
-                                System.out.println(healthdata);
-                                chatitem.user_bpm=healthdata.optInt("user_bpm");
-                                chatitem.user_res=healthdata.optInt("user_res");
-                                chatitem.data_signdate=healthdata.optString("data_signdate");
-                                chatitem.item_date = jsonObject.optString("message_date");
-                                chatitem.setType(2);
+                            JSONObject jsonObject=messageList.get(i);
+                            JSONObject friendinfo=dBhelper.getFriend(jsonObject.optString("message_sender"));//room_id는 개인과 개인일 때는 상대방의 아이디, 그룹채팅일때는 방번호임
+                            if(jsonObject.optString("message_sender").equals("me"))//나의 메세지
+                            {
+                                ChatItem chatitem = new ChatItem();
+                                try {//JSON형식으로 파싱이 되면 message_content는 JSON 형식의 건강데이터임 - //건강데이터
+                                    String message = jsonObject.optString("message_content");
+                                    JSONObject healthdata = new JSONObject(message);
+                                    System.out.println(healthdata);
+                                    chatitem.user_bpm=healthdata.optInt("user_bpm");
+                                    chatitem.user_res=healthdata.optInt("user_res");
+                                    chatitem.data_signdate=healthdata.optString("data_signdate");
+                                    chatitem.item_date = jsonObject.optString("message_date");
+                                    chatitem.setType(2);
 
-                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
-                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+                                    chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
 
-                                chatAdapter.addItemHealthME(0,chatitem);
+                                    chatAdapter.addItemHealthME(0,chatitem);
 
-                            } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지임 - //건강데이터가 아닌것은 그냥 메세지
-                                chatitem.item_content = jsonObject.optString("message_content");
-                                chatitem.item_date = jsonObject.optString("message_date");
-                                chatitem.setType(0);
+                                } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지임 - //건강데이터가 아닌것은 그냥 메세지
+                                    chatitem.item_content = jsonObject.optString("message_content");
+                                    chatitem.item_date = jsonObject.optString("message_date");
+                                    chatitem.setType(0);
 
-                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
-                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+                                    chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
 
-                                chatAdapter.addItemME(0,chatitem);
+                                    chatAdapter.addItemME(0,chatitem);
+                                }
+
+                            }else{//다른 사람이 보낸 메세지
+
+                                ChatItem chatitem = new ChatItem();
+                                try {//JSON형식으로 파싱이 되면 message_content는 JSON 형식의 건강데이터임 - //건강데이터
+                                    String message = jsonObject.optString("message_content");
+                                    JSONObject healthdata = new JSONObject(message);
+                                    System.out.println(healthdata);
+                                    chatitem.user_bpm=healthdata.optInt("user_bpm");
+                                    chatitem.user_res=healthdata.optInt("user_res");
+                                    chatitem.data_signdate=healthdata.optString("data_signdate");
+                                    chatitem.item_date = jsonObject.optString("message_date");
+                                    chatitem.setType(3);
+                                    //senderId는 프로필 사진을 갖고 오기 위해 필요한 부분
+
+                                    chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
+                                    chatAdapter.addItemHealthYou(0,chatitem);
+
+                                } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지임 - //건강데이터가 아닌것은 그냥 메세지
+                                    chatitem.item_content = jsonObject.optString("message_content");
+                                    chatitem.item_date = jsonObject.optString("message_date");
+                                    chatitem.setType(1);
+
+                                    chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
+                                    chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
+
+                                    chatAdapter.addItemYou(0,chatitem);
+                                }
                             }
-
-                        }else{//다른 사람이 보낸 메세지
-
-                            ChatItem chatitem = new ChatItem();
-                            try {//JSON형식으로 파싱이 되면 message_content는 JSON 형식의 건강데이터임 - //건강데이터
-                                String message = jsonObject.optString("message_content");
-                                JSONObject healthdata = new JSONObject(message);
-                                System.out.println(healthdata);
-                                chatitem.user_bpm=healthdata.optInt("user_bpm");
-                                chatitem.user_res=healthdata.optInt("user_res");
-                                chatitem.data_signdate=healthdata.optString("data_signdate");
-                                chatitem.item_date = jsonObject.optString("message_date");
-                                chatitem.setType(3);
-                                //senderId는 프로필 사진을 갖고 오기 위해 필요한 부분
-
-                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
-                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-
-                                chatAdapter.addItemHealthYou(0,chatitem);
-
-                            } catch (JSONException e) {//건강데이터가 아니면 그냥 메세지임 - //건강데이터가 아닌것은 그냥 메세지
-                                chatitem.item_content = jsonObject.optString("message_content");
-                                chatitem.item_date = jsonObject.optString("message_date");
-                                chatitem.setType(1);
-
-                                chatitem.item_sender = jsonObject.optString("senderName");//친구의 아이디를 보여줌
-                                chatitem.item_senderId = jsonObject.optString("message_sender");//친구의 아이디를 보여줌
-
-                                chatAdapter.addItemYou(0,chatitem);
-                            }
-                        }
-                        //날짜 정해주는 부분 - //TODO 디버깅할것!!!!!!(날짜 추가되니까 안됨)
+                            //날짜 정해주는 부분 - //TODO 디버깅할것!!!!!!(날짜 추가되니까 안됨)
 
 
-
-                        if(i!=0)//0일때는 하면 안됨
-                        {
-                            String before=messageList.get(i).optString("message_date");
-                            String after=messageList.get(i-1).optString("message_date");
+                            String before=messageList.get(i).optString("message_date");//현재 데이터에 대한 날짜를 갖고옴
                             try {
-                                beforedate = dateFormat.parse(before);
-                                afterdate = dateFormat.parse(after);
+                                beforedate = dateFormat.parse(before);//Date로 파싱
                             } catch (ParseException e) {
                                 e.printStackTrace();
                             }
+                            if(i!=0)//0일때는 하면 안됨
+                            {
+                                String after=messageList.get(i-1).optString("message_date");
+                                try {
+                                    afterdate = dateFormat.parse(after);
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                }
 
-                            System.out.println(beforedate+"이전");
-                            System.out.println(afterdate+"이후");
+                                System.out.println(beforedate+"이전");
+                                System.out.println(afterdate+"이후");
 
-                            if (beforedate != null&&afterdate!=null) {
-                                int compare = beforedate.compareTo(afterdate);
-                                System.out.println(compare+"비교비교");
-                                if ( compare < 0) { //지금 뿌려지고 있는 리스트뷰 아이템이 이전것보다 날짜가 작으면
+                                if (afterdate!=null) {///메세지가 2개 이상되서 비교 해야되는 경우
+                                    int compare = beforedate.compareTo(afterdate);
+                                    System.out.println(compare+"비교비교");
+                                    if ( compare < 0) { //지금 뿌려지고 있는 리스트뷰 아이템이 이전것보다 날짜가 작으면
+                                        ChatItem chatItem = new ChatItem();
+                                        chatItem.item_date = printFormat.format(afterdate);
+                                        chatAdapter.addItemTime(1, chatItem);
+                                        timeitemCount++;
+                                    }
+                                }
+                            }
+                            if(beforedate !=null){//메세지가 하나밖에 없어서 비교할게 없는 경우
+                                //가장위에 날짜변경선 해주는 부분
+                                if(chatAdapter.getCount()==itemCount+timeitemCount)//모든 아이템의 갯수가 chatAdapter에 추가된 갯수와 같을때 + 날짜 추가된것도 고려
+                                {
                                     ChatItem chatItem = new ChatItem();
-                                    chatItem.item_date = printFormat.format(afterdate);
-                                    chatAdapter.addItemTime(1, chatItem);
-                                    timeitemCount++;
+                                    chatItem.item_date = printFormat.format(beforedate);
+                                    chatAdapter.addItemTime(0,chatItem);
                                 }
                             }
                         }
-                    }
-                    //가장위에 메세지를 올려주는 부분
-                    if(chatAdapter.getCount()==itemCount+timeitemCount)//모든 아이템의 갯수가 chatAdapter에 추가된 갯수와 같을때 + 날짜 추가된것도 고려
-                    {
-                        ChatItem chatItem = new ChatItem();
-                        chatItem.item_date = printFormat.format(beforedate);
-                        chatAdapter.addItemTime(0,chatItem);
-                    }
 
-                    String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
+                        String updateStateQuery = "UPDATE ChatMessage SET is_looked=1 WHERE is_looked=0 and room_id= '" + who + "';";
 
-                    dBhelper.update(updateStateQuery);
-                    chatAdapter.notifyDataSetChanged();
+                        dBhelper.update(updateStateQuery);
+                        chatAdapter.notifyDataSetChanged();
 
-                    Log.d("Chat",chatAdapter.getCount()+"리스트뷰에 추가된갯수");
-                    Log.d("Chat",itemCount+"메세지 총갯수");
+                        Log.d("Chat",chatAdapter.getCount()+"리스트뷰에 추가된갯수");
+                        Log.d("Chat",itemCount+"메세지 총갯수");
 
-
-
-                    chatlist.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
-                    if(chatAdapter.getCount()>20){
-                        chatlist.setSelection(callmessageCount+visibleThreshold+1);
-                        System.out.println("20<x Call");
-                    }else{
-                        chatlist.setSelection(chatAdapter.getCount()-1);
-                        System.out.println("20>=x Call");
+                        chatlist.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
+                        if(chatAdapter.getCount()>20){
+                            chatlist.setSelection(callmessageCount+visibleThreshold+1);
+                            System.out.println("20<x Call");
+                        }else{
+                            chatlist.setSelection(chatAdapter.getCount()-1);
+                            System.out.println("20>=x Call");
+                        }
                     }
 
                     break;
