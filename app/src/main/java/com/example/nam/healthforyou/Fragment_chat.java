@@ -34,7 +34,7 @@ public class Fragment_chat extends Fragment{
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         chat = (LinearLayout)inflater.inflate(R.layout.frag_chat,container,false);
-
+        ((MainActivity)getActivity()).getSupportActionBar().setTitle("헬스톡");//Action Bar이름 지정
 //        //채팅창을 누를 시에 Socket을 연다
 //        ServicesocketThread servicesocketThread = new ServicesocketThread();
 //        servicesocketThread.start();

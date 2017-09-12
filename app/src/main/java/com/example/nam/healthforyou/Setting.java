@@ -146,6 +146,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         setContentView(R.layout.activity_setting);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);///뒤로가기 버튼
         mContext = getApplicationContext();
+        getSupportActionBar().setTitle("설정");//Action Bar이름 지정
         stream = new ByteArrayOutputStream();
         SharedPreferences useremail = getApplicationContext().getSharedPreferences("useremail",MODE_PRIVATE);
         String loginemailid=useremail.getString("useremail","false");

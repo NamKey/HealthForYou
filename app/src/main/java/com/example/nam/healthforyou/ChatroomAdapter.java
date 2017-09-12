@@ -96,7 +96,7 @@ public class ChatroomAdapter extends BaseAdapter {
                 Glide.with(context)
                         .load(imageUri)
                         .asBitmap()
-                        .override(64,64)
+                        .override(80,80)
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .skipMemoryCache(true)
                         .centerCrop()

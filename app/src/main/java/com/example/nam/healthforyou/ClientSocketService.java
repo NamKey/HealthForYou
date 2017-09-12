@@ -295,8 +295,8 @@ public class ClientSocketService extends Service {
                                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.teamchat);
                             }
 
-                            Bitmap myBitmap=null;
-                            if(bitmap!=null)
+                            Bitmap myBitmap;//Notification 프로필 사진
+                            if(bitmap!=null)//프로필에 대한 사진이 있으면
                             {
                                 //기기마다의 notification크기에 따라서 resize를 다르게 해줌
                                 Resources res = mContext.getResources();
@@ -304,6 +304,14 @@ public class ClientSocketService extends Service {
                                 int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
                                 //그 이후에 notification을 Circular 형태로 바꿈
                                 //Glide로 처리하지 않는 이유는 Glide는 MainThread를 통해 이미지를 처리함 Service에서 할 수 없다
+                                myBitmap=getCircularBitmap(resizeBitmap(bitmap,height,width));
+                            }else{//프로필에 대한 사진이 없으면
+                                Resources res = mContext.getResources();
+                                int height = (int) res.getDimension(android.R.dimen.notification_large_icon_height);
+                                int width = (int) res.getDimension(android.R.dimen.notification_large_icon_width);
+                                //그 이후에 notification을 Circular 형태로 바꿈
+                                //Glide로 처리하지 않는 이유는 Glide는 MainThread를 통해 이미지를 처리함 Service에서 할 수 없다
+                                bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.no_profile);
                                 myBitmap=getCircularBitmap(resizeBitmap(bitmap,height,width));
                             }
                             System.out.println(inputYou+"inputYou");

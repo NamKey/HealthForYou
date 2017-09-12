@@ -109,7 +109,7 @@ public class Fragment_main extends Fragment {
 
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         RelativeLayout main = (RelativeLayout) inflater.inflate(R.layout.frag_main,container,false);
-
+        ((MainActivity)getActivity()).getSupportActionBar().setTitle("메인");//Action Bar이름 지정
         heart_rate =(TextView)main.findViewById(R.id.tv_heartrate);
         RIIV = (TextView)main.findViewById(R.id.tv_riiv);
         date = (TextView)main.findViewById(R.id.tv_date);

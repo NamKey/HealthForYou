@@ -32,6 +32,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -76,6 +77,13 @@ import static com.example.nam.healthforyou.Login.msCookieManager;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     Context mContext;
     private static final String TAG ="MainActivity";
+
+    //버튼에 대한 선언
+    Button btn_main;
+    Button btn_chat;
+    Button btn_meas;
+    Button btn_result;
+
     //Back button
     private BackPressCloseHandler backPressCloseHandler;
 
@@ -152,12 +160,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //뒤로가는 부분
     backPressCloseHandler = new BackPressCloseHandler(this);
-
     // 위젯에 대한 참조.
-    findViewById(R.id.btn_frag1_main).setOnClickListener(this);
-    findViewById(R.id.btn_frag2_chat).setOnClickListener(this);
-    findViewById(R.id.btn_frag3_meas).setOnClickListener(this);
-    findViewById(R.id.btn_frag4_result).setOnClickListener(this);
+    btn_main=(Button)findViewById(R.id.btn_frag1_main);
+    btn_chat=(Button)findViewById(R.id.btn_frag2_chat);
+    btn_meas=(Button)findViewById(R.id.btn_frag3_meas);
+    btn_result=(Button)findViewById(R.id.btn_frag4_result);
+
+    btn_main.setOnClickListener(this);
+    btn_chat.setOnClickListener(this);
+    btn_meas.setOnClickListener(this);
+    btn_result.setOnClickListener(this);
+
+
+//  findViewById(R.id.btn_frag1_main).setOnClickListener(this);
+//  findViewById(R.id.btn_frag2_chat).setOnClickListener(this);
+//  findViewById(R.id.btn_frag3_meas).setOnClickListener(this);
+//  findViewById(R.id.btn_frag4_result).setOnClickListener(this);
 
     //카메라를 사용하기 위한 권한얻기
     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
@@ -173,10 +191,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
                 })
-                .setPreNoticeDialogData("알려드립니다","Please accept all permission to using this app")
-                .setOfferGrantPermissionData("Move To App Setup","1. Touch the 'SETUP'\n" +
-                        "2. Touch the 'Permission' tab\n"+
-                        "3. Grant all permissions by dragging toggle button")
+                .setPreNoticeDialogData("알려드립니다","Healthforyou를 사용하기 위해서는 권한을 수락해주세요")
+                .setOfferGrantPermissionData("앱 설정으로 이동하여","신체정보를 측정하기 위하여 카메라를 사용하기 위한 권한이 필요합니다")
                 .build()
                 .checkPermissions();
     }
@@ -233,6 +249,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_main())
                     .commit();
+                btn_main.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.home_focus, 0, 0);
+                btn_chat.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.rotate, 0, 0);
+                btn_meas.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.electrocardiogram, 0, 0);
+                btn_result.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.list, 0, 0);
                 break;
 
             case R.id.btn_frag2_chat:
@@ -240,6 +260,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .beginTransaction()
                         .replace(R.id.frag_container_, new Fragment_chat())
                         .commit();
+                btn_main.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.home, 0, 0);
+                btn_chat.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.rotate_focus, 0, 0);
+                btn_meas.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.electrocardiogram, 0, 0);
+                btn_result.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.list, 0, 0);
                 break;
 
             case R.id.btn_frag3_meas:
@@ -248,6 +272,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .beginTransaction()
                         .replace(R.id.frag_container_, fragment_meas)
                         .commit();
+                btn_main.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.home, 0, 0);
+                btn_chat.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.rotate, 0, 0);
+                btn_meas.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.electrocardiogram_focus, 0, 0);
+                btn_result.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.list, 0, 0);
                 break;
 
             case R.id.btn_frag4_result:
@@ -255,6 +283,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .beginTransaction()
                         .replace(R.id.frag_container_, new Fragment_result())
                         .commit();
+                btn_main.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.home, 0, 0);
+                btn_chat.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.rotate, 0, 0);
+                btn_meas.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.electrocardiogram, 0, 0);
+                btn_result.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.list_focus, 0, 0);
                 break;
         }
     }
@@ -281,6 +313,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .beginTransaction()
                     .replace(R.id.frag_container_, new Fragment_main())
                     .commit();
+            getSupportActionBar().setTitle("메인");
+            btn_main.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.home_focus, 0, 0);
+            btn_chat.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.rotate, 0, 0);
+            btn_meas.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.electrocardiogram, 0, 0);
+            btn_result.setCompoundDrawablesWithIntrinsicBounds( 0, R.drawable.list, 0, 0);
         }
 
         @Override

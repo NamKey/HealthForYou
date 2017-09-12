@@ -13,7 +13,10 @@
         <com.github.mikephil.charting.charts.BarChart
             android:id="@+id/monthgraph"
             android:layout_width="match_parent"
-            android:layout_height="146sp">
+            android:layout_height="146sp"
+            android:layout_marginTop="20sp"
+            android:paddingEnd="10sp"
+            android:paddingStart="10sp">
 
         </com.github.mikephil.charting.charts.BarChart>
 

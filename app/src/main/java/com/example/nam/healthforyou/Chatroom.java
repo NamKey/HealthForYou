@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -67,6 +68,7 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
     String choose_date;///데이터를 선택할때 선택한 날짜!
     NetworkChangeReceiver networkChangeReceiver;
 
+    ImageButton btn_sendhealthdata;//신체정보를 보내는 버튼
 
     //대화목록 페이징
     private final static int INSERT_COUNT = 20;//보여줄 아이템의 갯수
@@ -79,7 +81,6 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
     private int lastPage=pageCount-1;//보여줄수 있는 마지막 페이지
     private boolean is_loading=true;
     private boolean is_first=false;
-
 
     private int previousTotalItemCount=0;//이전에 불러온 데이터들
     private int visibleThreshold = 5;//이 이상 되면 불러오는 것
@@ -289,11 +290,12 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
             }
         };
         yourEditText.addTextChangedListener(textWatcher);
-        ImageButton btn_sendhealthdata =(ImageButton)findViewById(R.id.ib_sendhealth);//건강데이터를 보내는 부분
+        btn_sendhealthdata =(ImageButton)findViewById(R.id.ib_sendhealth);//건강데이터를 보내는 부분
         btn_sendhealthdata.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ShowDialog();
+                btn_sendhealthdata.setImageResource(R.drawable.send_health);//이미지를 변환시킴
             }
         });
     }
@@ -339,7 +341,12 @@ public class Chatroom extends AppCompatActivity implements AbsListView.OnScrollL
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         myDialog.setContentView(dialogLayout);
         myDialog.show();
-
+        myDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {//Dialog가 사라지면 이미지를 바꿔줌
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                btn_sendhealthdata.setImageResource(R.drawable.not_sendhealth);
+            }
+        });
         LinearLayout lo_btn_recent = (LinearLayout)myDialog.findViewById(R.id.lo_recent_data);///최근데이터를 보내는 레이아웃 버튼 처럼 작동함
         lo_btn_recent.setOnClickListener(new View.OnClickListener() {
             @Override

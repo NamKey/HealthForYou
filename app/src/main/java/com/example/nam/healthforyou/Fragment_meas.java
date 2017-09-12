@@ -36,6 +36,7 @@ import android.graphics.Color;
 import android.widget.Toast;
 
 import org.ejml.simple.SimpleMatrix;
+import org.fastica.FastICAException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jtransforms.fft.DoubleFFT_1D;
@@ -377,6 +378,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         meas = (LinearLayout) inflater.inflate(R.layout.frag_meas,container,false);
+        ((MainActivity)getActivity()).getSupportActionBar().setTitle("측정하기");//Action Bar이름 지정
         mOpenCvCameraView =(javaViewCameraControl)meas.findViewById(R.id.activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setAlpha(0);//프리뷰
@@ -384,7 +386,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
         mOpenCvCameraView.setMaxFrameSize(200, 200);
         mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-
+        mContext = getActivity().getApplicationContext();
         //SQlite DB 접근
         dbManager = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB생성
 
@@ -1509,38 +1511,6 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     phase2=false;
                     phase3=false;
 
-                    //쓰레드 제어부분
-                    if(setTextthread!=null)//null check
-                    {
-                        if(!setTextthread.isInterrupted())//isInterrupted check
-                        {
-                            setTextthread.interrupt();//텍스를 바꿔주는 쓰레드
-                        }
-                    }
-                    if(thread!=null)//null check
-                    {
-                        if(!thread.isInterrupted())//isInterrupted check
-                        {
-                            thread.interrupt();///데이터를 처리하는 쓰레드
-                        }
-                    }
-
-                    if(setProgressthread!=null)//null check
-                    {
-                        if(!setProgressthread.isInterrupted())//isInterrupted check
-                        {
-                            setProgressthread.interrupt();///데이터를 처리하는 쓰레드
-                        }
-                    }
-                    ///**심박수를 갱신하는 쓰레드를 가장 늦게 종료 - 이유 마지막 보정 심박수값을 출력시켜줘야됨
-                    if(setHeartratethread!=null)//null check
-                    {
-                        if(!setHeartratethread.isInterrupted())//isInterrupted check
-                        {
-                            setHeartratethread.interrupt();//심박수를 갱신하는 쓰레드
-                        }
-                    }
-
                     //호흡 처리
                     List<Double> testing_red = red_IndeComp_array.subList(73,1023);
                     List<Double> testing_green = green_IndeComp_array.subList(73,1023);
@@ -1574,7 +1544,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     System.out.println("2차원 배열(행)"+icadata.length);
                     System.out.println("2차원 배열(열)"+icadata[0].length);
 
-                    output = FastIca.fastICA(icadata,100,0.01,2);
+                    output = FastIca.fastICA(icadata,10,0.01,2);
                     System.out.println("ICA 수행완료");
 
                     Butterworth butterworth_low = new Butterworth();
@@ -1587,56 +1557,72 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     }
 
                     System.out.println("필터링 완료");
-                    double[] resValue=new double[3];
-                    for(int j=0;j<3;j++)
-                    {
-                        System.out.println(findFFTmax(output[j])+"여기");
-                        try{
+                    double[] resValue=new double[2];
+                    try{
+
+                        for(int j=0;j<2;j++)
+                        {
+                            System.out.println(findFFTmax(output[j])+"여기");
                             resValue[j]=findFFTmax(output[j]);//호흡과 관련된 최대값에 대한 값을 배열에 넣어줌
-                        }catch(Exception e)
-                        {
-                            e.printStackTrace();
                         }
 
-                    }
-                    int count=0;
-                    int caculateRes=0;
-                    for(int i=0;i<2;i++)
-                    {
-                        if(resValue[i]>0)
+                        int caculateRes1;
+                        int caculateRes2;
+
+                        caculateRes1=(int)ceil(resValue[0]*60);
+                        caculateRes2=(int)ceil(resValue[1]*60);
+
+                        if(caculateRes1<=caculateRes2)
                         {
-                            caculateRes+=(int)ceil(resValue[i]*60);
-                            count++;
+                            averes=caculateRes1;
+                        }else{
+                            averes=caculateRes2;///호흡수를 처리하지 못한것에 대한 대체값
                         }
+
+                        if(averes==0)//호흡측정에 실패하면
+                        {
+                            Toast.makeText(mContext,"호흡측정실패",Toast.LENGTH_SHORT).show();
+                        }
+
+                    }catch(Exception e){
+                        e.printStackTrace();
                     }
-                    if(count!=0)
-                    {
-                        averes=caculateRes/count;
-                    }else{
-                        averes=101;///호흡수를 처리하지 못한것에 대한 대체값
-                    }
-
-
-                    //**************전처리 필터
-
-                    /*//HPF-cut-off(0.1)
-                    Butterworth butterworth_high = new Butterworth();
-                    butterworth_high.highPass(9,30,0.1);
-
-                    //Band pass filter(0.1~0.3)
-                    //Butterworth butterworth_band = new Butterworth();
-                    //butterworth_band.bandPass(9,30,0.2,0.2);
-
-                    for(int i=peakPoint.get(0);i<peakPoint.get(peakPoint.size()-1);i++)
-                    {
-                        double temp=butterworth_low.filter(Raw_data.get(i));//Lowpass
-                        filtered_forriiv=butterworth_high.filter(temp);//Highpass
-                        //filtered_forriiv=butterworth_band.filter(temp);
-                        arrayListforrriiv.add(filtered_forriiv);
-                    }*/
 
                     testing_red.clear();
                     testing_green.clear();
+                    //쓰레드 제어부분
+                    if(setTextthread!=null)//null check
+                    {
+                        if(!setTextthread.isInterrupted())//isInterrupted check
+                        {
+                            setTextthread.interrupt();//텍스를 바꿔주는 쓰레드
+                        }
+                    }
+                    if(thread!=null)//null check
+                    {
+                        if(!thread.isInterrupted())//isInterrupted check
+                        {
+                            thread.interrupt();///데이터를 처리하는 쓰레드
+                        }
+                    }
+
+                    if(setProgressthread!=null)//null check
+                    {
+                        if(!setProgressthread.isInterrupted())//isInterrupted check
+                        {
+                            setProgressthread.interrupt();///데이터를 처리하는 쓰레드
+                        }
+                    }
+                    ///**심박수를 갱신하는 쓰레드를 가장 늦게 종료 - 이유 마지막 보정 심박수값을 출력시켜줘야됨
+                    if(setHeartratethread!=null)//null check
+                    {
+                        if(!setHeartratethread.isInterrupted())//isInterrupted check
+                        {
+                            setHeartratethread.interrupt();//심박수를 갱신하는 쓰레드
+                        }
+                    }
+
+
 
                     break;
                 }
@@ -1712,6 +1698,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                         detectStart=false;
                         heart_rate.setText(final_heart+" BPM");
                         tv_measriiv.setText(averes+" 회/분");
+                        follow_message.setText("측정 완료");//측정 지시 메시지 안보이게
                         //날짜 지정해주는 부분
                         now = System.currentTimeMillis();
                         date = new Date(now);

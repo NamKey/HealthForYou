@@ -14,7 +14,9 @@
             <android.support.v4.view.ViewPager
                 android:id="@+id/health_viewpager"
                 android:layout_width="match_parent"
-                android:layout_height="150sp">
+                android:layout_height="170sp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true">
 
             </android.support.v4.view.ViewPager>
 
@@ -25,10 +27,11 @@
     <LinearLayout
         android:id="@+id/layoutDots"
         android:layout_width="match_parent"
-        android:layout_height="20sp"
+        android:layout_height="30sp"
         android:layout_alignBottom="@+id/frameLayout"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="5sp"
+        android:layout_centerHorizontal="false"
+        android:elevation="9dp"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -41,10 +44,10 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/frameLayout"
         android:layout_marginTop="12dp"
+        android:background="@drawable/tvbtnstylerect"
         android:padding="10sp"
         android:text="나의 심박수 비교"
-        android:background="@drawable/tvbtnstylerect"
-        android:textSize="20sp" />
+        android:textSize="16sp" />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/mybarchart"

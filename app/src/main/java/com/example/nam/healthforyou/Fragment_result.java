@@ -60,6 +60,7 @@ public class Fragment_result extends Fragment {
         mView = (RelativeLayout)inflater.inflate(R.layout.frag_result,container,false);
         mViewPager = (ViewPager)mView.findViewById(R.id.health_viewpager);
         dotsLayout = (LinearLayout)mView.findViewById(R.id.layoutDots);
+        ((MainActivity)getActivity()).getSupportActionBar().setTitle("결과보기");//Action Bar이름 지정
         myAdapter = new ViewPagerAdapter(getChildFragmentManager());
         dBhelper = new DBhelper(getActivity().getApplicationContext(),"healthforyou.db", null, 1);
         String strurl = "http://kakapo12.vps.phps.kr/averagehealdata.php";
@@ -152,7 +153,7 @@ public class Fragment_result extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        dotsLayout.bringToFront();
         return mView;
     }
 

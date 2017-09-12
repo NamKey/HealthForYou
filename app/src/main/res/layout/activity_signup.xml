@@ -18,7 +18,7 @@
         android:inputType="textEmailAddress"
         android:maxLength="40"
         android:maxLines="1"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="35sp"
         android:layout_alignParentTop="true"
         android:layout_alignStart="@+id/input_name" />
 
@@ -68,8 +68,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/textView11"
         android:layout_centerHorizontal="true"
-
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="16sp"
         android:orientation="horizontal">
 
         <LinearLayout

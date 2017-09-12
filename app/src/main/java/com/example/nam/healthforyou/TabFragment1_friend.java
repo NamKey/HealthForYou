@@ -133,16 +133,27 @@ public class TabFragment1_friend extends Fragment {
                         setDirectoryName("PFImage").
                         load();
                 ImageView iv_profile = (ImageView)layout.findViewById(R.id.iv_dialogprofile);
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-                Glide.with(mContext)
-                        .load(stream.toByteArray())
-                        .asBitmap()
-                        .override(256,256)
-                        .transform(new RoundedCornersTransformation(mContext,10,10))
-                        .error(R.drawable.no_profile)
-                        .into(iv_profile);
-                //iv_profile.setImageBitmap(bitmap);
+                if(bitmap!=null)//사진이 있을경우
+                {
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+                    Glide.with(mContext)
+                            .load(stream.toByteArray())
+                            .asBitmap()
+                            .override(256,256)
+                            .transform(new RoundedCornersTransformation(mContext,10,10))
+                            .error(R.drawable.no_profile)
+                            .into(iv_profile);
+                }else{//사진이 없을경우
+                    Glide.with(mContext)
+                            .load(R.drawable.no_profile)
+                            .asBitmap()
+                            .override(128,128)
+                            .centerCrop()
+                            .error(R.drawable.no_profile)
+                            .into(iv_profile);
+                }
+
                 iv_profile.bringToFront();
                 iv_profile.invalidate();
                 TextView tv_name = (TextView)layout.findViewById(R.id.tv_dialogname);
@@ -160,6 +171,7 @@ public class TabFragment1_friend extends Fragment {
                         Intent intent = new Intent(getActivity(),Chatroom.class);
                         intent.putExtra("from",0);////개인간의 대화를 나타내는 인텐트 - 다이얼로그를 통해 올 수 있음
                         intent.putExtra("who",clickProfile.email);///인텐트를 통해 내가 누구한테 보내는지 채팅 액티비티로 넘겨줌
+                        intent.putExtra("room_name",clickProfile.name);//인텐트를 통해 사람이름을 보내줌
                         startActivity(intent);
                     }
                 });
