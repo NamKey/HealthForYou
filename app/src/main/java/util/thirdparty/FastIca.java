@@ -61,8 +61,6 @@ public class FastIca {
                     double[] two = Vector.scale(one, Matrix.getVecOfCol(whitenedVectors, j));
                     
                     firstPart = Vector.add(firstPart, two);
-                    
-                    
                 }
 
                 firstPart = Vector.scale((1.0 / (double) n), firstPart);
@@ -79,8 +77,7 @@ public class FastIca {
                 for (int j = 0; j < m; ++j) {
                     B[c][j] = w[j];
                    
-                } 
-                
+                }
             }
             
             // symmetric decorrelation by orthonormalisation

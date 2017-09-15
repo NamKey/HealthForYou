@@ -25,16 +25,15 @@
  * For more information, please refer to <http://unlicense.org/>
  */
 
-package filter;
+package util.thirdparty.weka_plugin;
+
+import android.util.Log;
 
 import java.util.Random;
 
 import org.ejml.simple.SimpleEVD;
 import org.ejml.simple.SimpleMatrix;
 import org.ejml.simple.SimpleSVD;
-
-
-
 /**
  * FastICA port of Python scikit-learn implementation.
  * 
@@ -84,7 +83,7 @@ public class FastICA {
 	 * function to estimate negative entropy. This implementation does not
 	 * perform automatic component selection or reduction.
 	 * 
-	 * 	data 		2d array of doubles containing the source data;
+	 * 	data   2d array of doubles containing the source data;
 	 * 				each column contains a single signal, and each row contains
 	 * 				one sample of all signals (rows contain instances, 
 	 * 				columns are features)
@@ -166,7 +165,15 @@ public class FastICA {
 	 * @return	em	double[][] matrix containing the estimated mixing matrix 
 	 */
 	public double[][] getEM() {
+		System.out.println(K.mult(W).pseudoInverse().numCols()+"numCols");
+		System.out.println(K.mult(W).pseudoInverse().numRows()+"numRows");
 		return FastICA.mToA(K.mult(W).pseudoInverse());
+	}
+
+	public double[][] getIC() {
+		System.out.println(K.mult(W).numCols()+"numCols");
+		System.out.println(K.mult(W).numRows()+"numRows");
+		return FastICA.mToA(K.mult(W));
 	}
 	
 	/**
@@ -236,6 +243,11 @@ public class FastICA {
 		for (int iter = 0; iter < max_iter; iter++) {
 			
 			// Estimate the negative entropy and first derivative average
+			System.out.println(X.numCols()+"XCol");
+			System.out.println(X.numRows()+"XRow");
+			System.out.println(W.numCols()+"WCol");
+			System.out.println(W.numRows()+"WRow");
+
 			G.estimate(X.mult(W));
 
 			// Update the W matrix
@@ -265,7 +277,7 @@ public class FastICA {
 				return;
 			}
 		}
-		
+		Log.d("FastICA","완료");
 		throw new Exception("ICA did not converge - try again with more iterations.");
 	}
 	
@@ -286,8 +298,11 @@ public class FastICA {
 		
 		// K should only keep `num_components` columns if performing 
 		// dimensionality reduction
-		K = svd.getV().mult(svd.getW().invert())
-				.extractMatrix(0, x.numCols(), 0, num_components);
+		K = (SimpleMatrix)svd.getV().mult(svd.getW().invert()).extractMatrix(0, x.numCols(), 0, num_components);
+		System.out.println(x.numCols()+"xCol");
+		System.out.println(x.numRows()+"xRow");
+		System.out.println(K.numCols()+"KCol");
+		System.out.println(K.numRows()+"KRow");
 //		K = K.scale(-1);  // sklearn returns this version for K; doesn't affect results
 		
 //		return x.mult(K).scale(Math.sqrt(m));  // sklearn scales the input
@@ -351,8 +366,8 @@ public class FastICA {
 		for (int i = 0; i < len; i++) {
 			d = evd.getEigenvalue(i).getReal();
 			d = (d + Math.abs(d)) / 2;  // improve numerical stability by eliminating small negatives near singular matrix zeros
-			QL.insertIntoThis(0, i, evd.getEigenVector(i).divide(Math.sqrt(d)));
-			Q.insertIntoThis(0, i, evd.getEigenVector(i));
+			QL.insertIntoThis(0, i, (SimpleMatrix) evd.getEigenVector(i).divide(Math.sqrt(d)));
+			Q.insertIntoThis(0, i, (SimpleMatrix) evd.getEigenVector(i));
 		}
 		
 		return x.mult(QL.mult(Q.transpose()));
@@ -386,5 +401,5 @@ public class FastICA {
 		}
 		return result;
 	}
-	
+
 }

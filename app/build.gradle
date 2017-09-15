@@ -53,7 +53,6 @@ dependencies {
     // ADD THIS AT THE BOTTOM
     //compile files('libs/fastica-1.11.jar')
     //compile files('libs/StudentFilters.jar')
-    compile files('libs/StudentFilters.jar')
     compile files('libs/fastica-1.11.jar')
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.github.clans:fab:1.6.4'
@@ -71,5 +70,7 @@ dependencies {
     compile 'com.mommoo.android:mommoo-permission:0.1.5'
     compile 'com.weiwangcn.betterspinner:library-material:1.1.0'
     compile 'com.edwardraff:JSAT:0.0.8'
+    compile 'org.ejml:ejml-all:0.31'
     provided 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
+
 }
