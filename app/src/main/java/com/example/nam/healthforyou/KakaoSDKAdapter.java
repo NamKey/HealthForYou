@@ -1,8 +1,8 @@
 package com.example.nam.healthforyou;
 
-import android.app.Activity;
 import android.content.Context;
 
+import com.example.nam.healthforyou.util.GlobalApplication;
 import com.kakao.auth.ApprovalType;
 import com.kakao.auth.AuthType;
 import com.kakao.auth.IApplicationConfig;

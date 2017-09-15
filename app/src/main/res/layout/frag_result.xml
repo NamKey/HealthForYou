@@ -57,4 +57,14 @@
         android:layout_marginTop="5sp">
 
     </com.github.mikephil.charting.charts.BarChart>
+
+    <TextView
+        android:id="@+id/textView26"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="19dp"
+        android:text="*동일연령대, 동일성별의 평균"
+        android:layout_alignBaseline="@+id/textView19"
+        android:layout_alignBottom="@+id/textView19"
+        android:layout_toEndOf="@+id/textView19" />
 </RelativeLayout>

@@ -9,12 +9,12 @@ using namespace cv;
 
 extern "C"{
     JNIEXPORT jint JNICALL
-    Java_com_example_nam_healthforyou_Fragment_1meas_redDetection(JNIEnv *env, jobject instance,jlong matAddrInput,jlong matAddrResult) {
+    Java_com_example_nam_healthforyou_view_Fragment_1meas_redDetection(JNIEnv *env, jobject instance,jlong matAddrInput,jlong matAddrResult) {
 
         int sum1=0;
         Mat &matInput = *(Mat *) matAddrInput;
         Mat &matResult = * (Mat *)matAddrResult;
-
+        
         cvtColor(matInput,matResult,CV_RGB2BGR);
         for(int i=0;i<matResult.rows;i++)
         {
@@ -35,7 +35,7 @@ extern "C"{
 
 extern "C"{
 JNIEXPORT jint JNICALL
-Java_com_example_nam_healthforyou_Fragment_1meas_greenDetection(JNIEnv *env, jobject instance,jlong matAddrInput,jlong matAddrResult) {
+Java_com_example_nam_healthforyou_view_Fragment_1meas_greenDetection(JNIEnv *env, jobject instance,jlong matAddrInput,jlong matAddrResult) {
 
     int sum=0;
     Mat &matInput = *(Mat *) matAddrInput;
@@ -60,7 +60,7 @@ Java_com_example_nam_healthforyou_Fragment_1meas_greenDetection(JNIEnv *env, job
 
 extern "C"{
     JNIEXPORT jint JNICALL
-    Java_com_example_nam_healthforyou_Fragment_1meas_moveDetection(JNIEnv *env, jobject instance, jlong previous, jlong current) {
+    Java_com_example_nam_healthforyou_view_Fragment_1meas_moveDetection(JNIEnv *env, jobject instance, jlong previous, jlong current) {
 
         Mat &previous_frame = *(Mat *) previous;
         Mat &current_frame = *(Mat *) current;
@@ -84,5 +84,14 @@ extern "C"{
         current_frame.release();
         differ.release();
         return cnt;// TODO
+    }
+}
+
+extern "C"
+{
+    JNIEXPORT jint JNICALL
+    Java_com_example_nam_healthforyou_view_Fragment_1meas_fastIca(JNIEnv *env, jobject instance, jlong previous, jlong current) {
+
+
     }
 }

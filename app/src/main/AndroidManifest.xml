@@ -3,24 +3,29 @@
     package="com.example.nam.healthforyou">
 
     <uses-permission android:name="android.permission.INTERNET" />
-
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
     <uses-permission android:name="android.hardware.camera.autofocus" />
 
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
-    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
-    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
-    <uses-feature android:name="android.hardware.camera.front.autofocus"  android:required="false"/>
-
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front.autofocus"
+        android:required="false" />
 
     <application
-        android:name=".GlobalApplication"
+        android:name=".util.GlobalApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -28,7 +33,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <receiver
-            android:name=".NetworkChangeReceiver"
+            android:name=".component.NetworkChangeReceiver"
             android:label="NetworkChangeReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
@@ -36,15 +41,15 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".DatabaseChangedReceiver"
+            android:name=".component.DatabaseChangedReceiver"
             android:enabled="true">
             <intent-filter>
                 <action android:name="com.example.nam.healthforyou.DATABASE_CHANGED" />
             </intent-filter>
         </receiver>
 
-        <service android:name=".ClientSocketService" />
-        <service android:name=".Syncdbservice" />
+        <service android:name=".component.ClientSocketService" />
+        <service android:name=".component.Syncdbservice" />
 
         <!-- FireBase manifest등록 부분 -->
         <!-- FireBase manifest등록 종료 -->
@@ -58,12 +63,11 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-
         <activity
-            android:name=".MainActivity"
+            android:name=".view.MainActivity"
             android:label="@string/app_name" />
         <activity
-            android:name=".Splash"
+            android:name=".view.Splash"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -102,27 +106,24 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Login"
+            android:name=".view.Login"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".Signup" />
-        <activity
-            android:name=".test"
-            android:label="@string/title_activity_test"
-            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".view.Signup" />
         <activity
             android:name=".Measure"
             android:hardwareAccelerated="false" />
-        <activity android:name=".Addfriend" />
+        <activity android:name=".view.Addfriend" />
         <activity
-            android:name=".Chatroom"
+            android:name=".view.Chatroom"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".AddGroupChat"
+            android:name=".view.AddGroupChat"
             android:label="" />
-        <activity android:name=".Choosedata"
+        <activity
+            android:name=".view.Choosedata"
             android:label="신체정보 선택" />
-        <activity android:name=".Setting">
-        </activity>
+        <activity android:name=".view.Setting"></activity>
+        <activity android:name=".test"></activity>
     </application>
 
 </manifest>

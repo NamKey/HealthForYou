@@ -6,7 +6,7 @@
     android:background="#3AF6C5"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.nam.healthforyou.Login">
+    tools:context="com.example.nam.healthforyou.view.Login">
 
     <LinearLayout
 

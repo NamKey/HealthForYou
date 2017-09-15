@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 
+import com.example.nam.healthforyou.util.javaViewCameraControl;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;

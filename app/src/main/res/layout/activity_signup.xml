@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:background="#ffffff"
     android:layout_height="match_parent"
-    tools:context="com.example.nam.healthforyou.Signup">
+    tools:context="com.example.nam.healthforyou.view.Signup">
 
     <EditText
         android:id="@+id/input_id"

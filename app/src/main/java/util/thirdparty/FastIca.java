@@ -1,5 +1,8 @@
 package util.thirdparty;
 
+import org.fastica.BelowEVFilter;
+import org.fastica.EigenValueFilter;
+
 /**
  *
  * @author Tom Pepels
@@ -38,9 +41,7 @@ public class FastIca {
 
         B = Matrix.random(noComponents, m);
        
-        B = Matrix.mult(
-                powerSymmMatrix(Matrix.square(B), -0.5),
-                B);
+        B = Matrix.mult(powerSymmMatrix(Matrix.square(B), -0.5),B);
         
         
         for (int k = 1; k < maxIterations; k++) {               // Steps 2 - 4
@@ -83,9 +84,7 @@ public class FastIca {
             }
             
             // symmetric decorrelation by orthonormalisation
-            B = Matrix.mult(
-                    powerSymmMatrix(Matrix.square(B), -0.5),
-                    B);
+            B = Matrix.mult(powerSymmMatrix(Matrix.square(B), -0.5), B);
             
             double matrixDelta = deltaMatrices(B, oldB);
             //System.out.println("Matrix delta: " + matrixDelta);
@@ -115,7 +114,7 @@ public class FastIca {
         eigenValues = eigenDeco.getRealEigenvalues();
         
         //Eigenvaluefilter
-        /* System.out.println("Eigenvalues: ");
+         System.out.println("Eigenvalues: ");
         for(int i = 0 ;i < eigenValues.length ; i++)
             System.out.println((i+1)+": "+eigenValues[i]);
         EigenValueFilter ev = new BelowEVFilter(0.01, false);
@@ -124,13 +123,12 @@ public class FastIca {
         System.out.println("New Eigenvalues: ");
         for(int i = 0 ;i < eigenValues.length ; i++)
             System.out.println((i+1)+": "+eigenValues[i]);
-        E = ev.getEigenVectors(); */
+        E = ev.getEigenVectors();
         // Continue with new eigenvalues and vectors
        
         // calculate the resulting vectors
         resVectors = Matrix.mult(Matrix.transpose(E), vectorsZeroMean);
-       
-       
+
         whiteningMatrix =
                 Matrix.mult(
                 Matrix.diag(Vector.invVector(Matrix.sqrtVector(eigenValues))),
@@ -143,9 +141,6 @@ public class FastIca {
         // which is demanded to perform the FastICA algorithm
         whitenedVectors =
                 Matrix.mult(whiteningMatrix, vectorsZeroMean);
-        
-        
-       
     }
 
     /**
