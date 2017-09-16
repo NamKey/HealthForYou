@@ -69,8 +69,7 @@ dependencies {
     compile 'jp.wasabeef:glide-transformations:2.0.2'
     compile 'com.mommoo.android:mommoo-permission:0.1.5'
     compile 'com.weiwangcn.betterspinner:library-material:1.1.0'
-    compile 'com.edwardraff:JSAT:0.0.8'
     compile 'org.ejml:ejml-all:0.31'
     provided 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
-
+    compile project(':dlib')
 }

@@ -26,6 +26,7 @@ extern "C"{
             }
         }
         // TODO
+
         //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
         matInput.release();
         matResult.release();

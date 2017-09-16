@@ -1497,11 +1497,14 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
                     System.out.println("2차원 배열(행)"+icadata.length);
                     System.out.println("2차원 배열(열)"+icadata[0].length);
-                    /*TODO ICA의 가정이 틀렸을 수도 있다는 의문
+                    /*TODO ICA의 가정이 틀렸을 수도 있다는 의문(2017.09.16)
                     *  ICA의 명제는 A1 A2의 혼합된 신호가 있을 때
                     *  독립된 신호 a1 a2를 구할 수 있다.
                     *  A1과 A2가 혼합된 신호가 아니거나 상관없는 신호일 경우에
-                    *  a1과 a2를 구할 수 없다.
+                    *  a1과 a2를 구할 수 없다.*/
+                    //TODO 논문을 찾아보면 RGB를 3개의 성분을 사용하여 ICA를 구현한다.(2017.09.16)
+                    /* 이를 적용하여 값을 찾아냄
+                    *  값의 정확성은 테스트를 해봐야됨
                     * */
                     //output = FastIca.fastICA(icadata,10,0.01,3);
 
@@ -1537,13 +1540,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                                 calculateRes[2]=(int)ceil(resValue[2]*60);
 
                                 System.out.println("1 : "+calculateRes[0]+" 2 : "+calculateRes[1]+" 3 : "+calculateRes[2]);
-                                for(int i=0;i<3;i++)///호흡계산에 이상이 있는지 판단
-                                {
-                                    if(calculateRes[i]>60)
-                                    {
-                                        calculateRes[i]=0;
-                                    }
-                                }
+
                                 ///호흡수 필터를 씌운 값이기 때문에 더 작은 것을 호흡속도로 생각
                                 if(calculateRes[0]<=calculateRes[1])//1,2를 비교
                                 {
@@ -1564,16 +1561,21 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                                     }
                                 }
 
+                                if(averes>60)//만약 정해진 값이 쓰레기값 420이렇게 나오면 0으로 만들어줌
+                                {
+                                    averes=0;
+                                }
+
                                 if(averes==0)//호흡측정에 실패하면
                                 {
-                                    Toast.makeText(mContext,"호흡측정 실패\n 다시 측정해주세요",Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(mContext,"   호흡측정 실패\n다시 측정해주세요",Toast.LENGTH_SHORT).show();
                                 }
 
                             }catch(Exception e){
                                 e.printStackTrace();
                             }
                         }else{
-                            Toast.makeText(mContext,"호흡 알고리즘 수행실패\n 다시 측정해주세요",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext,"호흡 알고리즘 수행실패\n다시 측정해주세요",Toast.LENGTH_SHORT).show();
                         }
                     } catch (Exception e) {
                         e.printStackTrace();

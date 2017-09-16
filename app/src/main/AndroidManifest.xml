@@ -110,7 +110,7 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".view.Signup" />
         <activity
-            android:name=".Measure"
+            android:name=".MeasureFace"
             android:hardwareAccelerated="false" />
         <activity android:name=".view.Addfriend" />
         <activity

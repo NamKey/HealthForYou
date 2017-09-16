@@ -3,6 +3,7 @@ package com.example.nam.healthforyou;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.media.FaceDetector;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
@@ -26,6 +27,7 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.tzutalin.dlib.FaceDet;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -37,7 +39,7 @@ import org.opencv.core.Mat;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class Measure extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, OnChartValueSelectedListener {
+public class MeasureFace extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, OnChartValueSelectedListener {
 
     static {
         System.loadLibrary("native-lib");

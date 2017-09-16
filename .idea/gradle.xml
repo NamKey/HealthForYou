@@ -14,6 +14,7 @@
             <option value="$PROJECT_DIR$/applications/kakao-open-android-navi-sample" />
             <option value="$PROJECT_DIR$/applications/kakao-open-android-s2-sample" />
             <option value="$PROJECT_DIR$/applications/kakao-open-android-sdk-sample" />
+            <option value="$PROJECT_DIR$/dlib" />
             <option value="$PROJECT_DIR$/libraries" />
             <option value="$PROJECT_DIR$/libraries/auth" />
             <option value="$PROJECT_DIR$/libraries/friends" />
