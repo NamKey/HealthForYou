@@ -51,7 +51,7 @@ public class MeasureFace extends AppCompatActivity implements CameraBridgeViewBa
         }
     }
     Context mContext;
-
+    FaceDet faceDet;
     private static final String TAG = "opencv";
     //private CameraBridgeViewBase mOpenCvCameraView;
     private javaViewCameraControl mOpenCvCameraView;
@@ -101,8 +101,8 @@ public class MeasureFace extends AppCompatActivity implements CameraBridgeViewBa
     Double oldValue;
     double peakInterval;
     ////네이티브 메소드
-    public native int redDetection(long matAddrInput, long matAddrResult);
-    public native int moveDetection(long previous,long current);
+    //public native int redDetection(long matAddrInput, long matAddrResult);
+    //public native int moveDetection(long previous,long current);
 
     ////필터 부분
     double filtered_Raw;
@@ -194,6 +194,7 @@ public class MeasureFace extends AppCompatActivity implements CameraBridgeViewBa
         mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
         mOpenCvCameraView.setMaxFrameSize(200, 200);
         mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        faceDet = new FaceDet();
 
         //////////////////////측정순서 제어
         Button btn_start = (Button)findViewById(R.id.start_measure);
@@ -315,7 +316,7 @@ public class MeasureFace extends AppCompatActivity implements CameraBridgeViewBa
         /////빨간색을 받아오는 부분
         if ( matResult != null ) matResult.release();
         matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
-        sum=redDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        //sum=redDetection(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
         /////움직임을 감지하는 부분
         previous = new Mat(matInput.rows(), matInput.cols(), matInput.type());
@@ -329,16 +330,16 @@ public class MeasureFace extends AppCompatActivity implements CameraBridgeViewBa
             current=matInput;///인풋을 현재 프레임에 넣어주고
             previous = current;//현재프레임을 이전프레임으로 넣어주고
         }
-        int move_point=moveDetection(previous.getNativeObjAddr(),current.getNativeObjAddr());//현재프레임과 이전프레임을 비교
+        //int move_point=moveDetection(previous.getNativeObjAddr(),current.getNativeObjAddr());//현재프레임과 이전프레임을 비교
         previous = current;/////비교후에 현재프레임을 이전 프레임에 넣어줌
         ////움직이지 않을때 - 손가락을 갖다댔을 때 값이 3 나옴(실험 결과)
         ////손가락을 갖다댔을 때와 평상시인데 움직임이 없는 경우를 구분해야됨
-        if(move_point<100)
-        {
-            handler.sendEmptyMessage(no_moving);
-        }else{////움직일때
-            handler.sendEmptyMessage(is_moving);//그래프에 데이터를 넣지 않음
-        }
+//        if(move_point<100)
+//        {
+//            handler.sendEmptyMessage(no_moving);
+//        }else{////움직일때
+//            handler.sendEmptyMessage(is_moving);//그래프에 데이터를 넣지 않음
+//        }
         return matInput;
     }
     ////////움직임 알림/측정중/측정완료 알려줌

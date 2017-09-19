@@ -1001,7 +1001,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                                 finger_max_magnitude=Double.MIN_VALUE;
                                 phase1=true;//더이상 검사를 수행하지 않도록
 
-                                if(phase1_freq<=0.83 || phase1_freq>=3)
+                                if(phase1_freq<0 || phase1_freq>=3)
                                 {
                                     handler.sendEmptyMessage(detectStop);
                                 }
@@ -1065,7 +1065,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                                 finger_max_magnitude=Double.MIN_VALUE;
                                 phase2=true;//더이상 검사를 하지 않도록함
 
-                                if(phase2_freq<=0.83 || phase2_freq>=2.16)
+                                if(phase2_freq<0 || phase2_freq>=2.16)
                                 {
                                     handler.sendEmptyMessage(detectStop);
                                 }
@@ -1130,7 +1130,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                                 //System.out.println(finger_date.size()+"끝났을때");
                                 phase3=true;//더이상 검사를 하지 않도록 함
 
-                                if(phase3_freq<=0.83 || phase3_freq>=2.16)
+                                if(phase3_freq<0 || phase3_freq>=2.16)
                                 {
                                     handler.sendEmptyMessage(detectStop);
                                 }

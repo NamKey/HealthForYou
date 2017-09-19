@@ -72,4 +72,5 @@ dependencies {
     compile 'org.ejml:ejml-all:0.31'
     provided 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
     compile project(':dlib')
+    compile 'com.jakewharton.timber:timber:4.5.1'
 }
