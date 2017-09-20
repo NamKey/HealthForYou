@@ -14,7 +14,7 @@
  *
  */
 
-package facedetect;
+package com.example.nam.healthforyou;
 
 import android.support.annotation.NonNull;
 import android.text.TextUtils;

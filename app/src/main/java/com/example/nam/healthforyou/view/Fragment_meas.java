@@ -1,6 +1,7 @@
 package com.example.nam.healthforyou.view;
 
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
@@ -46,6 +47,7 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.OpenCVLoader;
 
 import com.example.nam.healthforyou.component.DBhelper;
+import com.example.nam.healthforyou.CameraActivity;
 import com.example.nam.healthforyou.util.NetworkUtil;
 import com.example.nam.healthforyou.R;
 import com.example.nam.healthforyou.util.javaViewCameraControl;
@@ -68,7 +70,6 @@ import java.util.List;
 import java.util.Locale;
 
 import filter.Butterworth;
-import util.thirdparty.FastIca;
 import util.thirdparty.weka_plugin.FastICA;
 import util.thirdparty.weka_plugin.LogCosh;
 
@@ -333,6 +334,16 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         dbManager = new DBhelper(getActivity().getApplicationContext(), "healthforyou.db", null, 1);//DB생성
         mainBtn_meas= (Button)getActivity().findViewById(R.id.btn_frag3_meas);
         mainBtn_result=(Button)getActivity().findViewById(R.id.btn_frag4_result);
+
+        //얼굴을 통해 맥박수를 측정하는 액티비티로 이동
+        Button btngotofacePPG = (Button)meas.findViewById(R.id.btnGotofaceppg);
+        btngotofacePPG.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), CameraActivity.class);
+                startActivity(intent);
+            }
+        });
 
         //////////////////////측정순서 제어
         //1) 측정 시작 초기 단계
@@ -1470,7 +1481,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
                     //StackOverflow 경고
                     //필요한 이유 : 측정시간이 짧기 때문에 적당한 크기로 반복적으로 늘려줄 필요가 있음
-                    for(int i=0;i<2;i++)
+                    for(int i=0;i<3;i++)
                     {
                         testing_red.addAll(testing_red);
                         testing_green.addAll(testing_green);
@@ -1509,7 +1520,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     //output = FastIca.fastICA(icadata,10,0.01,3);
 
                     try {
-                        FastICA fastICA = new FastICA(new LogCosh(),1E-3, 200, true);
+                        FastICA fastICA = new FastICA(new LogCosh(),1E-2, 1000, true);
                         fastICA.fit(icadata,3);
                         System.out.println("ICA 수행완료");
                         output=fastICA.getEM();
@@ -1713,7 +1724,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
     public double findFFTmax(double[] value)//scale을 정하는게 나으려나??
     {
-        int nPoint=2048;
+        int nPoint=4096;
         double[] resdata = new double[nPoint];//fft를 위해 사용하는 자료
 
         double real_part;
@@ -1758,6 +1769,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         {
             fft_mag.add(fft_magnitude[i]);
         }
+
         fft_maxmag=Collections.max(fft_mag);
         max_fftindex = fft_mag.indexOf(fft_maxmag);
         System.out.println(max_fftindex+"maxindex");

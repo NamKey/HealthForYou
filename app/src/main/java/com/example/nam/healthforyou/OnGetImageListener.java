@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package facedetect;
+package com.example.nam.healthforyou;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -37,7 +37,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.example.nam.healthforyou.R;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
@@ -52,6 +51,7 @@ import java.util.List;
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
  */
 public class OnGetImageListener implements OnImageAvailableListener {
+
     private static final boolean SAVE_PREVIEW_BITMAP = false;
 
     private static final int INPUT_SIZE = 224;
@@ -198,6 +198,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             final int yRowStride = planes[0].getRowStride();
             final int uvRowStride = planes[1].getRowStride();
             final int uvPixelStride = planes[1].getPixelStride();
+
             ImageUtils.convertYUV420ToARGB8888(
                     mYUVBytes[0],
                     mYUVBytes[1],
@@ -225,10 +226,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
         mInversedBipmap = imageSideInversion(mCroppedBitmap);
         mResizedBitmap = Bitmap.createScaledBitmap(mInversedBipmap, (int)(INPUT_SIZE/4.5), (int)(INPUT_SIZE/4.5), true);
-
-        if (SAVE_PREVIEW_BITMAP) {
-            ImageUtils.saveBitmap(mCroppedBitmap);
-        }
 
         mInferenceHandler.post(
                 new Runnable() {

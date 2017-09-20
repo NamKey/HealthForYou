@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.4.1)
 set(pathOPENCV C:/OpenCV-android-sdk)
 set(pathPROJECT C:/Users/NAM/AndroidStudioProjects/dodam/MyApplication)
 set(pathLIBOPENCV_JAVA ${pathPROJECT}/app/src/main/JniLibs/${ANDROID_ABI}/libopencv_java3.so)
+
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
@@ -27,9 +28,11 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
              src/main/cpp/native-lib.cpp )
 
-add_library( lib_opencv SHARED IMPORTED )
+add_library(lib_opencv SHARED IMPORTED )
+
 
 set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${pathLIBOPENCV_JAVA})
+
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -50,7 +53,6 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
                        native-lib
-
                        lib_opencv
 
                        # Links the target library to the log library

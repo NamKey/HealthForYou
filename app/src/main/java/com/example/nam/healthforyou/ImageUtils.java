@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package facedetect;
+package com.example.nam.healthforyou;
 
 import android.graphics.Bitmap;
 import android.os.Environment;
@@ -29,6 +29,12 @@ import timber.log.Timber;
  * Utility class for manipulating images.
  **/
 public class ImageUtils {
+
+    static {
+        System.loadLibrary("dlib_image");
+    }
+
+
     private static final String TAG = ImageUtils.class.getSimpleName();
 
     /**
@@ -72,7 +78,7 @@ public class ImageUtils {
             out.flush();
             out.close();
         } catch (final Exception e) {
-            Timber.tag(TAG).e("Exception!", e);
+
         }
     }
 

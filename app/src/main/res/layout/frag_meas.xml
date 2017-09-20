@@ -116,6 +116,14 @@
                 android:padding="25sp"
                 android:progressDrawable="@drawable/custom_progressbar_drawable" />
 
+            <Button
+                android:id="@+id/btnGotofaceppg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:text="얼굴측정" />
+
         </RelativeLayout>
     </FrameLayout>
 

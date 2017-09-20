@@ -14,7 +14,7 @@
  *
  */
 
-package facedetect;
+package com.example.nam.healthforyou;
 
 import android.app.Application;
 import android.util.Log;

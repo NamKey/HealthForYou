@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package facedetect;
+package com.example.nam.healthforyou;
 
 import android.content.Context;
 import android.graphics.Canvas;
