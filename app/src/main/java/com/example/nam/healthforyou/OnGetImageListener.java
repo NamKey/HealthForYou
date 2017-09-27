@@ -16,6 +16,7 @@
 
 package com.example.nam.healthforyou;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
@@ -25,40 +26,90 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
+import android.os.Message;
 import android.os.Trace;
 import android.util.Log;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
 
 import junit.framework.Assert;
 
+import org.jtransforms.fft.DoubleFFT_1D;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Range;
+import org.opencv.imgproc.Imgproc;
+
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import filter.Butterworth;
+import util.thirdparty.weka_plugin.FastICA;
+import util.thirdparty.weka_plugin.LogCosh;
+
+import static android.view.View.GONE;
+import static java.lang.Math.sqrt;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
  */
-public class OnGetImageListener implements OnImageAvailableListener {
+public class OnGetImageListener implements OnImageAvailableListener, OnChartValueSelectedListener {
+    static {
+        System.loadLibrary("native-lib");
+        System.loadLibrary("opencv_java3");
+    }
+
+    private int mFramenum;
+
+    private long detectStartTime;
+    private long detectDoneTime;
+    private int sampling_rate=10;
+
+    public native int redDetection(long matAddrInput, long matAddrResult);
+    public native int greenDetection(long matAddrInput, long matAddrResult);
+    public native int hueDetection(long matAddrInput, long matAddrResult);
+
 
     private static final boolean SAVE_PREVIEW_BITMAP = false;
 
-    private static final int INPUT_SIZE = 224;
+    private static final int INPUT_SIZE = 160;//크기를 정해줌 - 해상도가 떨어지면 얼굴 검출이 안됨
     private static final String TAG = "OnGetImageListener";
 
     private int mScreenRotation = 90;
-
+    private List<VisionDetRet> results;//얼굴찾는 부분에 대한 결과값
     private int mPreviewWdith = 0;
     private int mPreviewHeight = 0;
     private byte[][] mYUVBytes;
@@ -71,21 +122,107 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private Context mContext;
     private FaceDet mFaceDet;
-    private TrasparentTitleView mTransparentTitleView;
+
+    //측정 관련 레이아웃
+    private TextView tv_faceheartrate;//심박수를 나타내는 텍스트 뷰
+    private Button btn_control;//측정을 제어하는 버튼
+    private Button btn_resultsave;//결과를 저장하라는 버튼
+    private ProgressBar pb_detect;//진행되는 정도를 나타내주는 프로그레스바
+    private TextView tv_follow;//측정을 도와주는 안내메세지
+    private Activity activity;//뷰들이 위치한 액티비티 - 뷰를 접근할 수 있는건 메인쓰레드
+    private LineChart chart;//그래프를 그리는 차트
+    /////측정관련 변수
+    private boolean is_start=false;//시작을 나타냄
+    int face_heartrate;//최종적으로 나올 심박수
+
+    final static int initView=0;
+    private final static int facePPGstart=1;
+    private final static int facePPGdone=2;
+    private final static int cannotFindFace=3;
+    private final static int canFindFace=4;
+    private final static int facePPGdetecting=5;
+
+    private int avebp;
+
+    private int redsumleft;
+    private int greensumleft;
+    private int huesumleft;
+
+    private int redsumright;
+    private int greensumright;
+    private int huesumright;
+
+    int mframeNum;
+
+    double[][] face_signal_leftrect=new double[3][1024];//최종적으로 나오는 신호 - 왼쪽 뺨 네모 RGB
+    double[][] face_signal_rightrect=new double[3][1024];//최종적으로 나오는 신호 - 오른쪽 뺨 네모 RGB
+    double[][] face_signal_leftcheek;//최종적으로 나오는 신호 - 왼쪽 뺨
+    double[][] face_signal_rightcheek;//최종적으로 나오는 신호 - 오른쪽 뺨
+
+    List<Double> MaxmagnitudeList = new ArrayList<>();
+
+    //얼굴의 위치를 나타냄
+    private Point leftface;
+    private Point leftnose;
+
+    private Point rightface;
+    private Point rightnose;
+
+    //왼쪽뺨에 대한 위치
+    private Point leftcheek;
+
+    //오른쪽 뺨에 대한 위치
+    private Point rightcheek;
+
+    private Rect leftrect;
+
+    private Rect rightrect;
+
+
     private FloatingCameraWindow mWindow;
     private Paint mFaceLandmardkPaint;
-
+    private Paint mFaceLandmarkRect;
+    private Paint mFaceRoiMark;
+    private Paint mCheekRoimark;
     private Bitmap mResizedBitmap = null;
     private Bitmap mInversedBipmap = null;
+    private Bitmap roiBitmap= null;
 
     public void initialize(
             final Context context,
             final AssetManager assetManager,
             final TrasparentTitleView scoreView,
-            final Handler handler) {
+            final Handler handler,
+            final TextView tv_faceheartrate,//심박수 텍스트뷰
+            final Button btn_control,//버튼 제어
+            final Button btn_resultsave,//버튼 결과저장
+            final ProgressBar pb_detect,//프로그레스바
+            final TextView tv_follow,
+            final Activity activity,
+            final LineChart chart) {//안내메세지 텍스트뷰
+
         this.mContext = context;
-        this.mTransparentTitleView = scoreView;
+        //this.mTransparentTitleView = scoreView;
         this.mInferenceHandler = handler;
+
+        /////측정관련/////
+        this.tv_faceheartrate=tv_faceheartrate;
+        this.btn_control=btn_control;
+        this.pb_detect=pb_detect;
+        this.btn_resultsave=btn_resultsave;
+        this.tv_follow=tv_follow;
+        this.activity=activity;
+        this.chart=chart;
+
+        chart.setOnChartValueSelectedListener(this);
+        btn_control.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                is_start=true;
+                facehandler.sendEmptyMessage(facePPGstart);
+            }
+        });
+        facehandler.sendEmptyMessage(initView);//차트를 초기화
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = new FloatingCameraWindow(mContext);
 
@@ -93,6 +230,22 @@ public class OnGetImageListener implements OnImageAvailableListener {
         mFaceLandmardkPaint.setColor(Color.GREEN);
         mFaceLandmardkPaint.setStrokeWidth(2);
         mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
+
+        mFaceLandmarkRect = new Paint();
+        mFaceLandmarkRect.setColor(Color.BLUE);
+        mFaceLandmarkRect.setStrokeWidth(2);
+        mFaceLandmarkRect.setStyle(Paint.Style.STROKE);
+
+        mFaceRoiMark = new Paint();
+        mFaceRoiMark.setColor(Color.RED);
+        mFaceRoiMark.setStrokeWidth(2);
+        mFaceRoiMark.setStyle(Paint.Style.STROKE);
+
+        mCheekRoimark = new Paint();
+        mCheekRoimark.setAntiAlias(true);
+        mCheekRoimark.setColor(Color.CYAN);
+        mCheekRoimark.setStrokeWidth(1);
+        mCheekRoimark.setStyle(Paint.Style.STROKE);
     }
 
     public void deInitialize() {
@@ -223,54 +376,479 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
         mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWdith, 0, 0, mPreviewWdith, mPreviewHeight);
         drawResizedBitmap(mRGBframeBitmap, mCroppedBitmap);
-
         mInversedBipmap = imageSideInversion(mCroppedBitmap);
-        mResizedBitmap = Bitmap.createScaledBitmap(mInversedBipmap, (int)(INPUT_SIZE/4.5), (int)(INPUT_SIZE/4.5), true);
+
+//        Mat InversedMat = new Mat(mInversedBipmap.getHeight(),mInversedBipmap.getWidth(),CvType.CV_8UC4);
+//        Mat InversedMatResult = new Mat(mInversedBipmap.getHeight(),mInversedBipmap.getWidth(),CvType.CV_8UC3);
+//        Utils.bitmapToMat(mInversedBipmap,InversedMat);
+//        Imgproc.cvtColor(InversedMat,InversedMatResult,Imgproc.COLOR_RGB2BGR);
+//
+//        mResizedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+//        Utils.matToBitmap(InversedMatResult,mResizedBitmap);
 
         mInferenceHandler.post(
                 new Runnable() {
                     @Override
                     public void run() {
                         if (!new File(Constants.getFaceShapeModelPath()).exists()) {
-                            mTransparentTitleView.setText("Copying landmark model to " + Constants.getFaceShapeModelPath());
+                            //mTransparentTitleView.setText("Copying landmark model to " + Constants.getFaceShapeModelPath());
                             FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
                         }
 
                         long startTime = System.currentTimeMillis();
-                        List<VisionDetRet> results;
                         synchronized (OnGetImageListener.this) {
                             results = mFaceDet.detect(mInversedBipmap);
                         }
                         long endTime = System.currentTimeMillis();
-                        mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
+                        //mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
+                        System.out.println((endTime - startTime) / 1000f);
                         // Draw on bitmap
-                        if (results != null) {
+
+                        if (results.size()!=0) {
                             for (final VisionDetRet ret : results) {
                                 float resizeRatio = 1.0f;
-                                Rect bounds = new Rect();
-                                bounds.left = (int) (ret.getLeft() * resizeRatio);
-                                bounds.top = (int) (ret.getTop() * resizeRatio);
-                                bounds.right = (int) (ret.getRight() * resizeRatio);
-                                bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+                                RectF bounds = new RectF();
+                                int rectSizeindex = 3;
+                                bounds.left = ((ret.getLeft() + rectSizeindex) * resizeRatio);
+                                bounds.top = ((ret.getTop() - rectSizeindex) * resizeRatio);
+                                bounds.right = ((ret.getRight() - rectSizeindex) * resizeRatio);
+                                bounds.bottom = ((ret.getBottom() - rectSizeindex) * resizeRatio);
                                 Canvas canvas = new Canvas(mInversedBipmap);
-                                canvas.drawRect(bounds, mFaceLandmardkPaint);
+                                //canvas.drawRoundRect(bounds,10,10,mFaceLandmarkRect);
 
                                 // Draw landmark
                                 ArrayList<Point> landmarks = ret.getFaceLandmarks();
                                 for (Point point : landmarks) {
                                     int pointX = (int) (point.x * resizeRatio);
                                     int pointY = (int) (point.y * resizeRatio);
-                                    canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                                    canvas.drawCircle(pointX, pointY, 0.5f, mFaceLandmardkPaint);
                                 }
+
+                                leftface = landmarks.get(2);
+                                leftnose = landmarks.get(31);
+
+                                rightface = landmarks.get(14);
+                                rightnose = landmarks.get(35);
+
+                                //왼쪽뺨에 대한 위치
+                                leftcheek = new Point();
+                                leftcheek.x = (leftface.x + leftnose.x) / 2;
+                                leftcheek.y = (leftface.y + leftnose.y) / 2;
+
+                                //오른쪽 뺨에 대한 위치
+                                rightcheek = new Point();
+                                rightcheek.x = (rightface.x + rightnose.x) / 2;
+                                rightcheek.y = (rightface.y + rightnose.y) / 2;
+
+                                //왼쪽 뺨에 대해서 사각형을 그려줌
+                                leftrect = new Rect();
+                                leftrect.left = leftcheek.x - 5;
+                                leftrect.right = leftcheek.x + 5;
+                                leftrect.top = leftcheek.y + 5;
+                                leftrect.bottom = leftcheek.y - 5;
+
+                                canvas.drawRect(leftrect, mCheekRoimark);
+
+                                //오른쪽 뺨에 대해서 사각형을 그려줌
+                                rightrect = new Rect();
+                                rightrect.left = rightcheek.x - 5;
+                                rightrect.right = rightcheek.x + 5;
+                                rightrect.top = rightcheek.y + 5;
+                                rightrect.bottom = rightcheek.y - 5;
+
+                                canvas.drawRect(rightrect, mCheekRoimark);
+
+                                //양쪽 볼에 뺨에 대한 처리
+                                if(is_start)
+                                {
+                                    if(mframeNum==0)
+                                    {
+                                        detectStartTime=System.currentTimeMillis();
+                                    }
+
+                                    Bitmap leftBM=ImageUtils.cropBitmapuseCanvasRectCheek(mInversedBipmap,leftrect);
+                                    Bitmap rightBM=ImageUtils.cropBitmapuseCanvasRectCheek(mInversedBipmap,rightrect);
+                                    Mat leftmat = new Mat(leftBM.getHeight(),leftBM.getWidth(),CvType.CV_8UC3);
+                                    Mat rightmat = new Mat(rightBM.getHeight(),rightBM.getWidth(),CvType.CV_8UC3);
+                                    Utils.bitmapToMat(leftBM,leftmat);
+                                    Utils.bitmapToMat(rightBM,rightmat);
+                                    redsumleft=redDetection(leftmat.getNativeObjAddr(),leftmat.getNativeObjAddr())+redDetection(rightmat.getNativeObjAddr(),rightmat.getNativeObjAddr());
+                                    greensumleft = greenDetection(leftmat.getNativeObjAddr(),leftmat.getNativeObjAddr())+greenDetection(rightmat.getNativeObjAddr(),rightmat.getNativeObjAddr());
+                                    huesumleft = hueDetection(leftmat.getNativeObjAddr(),leftmat.getNativeObjAddr())+hueDetection(rightmat.getNativeObjAddr(),rightmat.getNativeObjAddr());
+
+                                    if(mframeNum>511)//512 의 데이터를 받음
+                                    {
+//                                        detectDoneTime=System.currentTimeMillis();
+//                                        System.out.println(detectDoneTime-detectStartTime+"측정시간ms");
+                                        if(is_start)//처음 한번만 끝마치는 것을 호출하기 위한 조건문
+                                        {
+                                            facehandler.sendEmptyMessage(facePPGdone);//측정을 끝마침
+                                        }
+
+                                    }else{
+                                        //RGB 순
+                                        face_signal_leftrect[0][mframeNum]=redsumleft;
+                                        face_signal_leftrect[1][mframeNum]=greensumleft;
+                                        face_signal_leftrect[2][mframeNum]=huesumleft;
+
+                                    }
+                                    mframeNum++;
+                                    Log.d("facePPG",redsumleft+"");
+                                    Log.d("facePPG",greensumleft+"");
+                                    Log.d("facePPG",huesumleft+"");
+                                    System.out.println(mframeNum+"길이");
+                                    facehandler.sendEmptyMessage(facePPGdetecting);//측정중임을 나타내는 Frame 갱신
+                                }
+
+                                //TODO 왼쪽 뺨
+                                Canvas roicanvas = new Canvas(mInversedBipmap);
+
+                                Path leftarea = new Path();
+                                //1번으로 옮겨감
+                                leftarea.moveTo(landmarks.get(1).x, landmarks.get(1).y);
+                                //2~6 왼쪽얼굴외곽선
+                                leftarea.lineTo(landmarks.get(2).x, landmarks.get(2).y);
+                                leftarea.lineTo(landmarks.get(3).x, landmarks.get(3).y);
+                                leftarea.lineTo(landmarks.get(4).x, landmarks.get(4).y);
+                                leftarea.lineTo(landmarks.get(5).x, landmarks.get(5).y);
+                                leftarea.lineTo(landmarks.get(6).x, landmarks.get(6).y);
+
+                                //입꼬리부터 왼쪽 콧망울을 따라감
+                                leftarea.lineTo(landmarks.get(48).x, landmarks.get(48).y);
+                                leftarea.lineTo(landmarks.get(31).x, landmarks.get(31).y);
+
+                                //눈선을 따라감
+                                leftarea.lineTo(landmarks.get(39).x, landmarks.get(39).y);
+                                leftarea.lineTo(landmarks.get(40).x, landmarks.get(40).y);
+                                leftarea.lineTo(landmarks.get(41).x, landmarks.get(41).y);
+                                leftarea.lineTo(landmarks.get(36).x, landmarks.get(36).y);
+
+                                //끝마침
+                                leftarea.close();
+                                //ROI 설정
+                                roicanvas.drawPath(leftarea, mFaceRoiMark);
+
+                                //TODO 오른쪽 뺨
+                                Path rightarea = new Path();
+
+                                rightarea.moveTo(landmarks.get(15).x, landmarks.get(15).y);
+
+                                //1번으로 옮겨감
+
+                                //14~10 오른쪽얼굴외곽선
+
+                                rightarea.lineTo(landmarks.get(14).x, landmarks.get(14).y);
+                                rightarea.lineTo(landmarks.get(13).x, landmarks.get(13).y);
+                                rightarea.lineTo(landmarks.get(12).x, landmarks.get(12).y);
+                                rightarea.lineTo(landmarks.get(11).x, landmarks.get(11).y);
+                                rightarea.lineTo(landmarks.get(10).x, landmarks.get(10).y);
+                                //입꼬리부터 오른쪽 콧망울을 따라감
+                                rightarea.lineTo(landmarks.get(54).x, landmarks.get(54).y);
+                                rightarea.lineTo(landmarks.get(35).x, landmarks.get(35).y);
+
+                                //눈선을 따라감
+                                rightarea.lineTo(landmarks.get(42).x, landmarks.get(42).y);
+                                rightarea.lineTo(landmarks.get(47).x, landmarks.get(47).y);
+                                rightarea.lineTo(landmarks.get(46).x, landmarks.get(46).y);
+                                rightarea.lineTo(landmarks.get(45).x, landmarks.get(45).y);
+
+                                rightarea.close();
+                                roicanvas.drawPath(rightarea, mFaceRoiMark);
                             }
+
+                            if(!is_start)//시작하지 않았을때
+                            {
+                                facehandler.sendEmptyMessage(canFindFace);
+                            }
+
+                        }else{
+                            //System.out.println("얼굴을 찾지못함");
+                            facehandler.sendEmptyMessage(cannotFindFace);
                         }
-
                         mWindow.setRGBBitmap(mInversedBipmap);
-
                         mIsComputing = false;
                     }
                 });
 
         Trace.endSection();
+    }
+
+    private LineDataSet createSet() {
+
+        LineDataSet set = new LineDataSet(null, "심장박동 데이터");
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+        set.setDrawCircles(false);
+        set.setColor(ColorTemplate.getHoloBlue());
+        set.setLineWidth(2f);
+        //set.setHighLightColor(Color.rgb(244, 117, 117));
+        //set.setValueTextColor(Color.WHITE);
+        set.setDrawValues(false);
+        return set;
+    }
+
+    private void addEntry() {
+
+        LineData data = chart.getData();
+
+        if (data != null) {
+
+            ILineDataSet set = data.getDataSetByIndex(0);
+            // set.addEntry(...); // can be called as well
+
+            if (set == null) {
+                set = createSet();
+                data.addDataSet(set);
+            }
+
+            data.addEntry(new Entry(set.getEntryCount(),(float)greensumleft), 0);///그래프에 데이터를 넣는 부분
+            //data.addEntry(new Entry(set.getEntryCount(),(float) average(Math.abs(filtered_Raw/100))), 0);///MOVING AVERAGE 거친 데이터 그래프
+            //data.addEntry(new Entry(set.getEntryCount(),(float)Math.abs(filtered_forriiv/100)), 0);///호흡신호 측정하기 위한 데이터를 넣는 부분
+            data.notifyDataChanged();
+
+            // let the chart know it's data has changed
+            chart.notifyDataSetChanged();
+            // limit the number of visible entries
+            chart.setVisibleXRangeMaximum(50);
+
+            //mChart.setVisibleYRangeMinimum(1, YAxis.AxisDependency.LEFT);
+
+            // move to the latest entry
+            chart.moveViewToX(data.getEntryCount());
+
+            // this automatically refreshes the chart (calls invalidate())
+            // mChart.moveViewTo(data.getXValCount()-7, 55f,
+            // AxisDependency.LEFT);
+        }
+    }
+
+
+    private Handler facehandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch(msg.what)
+            {
+                case initView:
+                {
+                    //LineChart chart = new LineChart(mContext);
+
+                    // enable description text
+                    chart.getDescription().setEnabled(false);
+
+                    // enable touch gestures
+                    chart.setTouchEnabled(true);
+                    // enable scaling and dragging
+                    chart.setDragEnabled(true);
+                    chart.setScaleEnabled(true);
+                    chart.setDrawGridBackground(false);
+
+                    // if disabled, scaling can be done on x- and y-axis separately
+                    chart.setPinchZoom(true);
+
+                    // set an alternative background color
+                    chart.setBackgroundColor(Color.WHITE);
+
+                    LineData data = new LineData();
+                    //data.setValueTextColor(Color.WHITE);
+
+                    // add empty data
+                    chart.setData(data);
+
+                    // get the legend (only possible after setting data)
+                    Legend l = chart.getLegend();
+
+                    // modify the legend ...
+                    l.setForm(Legend.LegendForm.LINE);
+                    l.setTextColor(Color.WHITE);
+
+                    XAxis xl = chart.getXAxis();
+                    xl.setTextColor(Color.WHITE);
+                    xl.setDrawGridLines(false);
+                    xl.setAvoidFirstLastClipping(true);
+                    xl.setEnabled(false);
+
+                    YAxis leftAxis = chart.getAxisLeft();
+                    leftAxis.setTextColor(Color.WHITE);
+                    leftAxis.setInverted(true);
+                    chart.setAutoScaleMinMaxEnabled(true);
+                    leftAxis.setDrawGridLines(false);
+
+                    YAxis rightAxis = chart.getAxisRight();
+                    rightAxis.setEnabled(false);
+
+                    break;
+                }
+
+
+                case facePPGstart:
+                {
+                    //버튼제어 부분
+                    btn_control.setVisibility(GONE);
+                    btn_resultsave.setVisibility(GONE);
+                    tv_follow.setText("움직이지 마세요");
+                    tv_faceheartrate.setText("--");
+                    break;
+                }
+
+                case facePPGdetecting://진행중임
+                {
+                    pb_detect.setProgress(mframeNum*100/512);
+                    break;
+                }
+
+                case facePPGdone:{
+                    mframeNum=0;//프레임 넘버 초기화
+                    btn_control.setVisibility(View.VISIBLE);
+                    btn_resultsave.setVisibility(View.GONE);
+                    tv_follow.setText("측정이 완료되었습니다");
+                    is_start=false;//측정종료
+
+                    final double[][] icadata = new double[][]{
+                            face_signal_leftrect[0]
+                            ,face_signal_leftrect[1]
+                            ,face_signal_leftrect[2]
+                    };
+
+
+                    try {
+                        FastICA fastICA = new FastICA(new LogCosh(),1E-4, 1000, true);
+                        fastICA.fit(icadata,3);
+
+                        System.out.println("ICA 수행완료");
+
+                        double[][] output=fastICA.getEM();
+
+
+                        Butterworth butterworth_high = new Butterworth();
+                        butterworth_high.highPass(2,10,1);
+                        Butterworth butterworth_low = new Butterworth();
+                        butterworth_low.lowPass(2,10,3);
+
+                        Butterworth butterworth_band = new Butterworth();
+                        butterworth_band.bandPass(5,10,2,1);
+
+                        if(output!=null){
+                            for(int i=0;i<icadata[0].length;i++)//filter를 통해 처리해줌
+                            {
+                                //BandPass
+                                output[0][i]=butterworth_band.filter(output[0][i]);
+                                output[1][i]=butterworth_band.filter(output[1][i]);
+                                output[2][i]=butterworth_band.filter(output[2][i]);
+                            }
+
+                            System.out.println("필터링 완료");
+                            double[] bpValue=new double[3];
+                            double[] bpValue2=new double[3];
+                            try{
+                                for(int j=0;j<3;j++)
+                                {
+                                    bpValue[j]=findFFTmax(output[j]);//호흡과 관련된 최대값에 대한 값을 배열에 넣어줌
+                                }
+
+                                int[] calculateBP = new int[3];
+
+                                calculateBP[0]= (int)(bpValue[0]*60.0);
+                                calculateBP[1]= (int)(bpValue[1]*60.0);
+                                calculateBP[2]= (int)(bpValue[2]*60.0);
+                                //012 순으로 값이 나옴
+                                //Magnitude를 비교해야함
+
+                                System.out.println("1 : "+calculateBP[0]+" 2 : "+calculateBP[1]+" 3: "+calculateBP[2]);
+
+                                double Powerofsignal= Collections.max(MaxmagnitudeList);
+                                avebp=calculateBP[MaxmagnitudeList.indexOf(Powerofsignal)];//가장 큰 파워를 갖고 있는 신호의 인덱스를 통해 심박수를 구함
+
+
+                                System.out.println(avebp+"심박값");
+                                if(avebp>150)//만약 정해진 값이 쓰레기값 420이렇게 나오면 0으로 만들어줌
+                                {
+                                    avebp=0;
+                                }
+
+                                if(avebp==0)//호흡측정에 실패하면
+                                {
+                                    Toast.makeText(mContext,"   심박측정 실패\n다시 측정해주세요",Toast.LENGTH_SHORT).show();
+                                }else{
+                                    tv_faceheartrate.setText(avebp+" BPM");
+                                }
+
+                            }catch(Exception e){
+                                e.printStackTrace();
+                            }
+                        }else{
+                            Toast.makeText(mContext,"심박 알고리즘 수행실패\n다시 측정해주세요",Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    break;
+                }
+
+                case cannotFindFace:{
+                    tv_follow.setText("얼굴을 찾을 수 없습니다");
+                    break;
+                }
+
+                case canFindFace:{
+                    tv_follow.setText("측정을 시작할 수 있습니다");
+                    break;
+                }
+            }
+        }
+    };
+
+    @Override
+    public void onValueSelected(Entry e, Highlight h) {
+
+    }
+
+    @Override
+    public void onNothingSelected() {
+
+    }
+
+    public double findFFTmax(double[] value)//scale을 정하는게 나으려나??
+    {
+        int nPoint=512;
+        DoubleFFT_1D fft=new DoubleFFT_1D(nPoint);
+        double[] bpdata = new double[nPoint];//fft를 위해 사용하는 자료
+        double real_part;
+        double image_part;
+        double[] fft_magnitude = new double[nPoint/2];
+        double fft_maxmag;
+        int max_fftindex;
+
+        ArrayList<Double> fft_mag=new ArrayList<>();
+
+        for(int i=0;i<nPoint/2;i++)//FFT를 수행하기 위하여 배열에 복사
+        {
+            bpdata[2*i]= value[i];////
+            bpdata[2*i+1]=0;
+        }
+        //--*FFT 변환
+
+        fft.realForward(bpdata);
+
+        //--**변환된 값으로부터 Magnitude 계산
+        for(int i=0;i<nPoint/2-1;i++)
+        {
+            real_part = bpdata[2*i];
+            image_part = bpdata[2*i+1];
+            fft_magnitude[i] = sqrt(real_part*real_part+image_part*image_part);
+        }
+
+        System.out.println("Magnitude"+ Arrays.toString(fft_magnitude));
+        //크기를 비교하여 가장 큰값을 찾아냄
+        for(int i=5;i<100;i++)//fft magnitude에서 값을 결정해줌
+        {
+            fft_mag.add(fft_magnitude[i]);
+        }
+
+        fft_maxmag=Collections.max(fft_mag);
+        MaxmagnitudeList.add(fft_maxmag);/////가장 큰 Magnitude의 값을 리스트에 넣어줌
+        max_fftindex = fft_mag.indexOf(fft_maxmag);
+        fft_mag.clear();
+        System.out.println(max_fftindex-1+"maxindex");
+        return (double)(max_fftindex-1)*sampling_rate/nPoint;
     }
 }

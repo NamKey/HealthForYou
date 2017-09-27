@@ -64,6 +64,7 @@ import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -824,6 +825,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         double newValue = oldValue + alpha * (value - oldValue);
         oldValue = newValue;
         return newValue;
+
     }
 
     private void feedMultiple() {//33ms second마다 sleep
@@ -1444,7 +1446,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     System.out.println("주파수:"+freq);
                     fft_heart = (int)(freq*60);
                     System.out.println("fft_heart"+fft_heart);
-                    if(fft_heart!=0)
+                    if(fft_heart>=60)
                     {
                         final_heart=(fft_heart+avebpm)/2;///Peak detection을 통해 구한 값과 FFT를 통해 구한값의 평균을 통해 최종 심박수 구함
                     }else{
@@ -1481,7 +1483,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
                     //StackOverflow 경고
                     //필요한 이유 : 측정시간이 짧기 때문에 적당한 크기로 반복적으로 늘려줄 필요가 있음
-                    for(int i=0;i<3;i++)
+                    for(int i=0;i<2;i++)
                     {
                         testing_red.addAll(testing_red);
                         testing_green.addAll(testing_green);
@@ -1497,7 +1499,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                         //ArrayList에 있는 원소를 옮겨담음
                         red_Array[count]=testing_red.get(count);//RED
                         green_Array[count]=testing_green.get(count);//GREEN
-                        blue_Array[count]=testing_blue.get(count);//Blue
+                        blue_Array[count]=testing_blue.get(count);
                     }
 
                     final double[][] icadata = new double[][]{
@@ -1520,7 +1522,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                     //output = FastIca.fastICA(icadata,10,0.01,3);
 
                     try {
-                        FastICA fastICA = new FastICA(new LogCosh(),1E-2, 1000, true);
+                        FastICA fastICA = new FastICA(new LogCosh(),1E-4, 1000, true);
                         fastICA.fit(icadata,3);
                         System.out.println("ICA 수행완료");
                         output=fastICA.getEM();
@@ -1546,11 +1548,15 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
 
                                 int[] calculateRes = new int[3];
 
-                                calculateRes[0]=(int)ceil(resValue[0]*60);
-                                calculateRes[1]=(int)ceil(resValue[1]*60);
-                                calculateRes[2]=(int)ceil(resValue[2]*60);
+                                System.out.println(resValue[0]*60.0);
+                                System.out.println(resValue[1]*60.0);
+                                System.out.println(resValue[2]*60.0);
 
-                                System.out.println("1 : "+calculateRes[0]+" 2 : "+calculateRes[1]+" 3 : "+calculateRes[2]);
+                                calculateRes[0]= (int)(resValue[0]*60.0);
+                                calculateRes[1]= (int)(resValue[1]*60.0);
+                                calculateRes[2]= (int)(resValue[2]*60.0);
+
+                                System.out.println("1 : "+calculateRes[0]+" 2 : "+calculateRes[1]);
 
                                 ///호흡수 필터를 씌운 값이기 때문에 더 작은 것을 호흡속도로 생각
                                 if(calculateRes[0]<=calculateRes[1])//1,2를 비교
@@ -1572,6 +1578,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
                                     }
                                 }
 
+                                System.out.println(averes+"호흡값");
                                 if(averes>60)//만약 정해진 값이 쓰레기값 420이렇게 나오면 0으로 만들어줌
                                 {
                                     averes=0;
@@ -1725,6 +1732,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
     public double findFFTmax(double[] value)//scale을 정하는게 나으려나??
     {
         int nPoint=4096;
+        DoubleFFT_1D fft_1D=new DoubleFFT_1D(nPoint);
         double[] resdata = new double[nPoint];//fft를 위해 사용하는 자료
 
         double real_part;
@@ -1763,9 +1771,9 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
             image_part = resdata[2*i+1];
             fft_magnitude[i] = sqrt(real_part*real_part+image_part*image_part);
         }
-        //System.out.println("Magnitude"+Arrays.toString(magnitude));
+        System.out.println("Magnitude"+ Arrays.toString(magnitude));
         //크기를 비교하여 가장 큰값을 찾아냄
-        for(int i=2;i<fft_magnitude.length;i++)
+        for(int i=5;i<65;i++)//fft magnitude에서 값을 결정해줌
         {
             fft_mag.add(fft_magnitude[i]);
         }
@@ -1773,6 +1781,7 @@ public class Fragment_meas extends Fragment implements CameraBridgeViewBase.CvCa
         fft_maxmag=Collections.max(fft_mag);
         max_fftindex = fft_mag.indexOf(fft_maxmag);
         System.out.println(max_fftindex+"maxindex");
-        return (double)max_fftindex*sampling_rate/(nPoint/2);
+        ///필터적인 개념으로 7을 빼주었는데 이는 index를 나타내고 있는 것이므로 다시더해서 복구해야함
+        return (double)(max_fftindex+5)*sampling_rate/(nPoint/2);
     }
 }

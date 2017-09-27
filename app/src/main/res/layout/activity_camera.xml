@@ -13,10 +13,19 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/facedetectcontainer"
+<RelativeLayout xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000"
-    tools:context="com.example.nam.healthforyou.com.example.nam.healthforyou.CameraActivity" />
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <FrameLayout
+        android:id="@+id/facedetectcontainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:background="#ffffff"
+        tools:context="com.example.nam.healthforyou.com.example.nam.healthforyou.CameraActivity">
+
+    </FrameLayout>
+
+</RelativeLayout>

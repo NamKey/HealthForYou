@@ -4,6 +4,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+
+
+
 using namespace std;
 using namespace cv;
 
@@ -28,8 +31,6 @@ extern "C"{
         // TODO
 
         //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
-        matInput.release();
-        matResult.release();
         return sum2;//
     }
 }
@@ -111,5 +112,106 @@ extern "C"{
         current_frame.release();
         differ.release();
         return cnt;// TODO
+    }
+}
+
+extern "C"
+{
+    JNIEXPORT jint JNICALL
+    Java_com_example_nam_healthforyou_OnGetImageListener_redDetection(JNIEnv *env, jobject instance,
+                                                                      jlong matAddrInput,
+                                                                      jlong matAddrResult) {
+        int sum2=0;
+        Mat &matInput = *(Mat *) matAddrInput;
+        Mat &matResult = * (Mat *)matAddrResult;
+
+        cvtColor(matInput,matResult,CV_RGB2BGR);
+        for(int i=0;i<matResult.rows;i++)
+        {
+            for(int j=0;j<matResult.cols;j++)
+            {
+                sum2+=matResult.at<cv::Vec3b>(i,j)[2];//Red
+                //sum+=matInput.at<cv::Vec3b>(i,j)[1];//Green
+                //sum1+=matInput.at<cv::Vec3b>(i,j)[0];//Blue
+            }
+        }
+        // TODO
+
+        //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
+
+        return sum2;//
+        // TODO
+
+    }
+
+    JNIEXPORT jint JNICALL
+    Java_com_example_nam_healthforyou_OnGetImageListener_hueDetection(JNIEnv *env, jobject instance,
+                                                                   jlong matAddrInput,
+                                                                   jlong matAddrResult) {
+
+        int sum1=0;
+        Mat &matInput = *(Mat *) matAddrInput;
+        Mat &matResult = * (Mat *)matAddrResult;
+
+        cvtColor(matInput,matResult,CV_RGB2HSV);
+        for(int i=0;i<matResult.rows;i++)
+        {
+            for(int j=0;j<matResult.cols;j++)
+            {
+                //sum1+=matResult.at<cv::Vec3b>(i,j)[2];//Red
+                //sum+=matInput.at<cv::Vec3b>(i,j)[1];//Green
+                Vec3b hsv=matResult.at<Vec3b>(i,j);
+                sum1+=hsv.val[0]; //hue
+            }
+        }
+        // TODO
+        //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
+        return sum1;//
+        // TODO
+
+    }
+
+    JNIEXPORT jint JNICALL
+    Java_com_example_nam_healthforyou_OnGetImageListener_greenDetection(JNIEnv *env, jobject instance,
+                                                                      jlong matAddrInput,
+                                                                      jlong matAddrResult) {
+        int sum=0;
+        Mat &matInput = *(Mat *) matAddrInput;
+        Mat &matResult = * (Mat *)matAddrResult;
+
+        cvtColor(matInput,matResult,CV_RGB2BGR);
+        for(int i=0;i<matResult.rows;i++)
+        {
+            for(int j=0;j<matResult.cols;j++)
+            {
+                //sum2+=matInput.at<cv::Vec3b>(i,j)[2];//Red
+                sum+=matResult.at<cv::Vec3b>(i,j)[1];//Green
+                //sum1+=matInput.at<cv::Vec3b>(i,j)[0];//Blue
+            }
+        }
+        // TODO
+
+        //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
+        matInput.release();
+        matResult.release();
+        return sum;//
+        // TODO
+
+    }
+
+    JNIEXPORT jlong JNICALL
+    Java_com_example_nam_healthforyou_OnGetImageListener_rgbtogray(JNIEnv *env, jobject instance,
+                                                                        jlong matAddrInputRGB,
+                                                                        jlong matAddrResultGRAY) {
+
+        Mat &matInputRGB = *(Mat *) matAddrInputRGB;
+        Mat &matResultGRAY = * (Mat *)matAddrResultGRAY;
+
+        cvtColor(matInputRGB,matResultGRAY,CV_RGB2GRAY);
+
+
+        //Test 하는 부분 Fatal signal 에러가 발생하는 이유가 Frame에 대해서 메모리를 할당(assign)했다가 해제(release)하지않아서 그런것은 아닐까?
+        matInputRGB.release();
+        // TODO
     }
 }

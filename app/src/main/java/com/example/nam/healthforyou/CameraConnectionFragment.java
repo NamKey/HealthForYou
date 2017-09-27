@@ -26,6 +26,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -43,6 +44,7 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Size;
 import android.util.SparseArray;
@@ -52,7 +54,22 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +81,7 @@ import java.util.concurrent.TimeUnit;
 
 import timber.log.Timber;
 
-public class CameraConnectionFragment extends Fragment {
+public class CameraConnectionFragment extends Fragment implements OnChartValueSelectedListener {
 
     /**
      * The camera preview size will be chosen to be the smallest frame by pixel size capable of
@@ -120,9 +137,6 @@ public class CameraConnectionFragment extends Fragment {
 
                     int deviceRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                     int totalRotation = sensorToDeviceRotation(mCharacteristics, deviceRotation);
-                    System.out.println(totalRotation+"SensorRotation");
-                    System.out.println(deviceRotation+"DeviceRotation");
-                    System.out.println((270 + ORIENTATIONS.get(deviceRotation)) % 360+"Rotation");
                 }
             };
 
@@ -155,6 +169,20 @@ public class CameraConnectionFragment extends Fragment {
      * {@link CameraDevice.StateCallback}
      * is called when {@link CameraDevice} changes its state.
      */
+
+    private LineChart chart;
+    private TextView tvheartrate;
+    private Button btn_control;
+    private Button btn_resultsave;
+    private ProgressBar pb_detect;
+    private TextView tv_follow;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Toast.makeText(getContext(),"잠시만 기다려주세요",Toast.LENGTH_SHORT).show();
+    }
+
     private final CameraDevice.StateCallback stateCallback =
             new CameraDevice.StateCallback() {
                 @Override
@@ -300,7 +328,13 @@ public class CameraConnectionFragment extends Fragment {
     @Override
     public void onViewCreated(final View view, final Bundle savedInstanceState) {
         textureView = (AutoFitTextureView) view.findViewById(R.id.texture);
-        mScoreView = (TrasparentTitleView) view.findViewById(R.id.results);
+        //mScoreView = (TrasparentTitleView) view.findViewById(R.id.results);
+        tvheartrate=(TextView)view.findViewById(R.id.tv_faceppgheartrate);
+        btn_control=(Button)view.findViewById(R.id.btn_faceppgstart);
+        btn_resultsave=(Button)view.findViewById(R.id.btn_faceppgresult);
+        pb_detect=(ProgressBar)view.findViewById(R.id.faceprogressBar);
+        tv_follow=(TextView)view.findViewById(R.id.tv_faceppgfollow);
+        chart=(LineChart)view.findViewById(R.id.facePPGchart);
     }
 
     @Override
@@ -577,18 +611,12 @@ public class CameraConnectionFragment extends Fragment {
                             // When the session is ready, we start displaying the preview.
                             captureSession = cameraCaptureSession;
                             try {
-                                // Auto focus should be continuous for camera preview.
-                                previewRequestBuilder.set(
-                                        CaptureRequest.CONTROL_AF_MODE,
-                                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                                // Flash is automatically enabled when necessary.
-                                previewRequestBuilder.set(
-                                        CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
 
                                 // Finally, we start displaying the camera preview.
                                 previewRequest = previewRequestBuilder.build();
                                 captureSession.setRepeatingRequest(
                                         previewRequest, captureCallback, backgroundHandler);
+
                             } catch (final CameraAccessException e) {
                                 Timber.tag(TAG).e("Exception!", e);
                             }
@@ -603,8 +631,8 @@ public class CameraConnectionFragment extends Fragment {
         } catch (final CameraAccessException e) {
             Timber.tag(TAG).e("Exception!", e);
         }
-
-        mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, inferenceHandler);
+        ///TODO 리스너에 등록해주는 부분
+        mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, inferenceHandler,tvheartrate,btn_control,btn_resultsave,pb_detect,tv_follow,getActivity(),chart);
     }
 
     /**
@@ -641,6 +669,16 @@ public class CameraConnectionFragment extends Fragment {
             matrix.postRotate(180, centerX, centerY);
         }
         textureView.setTransform(matrix);
+    }
+
+    @Override
+    public void onValueSelected(Entry e, Highlight h) {
+
+    }
+
+    @Override
+    public void onNothingSelected() {
+
     }
 
     /**

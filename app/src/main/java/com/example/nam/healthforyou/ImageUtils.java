@@ -17,6 +17,13 @@
 package com.example.nam.healthforyou;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.os.Environment;
 import android.support.annotation.Keep;
 
@@ -50,6 +57,36 @@ public class ImageUtils {
         final int uvSize = ((width + 1) / 2) * ((height + 1) / 2) * 2;
 
         return ySize + uvSize;
+    }
+
+    //양쪽볼에서 네모난 부분을 잘라냄
+    public static Bitmap cropBitmapuseCanvasRectCheek(Bitmap bitmap, Rect rect) {
+        Bitmap bmp = bitmap;
+        Bitmap bmOverlay = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+
+        Paint paint = new Paint();
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+
+        Canvas canvas = new Canvas(bmOverlay);
+        canvas.drawBitmap(bmp, 0, 0, null);
+        canvas.drawRect(rect, paint);
+
+        return bmOverlay;
+    }
+
+    public static Bitmap cropBitmapuseCanvasCheek(Bitmap bitmap, Path pathleft, Path pathright) {
+        Bitmap bmp = bitmap;
+        Bitmap bmOverlay = Bitmap.createBitmap(bitmap.getHeight(), bitmap.getWidth(), Bitmap.Config.ARGB_8888);
+
+        Paint paint = new Paint();
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+
+        Canvas canvas = new Canvas(bmOverlay);
+        canvas.drawBitmap(bmp, 0, 0, null);
+        canvas.drawPath(pathleft, paint);
+        canvas.drawPath(pathright, paint);
+
+        return bmOverlay;
     }
 
     /**

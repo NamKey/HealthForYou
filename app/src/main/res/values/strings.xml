@@ -7,7 +7,7 @@
 
     <string name="facebook_app_id">462631720770505</string>
     <string name="fb_login_protocol_scheme">fb462631720770505</string>
-
+    <string name="facePPG">얼굴을 통한 맥박 측정</string>
     <string-array name="sex">
         <item>남성</item>
         <item>여성</item>

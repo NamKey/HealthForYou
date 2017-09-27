@@ -36,6 +36,10 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
+import static android.view.View.GONE;
+import static android.view.View.INVISIBLE;
+import static android.view.View.VISIBLE;
+
 /**
  * Created by Tzutalin on 2016/5/25
  */
@@ -74,8 +78,8 @@ public class FloatingCameraWindow {
             mScreenMaxHeight = display.getHeight();
         }
         // Default window size
-        mWindowWidth = mScreenMaxWidth / 2;
-        mWindowHeight = mScreenMaxHeight / 2;
+        mWindowWidth = (mScreenMaxWidth) / 3;
+        mWindowHeight = (mScreenMaxHeight) / 3;
 
         mWindowWidth = mWindowWidth > 0 && mWindowWidth < mScreenMaxWidth ? mWindowWidth : mScreenMaxWidth;
         mWindowHeight = mWindowHeight > 0 && mWindowHeight < mScreenMaxHeight ? mWindowHeight : mScreenMaxHeight;
@@ -107,6 +111,7 @@ public class FloatingCameraWindow {
                 if (mWindowManager == null || mRootView == null) {
                     mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
                     mRootView = new FloatCamView(FloatingCameraWindow.this);
+                    mRootView.setClipToOutline(false);
                     mWindowManager.addView(mRootView, initWindowParameter());
                 }
             }
@@ -133,11 +138,10 @@ public class FloatingCameraWindow {
         mWindowParam.format = 1;
         mWindowParam.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         mWindowParam.flags = mWindowParam.flags | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-        mWindowParam.flags = mWindowParam.flags | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
-
+        //mWindowParam.flags = mWindowParam.flags | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
         mWindowParam.alpha = 1.0f;
 
-        mWindowParam.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+        mWindowParam.gravity = Gravity.TOP | Gravity.END;
         mWindowParam.x = 0;
         mWindowParam.y = 0;
         mWindowParam.width = mWindowWidth;
@@ -216,8 +220,8 @@ public class FloatingCameraWindow {
             mColorView = (ImageView) findViewById(R.id.imageView_c);
             mFPSText = (TextView) findViewById(R.id.fps_textview);
             mInfoText = (TextView) findViewById(R.id.info_textview);
-            mFPSText.setVisibility(View.GONE);
-            mInfoText.setVisibility(View.GONE);
+            mFPSText.setVisibility(GONE);
+            mInfoText.setVisibility(GONE);
 
             int colorMaxWidth = (int) (mWindowWidth* window.mScaleWidthRatio);
             int colorMaxHeight = (int) (mWindowHeight * window.mScaleHeightRatio);
@@ -251,7 +255,7 @@ public class FloatingCameraWindow {
                         WindowManager.LayoutParams parm = mWeakRef.get().mWindowParam;
                         if (event.getPointerCount() == 1 && windowMgr != null) {
                             parm.x -= deltaX;
-                            parm.y -= deltaY;
+                            parm.y = deltaY;//위에서만 움직이도록 설정
                             windowMgr.updateViewLayout(this, parm);
                         }
                     }
@@ -272,17 +276,19 @@ public class FloatingCameraWindow {
 
         public void setFPS(float fps) {
             if (mFPSText != null) {
-                if (mFPSText.getVisibility() == View.GONE) {
-                    mFPSText.setVisibility(View.VISIBLE);
+                if (mFPSText.getVisibility() == GONE) {
+                    mFPSText.setVisibility(VISIBLE);
                 }
                 mFPSText.setText(String.format("FPS: %.2f", fps));
             }
         }
 
+
+
         public void setMoreInformation(String info) {
             if (mInfoText != null) {
-                if (mInfoText.getVisibility() == View.GONE) {
-                    mInfoText.setVisibility(View.VISIBLE);
+                if (mInfoText.getVisibility() == GONE) {
+                    mInfoText.setVisibility(VISIBLE);
                 }
                 mInfoText.setText(info);
             }
