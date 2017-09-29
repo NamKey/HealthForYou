@@ -71,12 +71,20 @@ import org.opencv.core.Range;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import filter.Butterworth;
+import filter.DirectFormAbstract;
+import filter.Filter;
+import filter.MovingAverage;
 import util.thirdparty.weka_plugin.FastICA;
 import util.thirdparty.weka_plugin.LogCosh;
 
@@ -144,6 +152,8 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
 
     private int avebp;
 
+    private int progresspercentage=0;
+
     private int redsumleft;
     private int greensumleft;
     private int huesumleft;
@@ -154,12 +164,15 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
 
     int mframeNum;
 
-    double[][] face_signal_leftrect=new double[3][1024];//최종적으로 나오는 신호 - 왼쪽 뺨 네모 RGB
-    double[][] face_signal_rightrect=new double[3][1024];//최종적으로 나오는 신호 - 오른쪽 뺨 네모 RGB
+    double[][] face_signal_leftrect=new double[3][512];//최종적으로 나오는 신호 - 왼쪽 뺨 네모 RGB
+    double[][] face_signal_rightrect=new double[3][512];//최종적으로 나오는 신호 - 오른쪽 뺨 네모 RGB
     double[][] face_signal_leftcheek;//최종적으로 나오는 신호 - 왼쪽 뺨
     double[][] face_signal_rightcheek;//최종적으로 나오는 신호 - 오른쪽 뺨
 
-    List<Double> MaxmagnitudeList = new ArrayList<>();
+    private List<Double> MaxmagnitudeList = new ArrayList<>();
+    private List<Double> lastSignal = new ArrayList<>();//최종적으로 심박수값이라 결정된 신호
+    //Moving Average filter를 위한 변수
+
 
     //얼굴의 위치를 나타냄
     private Point leftface;
@@ -401,7 +414,7 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                         }
                         long endTime = System.currentTimeMillis();
                         //mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
-                        System.out.println((endTime - startTime) / 1000f);
+                        //System.out.println((endTime - startTime) / 1000f);
                         // Draw on bitmap
 
                         if (results.size()!=0) {
@@ -691,7 +704,15 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
 
                 case facePPGdetecting://진행중임
                 {
-                    pb_detect.setProgress(mframeNum*100/512);
+                    progresspercentage = mframeNum*100/512;
+                    pb_detect.setProgress(progresspercentage);
+                    if(progresspercentage>60)
+                    {
+                        tv_follow.setText("측정이 거의 완료되었습니다");
+                    }else if(progresspercentage>30){
+                        tv_follow.setText("움직일 경우 측정의 오차가 생길 수 있습니다");
+                    }
+
                     break;
                 }
 
@@ -717,27 +738,41 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
 
                         double[][] output=fastICA.getEM();
 
-
-                        Butterworth butterworth_high = new Butterworth();
-                        butterworth_high.highPass(2,10,1);
-                        Butterworth butterworth_low = new Butterworth();
-                        butterworth_low.lowPass(2,10,3);
-
-                        Butterworth butterworth_band = new Butterworth();
-                        butterworth_band.bandPass(5,10,2,1);
-
                         if(output!=null){
-                            for(int i=0;i<icadata[0].length;i++)//filter를 통해 처리해줌
+                            Filter filter = new Filter();
+                            //a 와 b 는 filter 계수값
+                            BigDecimal[] a = new BigDecimal[]{BigDecimal.valueOf(1), BigDecimal.valueOf(-2.94186766992504), BigDecimal.valueOf(4.70231728846433), BigDecimal.valueOf(-4.63410965621041), BigDecimal.valueOf(3.07744779365828), BigDecimal.valueOf(-1.24661968102405), BigDecimal.valueOf(0.278059917634546)};
+                            BigDecimal[] b = new BigDecimal[]{BigDecimal.valueOf(0.0180989330075146), BigDecimal.valueOf(0), BigDecimal.valueOf(-0.0542967990225439), BigDecimal.valueOf(0), BigDecimal.valueOf(0.0542967990225439), BigDecimal.valueOf(0), BigDecimal.valueOf(-0.0180989330075146)};
+                            MovingAverage maf = new MovingAverage(10);
+                            for(int i=0;i<output.length;i++)//3개의 분리된 신호에 대해서
                             {
-                                //BandPass
-                                output[0][i]=butterworth_band.filter(output[0][i]);
-                                output[1][i]=butterworth_band.filter(output[1][i]);
-                                output[2][i]=butterworth_band.filter(output[2][i]);
+                                BigDecimal[] bigDecimals = new BigDecimal[output[0].length];//입력값
+                                BigDecimal[] outDecimals = new BigDecimal[output[0].length];//아웃풋
+                                for(int j=0;j<bigDecimals.length;j++)
+                                {
+                                    bigDecimals[j]= BigDecimal.valueOf(output[i][j]);
+                                    System.out.println(bigDecimals[j]);
+                                }
+
+                                outDecimals=filter.filter(b,a,bigDecimals);//필터를 통해 지나와서
+
+                                for(int k=0;k<bigDecimals.length;k++)
+                                {
+                                    output[i][k]=outDecimals[k].doubleValue();
+                                    //MAF 수행
+                                    maf.newNum(output[i][k]);
+                                    output[i][k]=maf.getAvg();
+                                }
                             }
 
+                            System.out.println(Arrays.toString(output[0]));
+                            System.out.println(Arrays.toString(output[1]));
+                            System.out.println(Arrays.toString(output[2]));
+
                             System.out.println("필터링 완료");
+
                             double[] bpValue=new double[3];
-                            double[] bpValue2=new double[3];
+
                             try{
                                 for(int j=0;j<3;j++)
                                 {
@@ -757,8 +792,24 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                                 double Powerofsignal= Collections.max(MaxmagnitudeList);
                                 avebp=calculateBP[MaxmagnitudeList.indexOf(Powerofsignal)];//가장 큰 파워를 갖고 있는 신호의 인덱스를 통해 심박수를 구함
 
+                                //그래프에 최종신호에 대한 그래프를 그려주기 위하여 수행하는 작업
+                                for(int t=0;t<output[MaxmagnitudeList.indexOf(Powerofsignal)].length;t++)
+                                {
+                                    if(t>30)
+                                    {
+                                        lastSignal.add(output[MaxmagnitudeList.indexOf(Powerofsignal)][t]);//최종 신호 출력값을 ArrayList에 넣음
+                                    }
+                                }
+                                //그래프에 값을 넣어줌
+                                for(int k=0;k<lastSignal.size();k++)
+                                {
+                                    addEntry(lastSignal.get(k));
+                                }
+
+                                //그래프에 값을 뿌려줌
 
                                 System.out.println(avebp+"심박값");
+
                                 if(avebp>150)//만약 정해진 값이 쓰레기값 420이렇게 나오면 0으로 만들어줌
                                 {
                                     avebp=0;
@@ -773,12 +824,12 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
 
                             }catch(Exception e){
                                 e.printStackTrace();
+                                Toast.makeText(mContext,"심박 알고리즘 수행실패\n다시 측정해주세요",Toast.LENGTH_SHORT).show();
                             }
-                        }else{
-                            Toast.makeText(mContext,"심박 알고리즘 수행실패\n다시 측정해주세요",Toast.LENGTH_SHORT).show();
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        Toast.makeText(mContext,"심박 알고리즘 수행실패\n다시 측정해주세요",Toast.LENGTH_SHORT).show();
                     }
 
                     break;
@@ -809,20 +860,37 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
 
     public double findFFTmax(double[] value)//scale을 정하는게 나으려나??
     {
-        int nPoint=512;
+        int nPoint=482;
         DoubleFFT_1D fft=new DoubleFFT_1D(nPoint);
         double[] bpdata = new double[nPoint];//fft를 위해 사용하는 자료
+        double[] testSignal = new double[482];
         double real_part;
         double image_part;
         double[] fft_magnitude = new double[nPoint/2];
         double fft_maxmag;
         int max_fftindex;
+        //들어온 value에서 값을 잘라내야함
+        List<Double> cutSignal = new ArrayList<>();
+        for(int i=0;i<value.length;i++)
+        {
+            if(i>30)//값을 잘라내는 중
+            {
+                cutSignal.add(value[i]);
+            }else{
+                System.out.println("신호 필터링중");
+            }
+        }
+        //잘라낸 신호를 다시 배열에 넣어줌
+        for(int count=0;count<cutSignal.size();count++)
+        {
+            testSignal[count]=cutSignal.get(count);
+        }
 
         ArrayList<Double> fft_mag=new ArrayList<>();
 
         for(int i=0;i<nPoint/2;i++)//FFT를 수행하기 위하여 배열에 복사
         {
-            bpdata[2*i]= value[i];////
+            bpdata[2*i]= testSignal[i];////
             bpdata[2*i+1]=0;
         }
         //--*FFT 변환
@@ -839,7 +907,7 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
 
         System.out.println("Magnitude"+ Arrays.toString(fft_magnitude));
         //크기를 비교하여 가장 큰값을 찾아냄
-        for(int i=5;i<100;i++)//fft magnitude에서 값을 결정해줌
+        for(int i=0;i<51;i++)//fft magnitude에서 값을 결정해줌 - //~120BPM
         {
             fft_mag.add(fft_magnitude[i]);
         }
@@ -848,7 +916,42 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
         MaxmagnitudeList.add(fft_maxmag);/////가장 큰 Magnitude의 값을 리스트에 넣어줌
         max_fftindex = fft_mag.indexOf(fft_maxmag);
         fft_mag.clear();
-        System.out.println(max_fftindex-1+"maxindex");
-        return (double)(max_fftindex-1)*sampling_rate/nPoint;
+        System.out.println((double)(max_fftindex)*sampling_rate/(256)+"maxindexFrequency");
+        return (double)(max_fftindex)*(double)sampling_rate/(256.0);
     }
+
+    private void addEntry(double value) {
+
+        LineData data = chart.getData();
+
+        if (data != null) {
+
+            ILineDataSet set = data.getDataSetByIndex(0);
+            // set.addEntry(...); // can be called as well
+
+            if (set == null) {
+                set = createSet();
+                data.addDataSet(set);
+            }
+
+            data.addEntry(new Entry(set.getEntryCount(),(float)(value*Math.pow(10,16))), 0);///그래프에 데이터를 넣는 부분
+            data.notifyDataChanged();
+
+            // let the chart know it's data has changed
+            chart.notifyDataSetChanged();
+            // limit the number of visible entries
+            chart.setVisibleXRangeMaximum(50);
+
+            //mChart.setVisibleYRangeMinimum(1, YAxis.AxisDependency.LEFT);
+
+            // move to the latest entry
+            chart.moveViewToX(data.getEntryCount());
+
+            // this automatically refreshes the chart (calls invalidate())
+            // mChart.moveViewTo(data.getXValCount()-7, 55f,
+            // AxisDependency.LEFT);
+        }
+    }
+
+
 }
