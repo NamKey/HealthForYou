@@ -651,11 +651,11 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                     chart.setTouchEnabled(true);
                     // enable scaling and dragging
                     chart.setDragEnabled(true);
-                    chart.setScaleEnabled(true);
+                    chart.setScaleEnabled(false);
                     chart.setDrawGridBackground(false);
 
                     // if disabled, scaling can be done on x- and y-axis separately
-                    chart.setPinchZoom(true);
+                    chart.setPinchZoom(false);
 
                     // set an alternative background color
                     chart.setBackgroundColor(Color.WHITE);
@@ -682,6 +682,7 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                     YAxis leftAxis = chart.getAxisLeft();
                     leftAxis.setTextColor(Color.WHITE);
                     leftAxis.setInverted(true);
+
                     chart.setAutoScaleMinMaxEnabled(true);
                     leftAxis.setDrawGridLines(false);
 
@@ -795,10 +796,7 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                                 //그래프에 최종신호에 대한 그래프를 그려주기 위하여 수행하는 작업
                                 for(int t=0;t<output[MaxmagnitudeList.indexOf(Powerofsignal)].length;t++)
                                 {
-                                    if(t>30)
-                                    {
-                                        lastSignal.add(output[MaxmagnitudeList.indexOf(Powerofsignal)][t]);//최종 신호 출력값을 ArrayList에 넣음
-                                    }
+                                    lastSignal.add(output[MaxmagnitudeList.indexOf(Powerofsignal)][t]);//최종 신호 출력값을 ArrayList에 넣음
                                 }
                                 //그래프에 값을 넣어줌
                                 for(int k=0;k<lastSignal.size();k++)
@@ -934,7 +932,7 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                 data.addDataSet(set);
             }
 
-            data.addEntry(new Entry(set.getEntryCount(),(float)(value*Math.pow(10,16))), 0);///그래프에 데이터를 넣는 부분
+            data.addEntry(new Entry(set.getEntryCount(),(float)(value)), 0);///그래프에 데이터를 넣는 부분
             data.notifyDataChanged();
 
             // let the chart know it's data has changed

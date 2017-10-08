@@ -65,6 +65,7 @@
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/facePPGchart"
             android:layout_width="match_parent"
+            android:layout_gravity="start"
             android:layout_height="80sp"
             android:layout_marginBottom="15sp" />
 

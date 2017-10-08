@@ -80,7 +80,7 @@ public class Signup extends AppCompatActivity {
 
     public static boolean checkPassword(String password)
     {   //12자리에서 20자리까지 검사 특수문자,영어,숫자
-        String regex = "^(?=.*[a-zA-Z])((?=.*\\d)|(?=.*\\W)).{12,20}$";
+        String regex = "^(?=.*[a-zA-Z])((?=.*\\d))((?=.*\\W)).{12,20}$";
         //문자, 숫자, 특수문자의 조합인지 확인
         Pattern p = Pattern.compile(regex);
         Matcher m = p.matcher(password);
