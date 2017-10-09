@@ -62,12 +62,16 @@
 
         </LinearLayout>
 
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/facePPGchart"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_gravity="start"
             android:layout_height="80sp"
-            android:layout_marginBottom="15sp" />
+            android:layout_marginBottom="15sp">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/facePPGchart"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"                />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tv_faceppgfollow"

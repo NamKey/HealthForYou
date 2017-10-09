@@ -39,6 +39,7 @@ import android.os.Message;
 import android.os.Trace;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -599,42 +600,6 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
         return set;
     }
 
-    private void addEntry() {
-
-        LineData data = chart.getData();
-
-        if (data != null) {
-
-            ILineDataSet set = data.getDataSetByIndex(0);
-            // set.addEntry(...); // can be called as well
-
-            if (set == null) {
-                set = createSet();
-                data.addDataSet(set);
-            }
-
-            data.addEntry(new Entry(set.getEntryCount(),(float)greensumleft), 0);///그래프에 데이터를 넣는 부분
-            //data.addEntry(new Entry(set.getEntryCount(),(float) average(Math.abs(filtered_Raw/100))), 0);///MOVING AVERAGE 거친 데이터 그래프
-            //data.addEntry(new Entry(set.getEntryCount(),(float)Math.abs(filtered_forriiv/100)), 0);///호흡신호 측정하기 위한 데이터를 넣는 부분
-            data.notifyDataChanged();
-
-            // let the chart know it's data has changed
-            chart.notifyDataSetChanged();
-            // limit the number of visible entries
-            chart.setVisibleXRangeMaximum(50);
-
-            //mChart.setVisibleYRangeMinimum(1, YAxis.AxisDependency.LEFT);
-
-            // move to the latest entry
-            chart.moveViewToX(data.getEntryCount());
-
-            // this automatically refreshes the chart (calls invalidate())
-            // mChart.moveViewTo(data.getXValCount()-7, 55f,
-            // AxisDependency.LEFT);
-        }
-    }
-
-
     private Handler facehandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -676,16 +641,16 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                     XAxis xl = chart.getXAxis();
                     xl.setTextColor(Color.WHITE);
                     xl.setDrawGridLines(false);
-                    xl.setAvoidFirstLastClipping(true);
+                    xl.setAvoidFirstLastClipping(false);
                     xl.setEnabled(false);
+                    xl.setDrawLabels(false);
 
                     YAxis leftAxis = chart.getAxisLeft();
                     leftAxis.setTextColor(Color.WHITE);
                     leftAxis.setInverted(true);
-
                     chart.setAutoScaleMinMaxEnabled(true);
                     leftAxis.setDrawGridLines(false);
-
+                    leftAxis.setDrawLabels(false);
                     YAxis rightAxis = chart.getAxisRight();
                     rightAxis.setEnabled(false);
 
@@ -697,7 +662,6 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                 {
                     //버튼제어 부분
                     btn_control.setVisibility(GONE);
-                    btn_resultsave.setVisibility(GONE);
                     tv_follow.setText("움직이지 마세요");
                     tv_faceheartrate.setText("--");
                     break;
@@ -720,7 +684,6 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                 case facePPGdone:{
                     mframeNum=0;//프레임 넘버 초기화
                     btn_control.setVisibility(View.VISIBLE);
-                    btn_resultsave.setVisibility(View.GONE);
                     tv_follow.setText("측정이 완료되었습니다");
                     is_start=false;//측정종료
 
@@ -798,12 +761,13 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
                                 {
                                     lastSignal.add(output[MaxmagnitudeList.indexOf(Powerofsignal)][t]);//최종 신호 출력값을 ArrayList에 넣음
                                 }
+
                                 //그래프에 값을 넣어줌
+
                                 for(int k=0;k<lastSignal.size();k++)
                                 {
                                     addEntry(lastSignal.get(k));
                                 }
-
                                 //그래프에 값을 뿌려줌
 
                                 System.out.println(avebp+"심박값");
@@ -939,11 +903,9 @@ public class OnGetImageListener implements OnImageAvailableListener, OnChartValu
             chart.notifyDataSetChanged();
             // limit the number of visible entries
             chart.setVisibleXRangeMaximum(50);
-
             //mChart.setVisibleYRangeMinimum(1, YAxis.AxisDependency.LEFT);
-
-            // move to the latest entry
-            chart.moveViewToX(data.getEntryCount());
+            // move to the first entry
+            chart.moveViewToX(0);
 
             // this automatically refreshes the chart (calls invalidate())
             // mChart.moveViewTo(data.getXValCount()-7, 55f,
